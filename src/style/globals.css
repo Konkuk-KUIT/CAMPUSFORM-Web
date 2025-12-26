@@ -1,0 +1,61 @@
+@import 'tailwindcss';
+
+@theme {
+  /* 브랜드 색상  */
+  --color-primary: #5a81fa;
+  --color-navy: #161f48;
+
+  /* 포인트 색상  */
+  --color-point-red: #fe5e5e;
+  --color-point-green: #52e05b;
+  --color-point-yellow: #ffd83d;
+
+  /* 파랑계열  */
+  --color-blue-950: #171954;
+  --color-blue-900: #1e248a;
+  --color-blue-800: #1e22af;
+  --color-blue-700: #1d28d8;
+  --color-blue-600: #253beb;
+  --color-blue-500: #3b5cf6;
+  --color-blue-300: #93affd;
+  --color-blue-200: #bfcffe;
+  --color-blue-100: #dbe3fe;
+  --color-blue-50: #eff3ff;
+
+  /* 회색계열  */
+  --color-gray-950: #1f1f1f;
+  --color-gray-900: #3d3d3d;
+  --color-gray-800: #454545;
+  --color-gray-700: #4f4f4f;
+  --color-gray-600: #5d5d5d;
+  --color-gray-500: #6d6d6d;
+  --color-gray-400: #888888;
+  --color-gray-300: #b0b0b0;
+  --color-gray-200: #d1d1d1;
+  --color-gray-100: #efefef;
+  --color-gray-50: #f6f6f6;
+  --color-white: #ffffff;
+
+  /* Header */
+  --text-title: 600 18px/25px;
+
+  /* Subtitle */
+  --text-subtitle-sb: 600 16px/22px;
+  --text-subtitle-md: 500 16px/22px;
+  --text-subtitle-rg: 400 16px/22px;
+  --text-subtitle-sm-sb: 600 15px/21px;
+  --text-subtitle-sm-md: 500 15px/21px;
+  --text-subtitle-sm-rg: 400 15px/21px;
+
+  /* Body */
+  --text-body: 500 15px/21px;
+  --text-body-md: 500 14px/20px;
+  --text-body-rg: 400 14px/20px;
+  --text-body-sm: 500 13px/18px;
+  --text-body-sm-rg: 400 13px/18px;
+  --text-body-xs: 500 12px/17px;
+  --text-body-xs-rg: 400 12px/17px;
+}
+
+body {
+}
