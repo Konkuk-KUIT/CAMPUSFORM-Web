@@ -55,7 +55,14 @@
   --text-body-sm-rg: 400 13px/18px;
   --text-body-xs: 500 12px/17px;
   --text-body-xs-rg: 400 12px/17px;
-}
 
-body {
+  --text-10: 0.625rem;
+  --text-12: 0.75rem;
+  --text-14: 0.875rem;
+  --text-16: 1rem;
+  --text-18: 1.125rem;
+  --text-20: 1.25rem;
+  --text-24: 1.5rem;
+  --text-28: 1.75rem;
+  --text-32: 2rem;
 }
