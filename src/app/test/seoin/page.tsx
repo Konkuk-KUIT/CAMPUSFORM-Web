@@ -11,6 +11,10 @@ import TopTab from '@/components/topTab';
 import Image from 'next/image';
 import ReplyButton from '@/components/replyButton';
 import AppointmentInfoButton from '@/components/appointmentInfoButton';
+import AllAccordion from '@/components/allAccordion';
+import ResultCard from '@/components/resultCard';
+import ApplicantTimeSlotCard from '@/components/applicantTimeSlotCard';
+import ScheduleResultCard from '@/components/scheduleResultCard';
 
 export default function SeoinTest() {
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
@@ -71,6 +75,40 @@ export default function SeoinTest() {
           <AppointmentInfoButton date="11월 15일 (수)" time="14:00" onClick={() => {}} />
           {/* 정보 없을 때 */}
           <AppointmentInfoButton date="--월 --일 (-)" time="--:--" onClick={() => {}} />
+        </div>
+
+        {/* 전체 아코디언 */}
+        <div className="flex justify-center">
+          <AllAccordion title="전체">
+            <div>내용</div>
+          </AllAccordion>
+        </div>
+
+        {/* 면접 결과 카드 */}
+        <ResultCard type="서류결과" totalApplicants={48} passed={10} ratio="0:0" malePercent={80} femalePercent={20} />
+        <ResultCard type="면접결과" totalApplicants={100} passed={30} ratio="0:0" malePercent={34} femalePercent={66} />
+
+        {/* 시간표 지원자 목록카드 */}
+        <ApplicantTimeSlotCard
+          time="9:00"
+          applicants={[
+            { name: '김민준', major: '건국대/컴퓨터공학과', position: '요리사' },
+            { name: '백서준', major: '건국대/화학공학과', position: '일반부원' },
+            { name: '오지우', major: '건국대/관광경영학과', position: '조리사' },
+          ]}
+        />
+
+        {/* 지원결과 카드 */}
+        <div className="p-3">
+          <ScheduleResultCard
+            timeRange="9:00 - 9:15"
+            applicants={[
+              { name: '김민준', major: '건국대/스마트ict융합공학과', position: '요리사' },
+              { name: '김민준', major: '건국대/컴퓨터공학과', position: '요리사' },
+              { name: '김민준', major: '건국대/컴퓨터공학과', position: '요리사' },
+            ]}
+            interviewers={['운영진A', '운영진B', '운영진C']}
+          />
         </div>
       </div>
     </>
