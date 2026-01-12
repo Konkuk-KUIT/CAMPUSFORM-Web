@@ -18,7 +18,7 @@
   --color-blue-600: #253beb;
   --color-blue-500: #3b5cf6;
   --color-blue-300: #93affd;
-  --color-blue-200: #bfcffe;
+  --color-blue-200: #bfcefe;
   --color-blue-100: #dbe3fe;
   --color-blue-50: #eff3ff;
 
@@ -36,26 +36,6 @@
   --color-gray-50: #f6f6f6;
   --color-white: #ffffff;
 
-  /* Header */
-  --text-title: 600 18px/25px;
-
-  /* Subtitle */
-  --text-subtitle-sb: 600 16px/22px;
-  --text-subtitle-md: 500 16px/22px;
-  --text-subtitle-rg: 400 16px/22px;
-  --text-subtitle-sm-sb: 600 15px/21px;
-  --text-subtitle-sm-md: 500 15px/21px;
-  --text-subtitle-sm-rg: 400 15px/21px;
-
-  /* Body */
-  --text-body: 500 15px/21px;
-  --text-body-md: 500 14px/20px;
-  --text-body-rg: 400 14px/20px;
-  --text-body-sm: 500 13px/18px;
-  --text-body-sm-rg: 400 13px/18px;
-  --text-body-xs: 500 12px/17px;
-  --text-body-xs-rg: 400 12px/17px;
-
   --text-10: 0.625rem;
   --text-12: 0.75rem;
   --text-14: 0.875rem;
@@ -65,4 +45,106 @@
   --text-24: 1.5rem;
   --text-28: 1.75rem;
   --text-32: 2rem;
+}
+
+@layer utilities {
+  /* Header */
+  .text-title {
+    font-weight: 600;
+    font-size: 18px;
+    line-height: 25px;
+  }
+
+  /* Subtitle */
+
+  /* Sub/16/Semibold */
+  .text-subtitle-sb {
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  /* Sub/16/Medium */
+  .text-subtitle-md {
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  /* Sub/16/Regular */
+  .text-subtitle-rg {
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  /* Sub/15/Semibold */
+  .text-subtitle-sm-sb {
+    font-weight: 600;
+    font-size: 15px;
+    line-height: 21px;
+  }
+
+  /* Sub/15/Medium */
+  .text-subtitle-sm-md {
+    font-weight: 500;
+    font-size: 15px;
+    line-height: 21px;
+  }
+
+  /* Sub/15/Regular */
+  .text-subtitle-sm-rg {
+    font-weight: 400;
+    font-size: 15px;
+    line-height: 21px;
+  }
+
+  /* Body */
+
+  /* Body/15/Medium */
+  .text-body {
+    font-weight: 500;
+    font-size: 15px;
+    line-height: 21px;
+  }
+
+  /* Body/14/Medium */
+  .text-body-md {
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  /* Body/14/Regular */
+  .text-body-rg {
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  .text-body-sm {
+    font-weight: 500;
+    font-size: 13px;
+    line-height: 18px;
+  }
+
+  /* Body/13/Regular */
+  .text-body-sm-rg {
+    font-weight: 400;
+    font-size: 13px;
+    line-height: 18px;
+  }
+
+  .text-body-xs {
+    font-weight: 500;
+    font-size: 12px;
+    line-height: 17px;
+  }
+
+  /* Body/12/Regular */
+  .text-body-xs-rg {
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 17px;
+  }
 }
