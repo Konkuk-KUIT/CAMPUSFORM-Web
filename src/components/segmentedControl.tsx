@@ -1,7 +1,8 @@
+// Updated filename to PascalCase
 'use client';
 
 import { useState } from 'react';
-import BtnRound from '@/components/btnRound';
+import BtnRound from '@/components/BtnRound';
 
 type View = 'calendar' | 'project';
 

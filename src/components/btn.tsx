@@ -1,3 +1,5 @@
+// Updated filename to PascalCase
+
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'outline' | 'neutral';
   size?: 'sm' | 'md' | 'lg';
