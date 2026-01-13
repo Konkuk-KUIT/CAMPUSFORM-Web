@@ -45,14 +45,19 @@ export default function ApplicantCard({
           {status}
         </span>
       </div>
-
-      <div className="absolute top-[16.5px] right-[16px] w-[20px] h-[20px] text-gray-200 cursor-pointer" />
-
-      <div className="absolute top-[93px] left-[299.5px] w-[27.5px] h-[17px] flex items-center gap-[6px] text-gray-300">
-        <div className="w-[13.5px] h-[13.5px] flex items-center justify-center" />
-        <span className="text-body-xs-rg text-gray-400 leading-none">{commentCount}</span>
+        
+      <div className="absolute top-[16.5px] right-[16px] w-[24px] h-[24px] cursor-pointer">
+        <img src="/icons/star-off.svg" alt="star" className="w-full h-full" />
       </div>
-      
+
+      <div className="absolute bottom-[16.5px] right-[16px] flex items-center gap-[6px] text-gray-300">
+        <div className="w-[18px] h-[18px] flex items-center justify-center">
+          <img src="/icons/comment.svg" alt="comment" className="w-full h-full" />
+        </div>
+        <span className="text-body-md text-gray-300 leading-none">
+          {commentCount}
+        </span>
+      </div>
     </div>
   );
 }

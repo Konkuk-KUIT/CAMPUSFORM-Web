@@ -31,7 +31,7 @@ export default function ApplicantSummaryCard({
 
       <div className="flex items-center gap-[10px]">
         <button className="w-[40px] h-[40px] rounded-full bg-gray-50 flex items-center justify-center text-gray-700 hover:bg-gray-100 transition-colors">
-
+          <img src="/icons/copy.svg" alt="copy" className="w-[20px] h-[20px]" />
         </button>
 
         <button className="w-[40px] h-[40px] rounded-full bg-gray-50 flex items-center justify-center text-gray-700 hover:bg-gray-100 transition-colors">

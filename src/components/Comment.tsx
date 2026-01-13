@@ -19,7 +19,12 @@ export default function NotificationCard({
                   ${isUnread ? "bg-[#EFF3FF]" : "bg-white"}`}
     >
       <div className="flex items-center w-full">
-        <div className={`w-[23px] h-[23px] ${isUnread ? "text-primary" : "text-gray-950"}`}>
+        <div className={`w-[23px] h-[23px] flex-shrink-0 flex items-center justify-center ${isUnread ? "text-primary" : "text-gray-950"}`}>
+          <img 
+            src={isUnread ? "/icons/newapplicant-blue.svg" : "/icons/newapplicant.svg"}
+            alt="new applicant" 
+            className={`w-full h-full ${isUnread ? "" : "grayscale"}`} 
+          />
         </div>
 
         <h4 className="ml-[8px] text-body-sm text-gray-950 flex-1">

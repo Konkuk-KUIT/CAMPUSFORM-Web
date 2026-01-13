@@ -22,6 +22,11 @@ export default function NotificationCard({
     >
       <div className="flex items-center w-full">
         <div className={`w-[23px] h-[23px] flex-shrink-0 ${isUnread ? "text-primary" : "text-gray-950"}`}>
+          <img 
+            src={isUnread ? "/icons/comment-blue.svg" : "/icons/comment.svg"} 
+            alt="icon" 
+            className="w-full h-full" 
+          />
         </div>
 
         <h4 className="ml-[8px] text-body-sm text-gray-950 flex-1">
