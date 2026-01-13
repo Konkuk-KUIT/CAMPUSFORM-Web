@@ -2,19 +2,19 @@
 'use client';
 
 import { useState } from 'react';
-import Button from '@/components/btn';
-import BtnRound from '@/components/btnRound';
-import SegmentedControl from '@/components/segmentedControl';
-import StatusDropdown from '@/components/statusDropdown';
-import TimeSelectButton from '@/components/timeSelectButton';
-import TopTab from '@/components/topTab';
+import Button from '@/components/Btn';
+import BtnRound from '@/components/BtnRound';
+import SegmentedControl from '@/components/SegmentedControl';
+import StatusDropdown from '@/components/StatusDropdown';
+import TimeSelectButton from '@/components/TimeSelectButton';
+import TopTab from '@/components/TopTab';
 import Image from 'next/image';
-import ReplyButton from '@/components/replyButton';
-import AppointmentInfoButton from '@/components/appointmentInfoButton';
-import AllAccordion from '@/components/allAccordion';
-import ResultCard from '@/components/resultCard';
-import ApplicantTimeSlotCard from '@/components/applicantTimeSlotCard';
-import ScheduleResultCard from '@/components/scheduleResultCard';
+import ReplyButton from '@/components/ReplyButton';
+import AppointmentInfoButton from '@/components/AppointmentInfoButton';
+import AllAccordion from '@/components/AllAccordion';
+import ResultCard from '@/components/ResultCard';
+import ApplicantTimeSlotCard from '@/components/ApplicantTimeSlotCard';
+import ScheduleResultCard from '@/components/ScheduleResultCard';
 
 export default function SeoinTest() {
   const [selectedTime, setSelectedTime] = useState<string | null>(null);

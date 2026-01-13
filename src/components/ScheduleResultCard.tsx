@@ -1,3 +1,5 @@
+// Updated filename to PascalCase
+
 'use client';
 
 export interface Applicant {

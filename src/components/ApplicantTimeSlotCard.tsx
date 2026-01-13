@@ -1,3 +1,5 @@
+// Updated filename to PascalCase
+
 'use client';
 
 export interface Applicant {
@@ -19,7 +21,7 @@ export default function ApplicantTimeSlotCard({ time, applicants }: ApplicantTim
       <div className="text-subtitle-rg  ml-4 text-black min-w-17">{time}</div>
 
       {/* 지원자 목록 박스 */}
-      <div className="flex-1 bg-white border border-gray-200 rounded-[10px] p-3">
+      <div className="flex-1 bg-white border border-gray-200 rounded-10 p-3">
         <div className="flex flex-col gap-1">
           {applicants.map((applicant, index) => (
             <div

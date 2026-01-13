@@ -1,3 +1,5 @@
+// Updated filename to PascalCase
+
 'use client';
 
 import { useState } from 'react';
@@ -33,7 +35,7 @@ export default function StatusDropdown() {
       {/* 선택된 버튼 */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full h-6.5 bg-white border border-gray-200 rounded-[5px] px-2 py-1 flex items-center justify-between"
+        className="w-full h-6.5 bg-white border border-gray-200 rounded-5 px-2 py-1 flex items-center justify-between"
       >
         <div className="flex items-center gap-1.5">
           <div className={`w-1.75 h-1.75 rounded-full ${selectedOption.color} shrink-0`} />
@@ -50,7 +52,7 @@ export default function StatusDropdown() {
 
       {/* 드롭다운 메뉴 */}
       {isOpen && (
-        <div className="absolute top-full w-21.25 bg-white rounded-[10px] overflow-hidden z-10">
+        <div className="absolute top-full w-21.25 bg-white rounded-10 overflow-hidden z-10">
           {options.map(option => (
             <button
               key={option.value}

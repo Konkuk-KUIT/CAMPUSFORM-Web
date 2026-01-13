@@ -1,3 +1,5 @@
+// Updated filename to PascalCase
+
 'use client';
 
 export interface TimeSelectButtonProps {
@@ -11,7 +13,7 @@ export default function TimeSelectButton({ time, isSelected, onClick }: TimeSele
     <button
       onClick={onClick}
       className={`
-        w-20 px-5.5 py-1.25 rounded-[5px] border text-body-sm-rg cursor-pointer
+        w-20 px-5.5 py-1.25 rounded-5 border text-body-sm-rg cursor-pointer
         ${isSelected ? 'bg-white border-primary text-primary' : 'bg-white border-gray-200 text-black'}
       `}
     >
