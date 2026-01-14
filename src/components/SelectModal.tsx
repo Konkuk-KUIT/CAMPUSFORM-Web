@@ -11,17 +11,21 @@ interface SelectModalProps {
   options: SelectModalOption[];
   value?: string;
   onChange?: (value: string) => void;
+  backgroundColor?: 'white' | 'gray-100';
+  width?: 'w-[102px]' | 'w-[113px]';
 }
 
-export default function SelectModal({ 
+export default function SelectModal({
   options,
   value: controlledValue,
-  onChange
+  onChange,
+  backgroundColor = 'white',
+  width = 'w-[102px]',
 }: SelectModalProps) {
   const [internalValue, setInternalValue] = useState('');
-  
+
   const value = controlledValue ?? internalValue;
-  
+
   const handleSelect = (id: string) => {
     if (onChange) {
       onChange(id);
@@ -30,13 +34,15 @@ export default function SelectModal({
     }
   };
 
+  const bgClass = backgroundColor === 'gray-100' ? 'bg-gray-100' : 'bg-white';
+
   return (
-    <div className="w-25.5 bg-white rounded-[10px] flex flex-col">
-      {options.map((option) => (
+    <div className={`${width} ${bgClass} rounded-10 flex flex-col`}>
+      {options.map(option => (
         <button
           key={option.id}
           onClick={() => handleSelect(option.id)}
-          className="h-8.75 text-body-sm-rg text-center"
+          className="h-8.75 text-body-sm-rg text-center cursor-pointer"
         >
           {option.label}
         </button>
