@@ -20,8 +20,6 @@ export default function SegmentedControl() {
           프로젝트
         </BtnRound>
       </div>
-
-      <div>{view === 'calendar' ? <div>캘린더 화면</div> : <div>프로젝트 화면</div>}</div>
     </div>
   );
 }
