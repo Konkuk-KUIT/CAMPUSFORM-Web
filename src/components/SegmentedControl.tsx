@@ -1,4 +1,3 @@
-// Updated filename to PascalCase
 'use client';
 
 import { useState } from 'react';
@@ -6,17 +5,34 @@ import BtnRound from '@/components/BtnRound';
 
 type View = 'calendar' | 'project';
 
-export default function SegmentedControl() {
+interface SegmentedControlProps {
+  onTabChange?: (tab: View) => void;
+}
+
+export default function SegmentedControl({ onTabChange }: SegmentedControlProps) {
   const [view, setView] = useState<View>('calendar');
+
+  const handleTabClick = (nextView: View) => {
+    setView(nextView);
+    onTabChange?.(nextView);
+  };
 
   return (
     <div>
       <div className="inline-flex bg-gray-100 rounded-full">
-        <BtnRound size="lg" variant={view === 'calendar' ? 'outline' : 'subtle'} onClick={() => setView('calendar')}>
+        <BtnRound 
+          size="lg" 
+          variant={view === 'calendar' ? 'outline' : 'subtle'} 
+          onClick={() => handleTabClick('calendar')}
+        >
           캘린더
         </BtnRound>
 
-        <BtnRound size="lg" variant={view === 'project' ? 'outline' : 'subtle'} onClick={() => setView('project')}>
+        <BtnRound 
+          size="lg" 
+          variant={view === 'project' ? 'outline' : 'subtle'} 
+          onClick={() => handleTabClick('project')}
+        >
           프로젝트
         </BtnRound>
       </div>
