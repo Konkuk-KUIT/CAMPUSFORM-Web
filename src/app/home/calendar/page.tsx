@@ -42,7 +42,7 @@ export default function HomePage() {
             <Calendar />
           </section>
 
-          <ScheduleList schedules={schedules[]} />
+          <ScheduleList schedules={schedules} />
           
         </div>
       </div>

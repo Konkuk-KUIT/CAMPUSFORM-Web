@@ -10,8 +10,8 @@ import ApplicantFileCard from "@/components/ApplicantFile";
 import ApplicantInterviewCard from "@/components/ApplicantInterview";
 import ApplicantSummaryCard from "@/components/Card";
 import ApplicantCardBasic from "@/components/FileDetail";
-import RecruitmentCardOn from "@/components/HomeOn";
-import RecruitmentCardOff from "@/components/HomeOff";
+import RecruitmentCardOn from "@/components/home/HomeOn";
+import RecruitmentCardOff from "@/components/home/HomeOff";
 
 export default function TestPage() {
   return (
