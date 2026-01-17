@@ -1,8 +1,8 @@
 'use client';
 
-import MypageSetupForm from '@/components/mypage/MypageSetupForm';
+import MypageSetupForm from '@/components/home/mypage/MypageSetupForm';
 import Header from '@/components/Header';
-import HeaderLogout from '@/components/HeaderLogout';
+import HeaderLogout from '@/components/home/mypage/HeaderLogout';
 
 export default function SetupPage() {
   return (

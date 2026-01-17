@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link"; 
 
 export default function TopAppBar() {
   return (
@@ -14,11 +15,17 @@ export default function TopAppBar() {
         홈
       </h1>
 
-      <div className="absolute left-[297px] top-[11px] w-[26px] h-[26px]">
+      <Link 
+        href="/home/mypage" 
+        className="absolute left-[297px] top-[11px] w-[26px] h-[26px]"
+      >
         <Image src="/icons/user.svg" alt="User" width={26} height={26} />
-      </div>
+      </Link>
 
-      <div className="absolute left-[338px] top-3 w-6 h-6 flex items-center justify-center">
+      <Link 
+        href="/home/notification" 
+        className="absolute left-[338px] top-3 w-6 h-6 flex items-center justify-center"
+      >
         <div className="relative w-[16.53px] h-[19.5px]">
           <Image 
             src="/icons/alarm.svg" 
@@ -27,7 +34,7 @@ export default function TopAppBar() {
             className="object-contain"
           />
         </div>
-      </div>
+      </Link>
       
     </header>
   );

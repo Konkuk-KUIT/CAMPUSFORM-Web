@@ -2,7 +2,7 @@
 
 interface NotificationCardProps {
   title: string;
-  subContent?: string; // 추가: "- 이현지 님의 지원서"
+  subContent?: string; 
   content: string;
   timeAgo: string;
   isUnread?: boolean;
@@ -17,8 +17,8 @@ export default function NotificationCard({
 }: NotificationCardProps) {
   return (
     <div 
-      className={`w-[375px] min-h-[80px] border-t border-[#EFEFEF] flex flex-col font-['Pretendard'] cursor-pointer px-[20px] pt-[12px] pb-[12px]
-                  ${isUnread ? "bg-[#EFF3FF]" : "bg-white"}`}
+      className={`w-[375px] min-h-[80px] border-t border-gray-100 flex flex-col font-['Pretendard'] cursor-pointer px-[20px] pt-[12px] pb-[12px]
+                  ${isUnread ? "bg-blue-50" : "bg-white"}`}
     >
       <div className="flex items-center w-full">
         <div className={`w-[23px] h-[23px] flex-shrink-0 ${isUnread ? "text-primary" : "text-gray-950"}`}>

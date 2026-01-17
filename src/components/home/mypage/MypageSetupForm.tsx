@@ -11,28 +11,24 @@ interface MypageSetupFormProps {
   }
 
   export default function MypageSetupForm({ 
-    initialName = '김유저', // 임시 기본값
+    initialName = '김유저',
     initialEmail = 'hxxxxx@gmail.com' 
   }: MypageSetupFormProps) {
     
     const [nickname, setNickname] = useState(initialName);
     const [nicknameError, setNicknameError] = useState(false);
 
-  // 닉네임 유효성 검사
   const validateNickname = (): boolean => {
-    // 빈 값 체크
     if (!nickname.trim()) {
       setNicknameError(true);
       return false;
     }
 
-    // 길이 체크 (1-12자)
     if (nickname.length < 1 || nickname.length > 12) {
       setNicknameError(true);
       return false;
     }
 
-    // 한글, 영문만 허용 (숫자, 특수문자 불가)
     const nameRegex = /^[가-힣a-zA-Z]+$/;
     if (!nameRegex.test(nickname)) {
       setNicknameError(true);
@@ -42,19 +38,15 @@ interface MypageSetupFormProps {
     return true;
   };
 
-  // 가입 완료 버튼 클릭
   const handleSignup = () => {
     if (!validateNickname()) {
       return;
     }
 
-    // 검사 통과
     setNicknameError(false);
 
-    // TODO: 서버로 데이터 전송
   };
 
-  // 닉네임 입력 시 에러메세지 제거
   const handleNicknameChange = (value: string) => {
     setNickname(value);
     if (nicknameError) {
@@ -65,10 +57,8 @@ interface MypageSetupFormProps {
   return (
     <>
       <div className="px-6 py-8 pb-28 flex flex-col gap-3">
-        {/* 프로필 사진 */}
         <ProfileImageButton />
 
-        {/* 이름 입력 */}
         <div className="flex flex-col gap-2 mt-15">
           <label className="text-subtitle-sm-md pl-2">이름(닉네임)</label>
           <Textbox
