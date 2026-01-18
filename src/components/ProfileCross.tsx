@@ -1,48 +1,55 @@
 "use client";
 
-import { useState } from "react";
-
-interface ProfileCardProps {
+interface ProfileCrossProps {
   nickname: string;
   email: string;
-  isExpanded?: boolean;
+  onDelete?: () => void;
+  isLeader?: boolean;   
 }
 
-export default function ProfileCard({
+export default function ProfileCross({
   nickname,
   email,
-  isExpanded: initialExpanded = false,
-}: ProfileCardProps) {
-  const [isExpanded, setIsExpanded] = useState(initialExpanded);
-
+  onDelete,
+  isLeader = false, 
+}: ProfileCrossProps) {
   return (
-    <div className="w-[343px] h-[66px] bg-white flex items-center justify-between px-[20px] py-[8px] font-['Pretendard'] border-b border-gray-100">
+    <div className="w-full h-[66px] bg-white flex items-center justify-between px-[20px] py-[8px] border-b border-gray-100">
       
       <div className="flex items-center gap-[10px]">
         <div className="w-[35px] h-[35px] bg-[#D9D9D9] rounded-full flex-shrink-0" />
 
         <div className="flex flex-col">
-          <h3 className="text-subtitle-md text-gray-950 leading-tight">
-            {nickname}
-          </h3>
-          <p className="text-body-rg text-gray-500">
+          <div className="flex items-center gap-1.5">
+            <h3 className="text-[14px] font-medium text-gray-950 leading-tight">
+              {nickname}
+            </h3>
+            {isLeader && (
+              <span className="flex items-center justify-center px-[5px] h-[15px] border border-primary rounded-[4px] text-[10px] text-primary bg-white leading-none mt-0.5">
+                대표
+              </span>
+            )}
+          </div>
+          <p className="text-[12px] text-gray-500 mt-[2px]">
             {email}
           </p>
         </div>
       </div>
 
-      <button 
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="w-[24px] h-[24px] flex items-center justify-center text-gray-950"
-      >
-        <svg 
-          width="20" height="20" viewBox="0 0 24 24" fill="none" 
-          stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+      {!isLeader && onDelete && (
+        <button 
+          onClick={onDelete} 
+          className="w-[24px] h-[24px] flex items-center justify-center text-gray-950 cursor-pointer hover:bg-gray-50 rounded-full transition-colors"
         >
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
-      </button>
+          <svg 
+            width="20" height="20" viewBox="0 0 24 24" fill="none" 
+            stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+          >
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      )}
 
     </div>
   );

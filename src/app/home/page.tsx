@@ -9,7 +9,7 @@ import ProjectFilter from "@/components/home/ProjectFilter";
 import HomeOn from "@/components/home/HomeOn";
 import HomeOff from "@/components/home/HomeOff";
 import Image from "next/image";
-
+import Link from "next/link";
 export default function HomePage() {
 
     const [currentTab, setCurrentTab] = useState("calendar");
@@ -91,9 +91,9 @@ export default function HomePage() {
                   ))}
               </section>
               <div className="flex justify-center w-full">
-                <button 
-                    className="flex items-center justify-center active:scale-95 transition-transform"
-                    onClick={() => console.log("추가 버튼 클릭")}
+                <Link 
+                href="/home/addproject"
+                className="flex items-center justify-center active:scale-95 transition-transform cursor-pointer"
                 >
                     <Image 
                     src="/icons/plus-blue.svg"
@@ -102,7 +102,7 @@ export default function HomePage() {
                     height={65} 
                     className="drop-shadow-lg"
                     />
-                </button>
+                </Link>
                 </div>
             </div>
           )}
