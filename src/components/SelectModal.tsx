@@ -11,7 +11,7 @@ interface SelectModalProps {
   options: SelectModalOption[];
   value?: string;
   onChange?: (value: string) => void;
-  backgroundColor?: 'white' | 'gray-100';
+  backgroundColor?: 'white' | 'gray-50' | 'gray-100';
   width?: 'w-[102px]' | 'w-[113px]';
 }
 
@@ -34,7 +34,11 @@ export default function SelectModal({
     }
   };
 
-  const bgClass = backgroundColor === 'gray-100' ? 'bg-gray-100' : 'bg-white';
+  const bgClass = {
+    'gray-100': 'bg-gray-100',
+    'gray-50': 'bg-gray-50',
+    white: 'bg-white',
+  }[backgroundColor];
 
   return (
     <div className={`${width} ${bgClass} rounded-10 flex flex-col`}>

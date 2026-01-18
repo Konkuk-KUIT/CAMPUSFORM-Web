@@ -13,15 +13,11 @@ interface SelectModalWideProps {
   onChange?: (value: string) => void;
 }
 
-export default function SelectModalWide({ 
-  options,
-  value: controlledValue,
-  onChange
-}: SelectModalWideProps) {
+export default function SelectModalWide({ options, value: controlledValue, onChange }: SelectModalWideProps) {
   const [internalValue, setInternalValue] = useState('');
-  
+
   const value = controlledValue ?? internalValue;
-  
+
   const handleSelect = (id: string) => {
     if (onChange) {
       onChange(id);
@@ -31,12 +27,12 @@ export default function SelectModalWide({
   };
 
   return (
-    <div className="w-28.25 bg-white rounded-[10px] flex flex-col">
-      {options.map((option) => (
+    <div className="w-28.25 bg-gray-50 rounded-10 flex flex-col">
+      {options.map(option => (
         <button
           key={option.id}
           onClick={() => handleSelect(option.id)}
-          className="h-8.75 text-body-sm-rg text-center"
+          className="h-8.75 text-body-sm-rg text-center cursor-pointer"
         >
           {option.label}
         </button>

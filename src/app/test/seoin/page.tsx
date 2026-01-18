@@ -15,9 +15,12 @@ import AllAccordion from '@/components/AllAccordion';
 import ResultCard from '@/components/ResultCard';
 import ApplicantTimeSlotCard from '@/components/ApplicantTimeSlotCard';
 import ScheduleResultCard from '@/components/ScheduleResultCard';
+import SearchBar from '@/components/form/SearchBar';
 
 export default function SeoinTest() {
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('name-asc');
   return (
     <>
       <div className="min-h-screen space-y-3 bg-amber-100">
@@ -110,6 +113,16 @@ export default function SeoinTest() {
             interviewers={['운영진A', '운영진B', '운영진C']}
           />
         </div>
+
+        {/* 서치바 */}
+        <SearchBar
+          placeholder="지원자의 이름을 검색하세요."
+          onSearch={setSearchQuery}
+          onFilterClick={() => console.log('필터')}
+          showSort={true}
+          sortValue={sortBy}
+          onSortChange={setSortBy}
+        />
       </div>
     </>
   );
