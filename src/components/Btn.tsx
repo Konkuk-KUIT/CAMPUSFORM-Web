@@ -1,5 +1,3 @@
-// Updated filename to PascalCase
-
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'outline' | 'neutral';
   size?: 'sm' | 'md' | 'lg';
@@ -25,9 +23,9 @@ export default function Button({
   const disabledStyle = 'bg-gray-300 text-white cursor-not-allowed';
 
   const btnSize = {
-    sm: 'w-[108px] h-[38px] text-[13px] rounded-[10px]',
+    sm: 'w-[108px] h-[38px] text-body-sm-rg rounded-[10px]',
     md: 'w-[155px] h-[45px] text-12 rounded-[10px]',
-    lg: 'w-[344px] h-[50px] text-16 rounded-[10px]',
+    lg: 'w-[344px] h-[50px] text-subtitle-sm-sb rounded-[10px]',
   };
 
   return (
