@@ -1,5 +1,3 @@
-'use client';
-
 import MypageSetupForm from '@/components/home/mypage/MypageSetupForm';
 import Header from '@/components/Header';
 import HeaderLogout from '@/components/home/mypage/HeaderLogout';

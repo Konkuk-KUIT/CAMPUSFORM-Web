@@ -1,84 +1,298 @@
 "use client";
 
+import { useState } from "react";
+import ReactDatePicker, { registerLocale } from "react-datepicker";
+import { ko } from "date-fns/locale";
+import "react-datepicker/dist/react-datepicker.css";
 import Image from "next/image";
+import clsx from "clsx";
 
-export default function Calendar() {
-  const days = ["일", "월", "화", "수", "목", "금", "토"];
-  
-  const dates = [
-    29, 30, 1, 2, 3, 4, 5, 
-    6, 7, 8, 9, 10, 11, 12, 
-    13, 14, 15, 16, 17, 18, 19, 
-    20, 21, 22, 23, 24, 25, 26, 
-    27, 28, 29, 30, 31, 1, 2
-  ];
+registerLocale("ko", ko);
+
+interface CalendarProps {
+  selected?: Date | null;
+  onDateChange: (date: Date | [Date | null, Date | null] | null) => void;
+  startDate?: Date | null;
+  endDate?: Date | null;
+  events?: Array<{ date: Date; title: string }>;
+  selectsRange?: boolean;
+  disableTodayHighlight?: boolean;
+}
+
+export default function Calendar({ 
+  selected,
+  onDateChange,
+  startDate,
+  endDate,
+  events = [],
+  selectsRange = false,
+  disableTodayHighlight = false,
+}: CalendarProps) {
+  const [currentDate, setCurrentDate] = useState<Date>(selected || startDate || new Date());
+
+  const handleDateChange = (date: Date | [Date | null, Date | null] | null) => {
+    onDateChange(date);
+    if (date && !Array.isArray(date)) {
+      setCurrentDate(date);
+    }
+  };
+
+  const handlePickerChange = (dates: Date | (Date | null)[] | null) => {
+    if (Array.isArray(dates)) {
+      const normalized: [Date | null, Date | null] = [dates[0] ?? null, dates[1] ?? null];
+      handleDateChange(normalized);
+      return;
+    }
+    handleDateChange(dates);
+  };
+
+  const datePickerRangeProps = selectsRange
+    ? {
+        selectsRange: true as const,
+        startDate,
+        endDate,
+        onChange: (dates: [Date | null, Date | null] | null) => handlePickerChange(dates),
+      }
+    : {
+        selectsRange: false as const,
+        onChange: (date: Date | null) => handlePickerChange(date),
+      };
+
+  // 이벤트 맵 (날짜 문자열 -> 이벤트 배열)
+  const eventMap = new Map<string, string[]>();
+  events.forEach(({ date, title }) => {
+    const key = date.toDateString();
+    if (!eventMap.has(key)) {
+      eventMap.set(key, []);
+    }
+    eventMap.get(key)?.push(title);
+  });
+
+  const containerClasses = clsx(
+    "w-full flex flex-col items-center justify-center font-['Pretendard'] py-[20px]",
+    {
+      "calendar-no-today": disableTodayHighlight,
+    }
+  );
 
   return (
-    <div className="w-[375px] flex flex-col items-center font-['Pretendard']">
-      
-      <div className="w-[296px] h-[33px] flex justify-between items-center my-[20px]">
-        <button className="w-[33px] h-[33px] flex items-center justify-center rotate-180">
-          <Image 
-            src="/icons/chevron-right.svg" 
-            alt="prev month" 
-            width={24} 
-            height={7} 
-          />
-        </button>
+    <div className={containerClasses}>
+      <div className="w-[343px] mx-auto">
+        <style>{`
+          .react-datepicker {
+            border: none !important;
+            background: transparent !important;
+            font-family: 'Pretendard' !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 auto !important;
+          }
+          .react-datepicker__header {
+            background: transparent !important;
+            border: none !important;
+            padding: 0 0 15px 0 !important;
+            text-align: center !important;
+            font-size: 14px !important;
+            font-weight: 500 !important;
+            color: var(--color-gray-950) !important;
+          }
+          .react-datepicker__month {
+            margin: 0 !important;
+            width: 100% !important;
+            display: flex !important;
+            flex-direction: column !important;
+          }
+          .react-datepicker__month-container {
+            width: 100% !important;
+          }
+          .react-datepicker__day-names {
+            display: grid !important;
+            grid-template-columns: repeat(7, 1fr) !important;
+            width: 100% !important;
+            height: 32px !important;
+            margin-bottom: 10px !important;
+            gap: 0 !important;
+            text-align: center !important;
+          }
+          .react-datepicker__day-name {
+            width: 100% !important;
+            margin: 0 !important;
+            font-size: 13px !important;
+            color: var(--color-gray-400) !important;
+            font-weight: 500 !important;
+            line-height: 32px !important;
+            padding: 0 !important;
+          }
+          .react-datepicker__week {
+            display: grid !important;
+            grid-template-columns: repeat(7, 1fr) !important;
+            width: 100% !important;
+            gap: 0 !important;
+            margin-bottom: 3px !important;
+          }
+          .react-datepicker__day {
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 4px 0 !important;
+            height: auto !important;
+            min-height: 45px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: flex-start !important;
+            font-size: 14px !important;
+            color: var(--color-gray-950) !important;
+            background: transparent !important;
+            border: none !important;
+            cursor: pointer !important;
+            gap: 2px !important;
+          }
+          .react-datepicker__day--outside-month {
+            color: var(--color-gray-200);
+          }
+          .react-datepicker__day--today {
+            background: transparent;
+            color: var(--color-gray-950);
+            font-weight: normal;
+          }
+          .calendar-no-today .react-datepicker__day--today {
+            background: transparent !important;
+            color: var(--color-gray-950) !important;
+            font-weight: normal !important;
+          }
+          .calendar-no-today .react-datepicker__day--today.react-datepicker__day--selected,
+          .calendar-no-today .react-datepicker__day--today.react-datepicker__day--in-range,
+          .calendar-no-today .react-datepicker__day--today.react-datepicker__day--range-start,
+          .calendar-no-today .react-datepicker__day--today.react-datepicker__day--range-end {
+            background-color: var(--color-primary) !important;
+            color: white !important;
+          }
+          .react-datepicker__day--has-event {
+            background: transparent;
+          }
+          .react-datepicker__day--selected {
+            background-color: transparent !important;
+            color: var(--color-gray-950) !important;
+            border-radius: 0;
+          }
+          .react-datepicker__day--in-range {
+            background-color: transparent !important;
+            color: var(--color-gray-950) !important;
+            border-radius: 0;
+          }
+          .calendar-no-today .react-datepicker__day--selected {
+            background-color: var(--color-primary) !important;
+            color: white !important;
+            border-radius: 10px;
+          }
+          .calendar-no-today .react-datepicker__day--in-range {
+            background-color: var(--color-primary) !important;
+            color: white !important;
+            border-radius: 0;
+          }
+          .react-datepicker__day--range-start {
+            background-color: var(--color-primary) !important;
+            color: white !important;
+            border-top-left-radius: 10px !important;
+            border-bottom-left-radius: 10px !important;
+            border-top-right-radius: 0 !important;
+            border-bottom-right-radius: 0 !important;
+          }
+          .react-datepicker__day--range-end {
+            background-color: var(--color-primary) !important;
+            color: white !important;
+            border-top-left-radius: 0 !important;
+            border-bottom-left-radius: 0 !important;
+            border-top-right-radius: 10px !important;
+            border-bottom-right-radius: 10px !important;
+          }
+          .react-datepicker__day--in-range.react-datepicker__day--today {
+            border-radius: 0 !important;
+          }
+          .calendar-no-today .react-datepicker__day--in-range.react-datepicker__day--today {
+            background-color: var(--color-primary) !important;
+            color: white !important;
+          }
+          .calendar-no-today .react-datepicker__day--range-start {
+            border-top-left-radius: 10px !important;
+            border-bottom-left-radius: 10px !important;
+            border-top-right-radius: 0 !important;
+            border-bottom-right-radius: 0 !important;
+          }
+          .calendar-no-today .react-datepicker__day--range-end {
+            border-top-left-radius: 0 !important;
+            border-bottom-left-radius: 0 !important;
+            border-top-right-radius: 10px !important;
+            border-bottom-right-radius: 10px !important;
+          }
+          .react-datepicker__day:hover {
+            background: var(--color-blue-50);
+            border-radius: 4px;
+          }
+        `}</style>
 
-        <span className="text-[14px] font-medium text-gray-950">2025년 11월</span>
+        <ReactDatePicker
+          key={`calendar-${currentDate.getFullYear()}-${currentDate.getMonth()}`}
+          selected={selected}
+          onMonthChange={(date) => setCurrentDate(date)}
+          openToDate={currentDate}
+          inline
+          locale="ko"
+          showMonthYearPicker={false}
+          calendarClassName="w-full"
+          dayClassName={(date) => {
+            const eventKey = date.toDateString();
+            const dayEvents = eventMap.get(eventKey) || [];
+            return dayEvents.length > 0 ? 'react-datepicker__day--has-event' : '';
+          }}
+          {...datePickerRangeProps}
+          {...(!selectsRange && !disableTodayHighlight && {
+            renderDayContents: (day: number, date?: Date) => {
+              if (!date) return day;
+              const eventKey = date.toDateString();
+              const dayEvents = eventMap.get(eventKey) || [];
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              const compareDate = new Date(date);
+              compareDate.setHours(0, 0, 0, 0);
+              const isToday = compareDate.getTime() === today.getTime();
 
-        <button className="w-[33px] h-[33px] flex items-center justify-center">
-          <Image 
-            src="/icons/chevron-right.svg" 
-            alt="next month" 
-            width={24} 
-            height={7} 
-          />
-        </button>
-      </div>
-
-      <div className="w-full px-[16px] flex flex-col">
-        
-        <div className="grid grid-cols-7 h-[28px] items-center mb-[4px]">
-          {days.map((day) => (
-            <span key={day} className="text-center text-[12px] text-gray-400 font-medium">
-              {day}
-            </span>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-7 w-full">
-          {dates.map((date, idx) => {
-            const isCurrentMonth = idx >= 2 && idx <= 32;
-            const isToday = date === 13 && isCurrentMonth;
-            const hasEvent = [13, 14, 15].includes(date) && isCurrentMonth;
-
-            return (
-              <div key={idx} className="flex flex-col items-center h-[53.4px] pt-[2px]">
-                <div className="relative w-6 h-6 flex items-center justify-center">
-                  <span className={`text-[14px] z-10 ${
-                    isToday ? "text-white font-bold" : 
-                    isCurrentMonth ? "text-gray-950" : "text-gray-300"
-                  }`}>
-                    {date}
+              return (
+                <div className="flex flex-col items-center justify-start w-full h-full gap-[2px] pt-[4px]">
+                  <span className={`text-[14px] font-normal ${isToday ? 'w-[24px] h-[24px] flex items-center justify-center rounded-full bg-[var(--color-primary)] text-white' : ''}`}>
+                    {day}
                   </span>
-                  {isToday && (
-                    <div className="absolute inset-0 bg-primary rounded-full" />
+                  {dayEvents.length > 0 && (
+                    <div className="w-[40px] h-[14px] bg-blue-200 rounded-[2px] flex items-center justify-center px-[1px] py-[2px]">
+                      <span className="overflow-hidden text-gray-900 text-center text-ellipsis whitespace-nowrap font-['Pretendard'] text-[10px] font-normal leading-[17px] max-w-full">
+                        {dayEvents[0]}
+                      </span>
+                    </div>
                   )}
                 </div>
-
-                {hasEvent && (
-                  <div className="mt-[2px] w-[45px] h-[14px] bg-[#BFCEFE] rounded-[2px] flex items-center justify-center px-[3.5px]">
-                    <span className="text-[10px] text-[#3D3D3D] leading-none truncate w-full text-center">
-                      요리퐁 6기 신입부원 모집
-                    </span>
-                  </div>
-                )}
-              </div>
-            );
+              );
+            },
           })}
-        </div>
+          renderCustomHeader={({ date, decreaseMonth, increaseMonth }) => (
+            <div className="flex items-center justify-between mb-[15px]">
+              <button
+                onClick={decreaseMonth}
+                className="w-[24px] h-[24px] flex items-center justify-center hover:bg-gray-100 rounded transition"
+              >
+                <span className="text-[16px]">{"<"}</span>
+              </button>
+              <div className="text-center text-[14px] font-medium text-gray-950 flex-1">
+                {date.getFullYear()}년 {(date.getMonth() + 1).toString().padStart(2, '0')}월
+              </div>
+              <button
+                onClick={increaseMonth}
+                className="w-[24px] h-[24px] flex items-center justify-center hover:bg-gray-100 rounded transition"
+              >
+                <span className="text-[16px]">{">"}</span>
+              </button>
+            </div>
+          )}
+        />
       </div>
     </div>
   );

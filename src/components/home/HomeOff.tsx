@@ -1,6 +1,7 @@
 "use client";
 import SelectModal from '@/components/SelectModal'; // 1. 임포트 확인!
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 interface RecruitmentCardProps {
   title: string;
   status: string;
@@ -17,6 +18,7 @@ export default function RecruitmentCard({
 
 // 1. 메뉴 열림 상태 관리
 const [isMenuOpen, setIsMenuOpen] = useState(false);
+const router = useRouter();
 
 // 2. 모달에 넘겨줄 옵션 데이터
 const modalOptions = [
@@ -29,7 +31,7 @@ const handleMenuSelect = (value: string) => {
   console.log(`선택된 메뉴: ${value}`);
   
   if (value === 'settings') {
-    // 설정하기 로직 (예: router.push...)
+    router.push('/home/manage');
   } else if (value === 'delete') {
     // 삭제하기 로직
   }

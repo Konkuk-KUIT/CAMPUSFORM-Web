@@ -21,9 +21,9 @@ export default function HeaderLogout() {
 
       {isOpen && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 px-4">
-          <div className="flex flex-col w-[330px] bg-white rounded-xl shado w-lg overflow-hidden">
+          <div className="flex flex-col w-[330px] bg-white rounded-xl shadow-lg overflow-hidden">
             <div className="mt-12 w-full pl-6">
-              <p className="text-base font-medium text-gray-90 0 leading-snug">
+              <p className="text-base font-medium text-gray-900 leading-snug">
                 로그아웃 하시겠습니까?
               </p>
             </div>

@@ -1,5 +1,8 @@
 "use client";
 
+import { useState } from 'react';
+import DeleteManagerModal from './DeleteManagerModal';
+
 interface ProfileCrossProps {
   nickname: string;
   email: string;
@@ -13,7 +16,27 @@ export default function ProfileCross({
   onDelete,
   isLeader = false, 
 }: ProfileCrossProps) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleDeleteClick = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (onDelete) {
+      onDelete();
+    }
+  };
+
   return (
+    <>
+      <DeleteManagerModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onConfirm={handleConfirmDelete}
+        managerName={nickname}
+      />
+    
     <div className="w-full h-[66px] bg-white flex items-center justify-between px-[20px] py-[8px] border-b border-gray-100">
       
       <div className="flex items-center gap-[10px]">
@@ -25,8 +48,8 @@ export default function ProfileCross({
               {nickname}
             </h3>
             {isLeader && (
-              <span className="flex items-center justify-center px-[5px] h-[15px] border border-primary rounded-[4px] text-[10px] text-primary bg-white leading-none mt-0.5">
-                대표
+              <span className="flex items-center justify-center px-[7px] h-[15px] border border-primary rounded-full text-[10px] text-primary bg-white leading-none mt-0.5">
+                대표자
               </span>
             )}
           </div>
@@ -38,7 +61,7 @@ export default function ProfileCross({
 
       {!isLeader && onDelete && (
         <button 
-          onClick={onDelete} 
+          onClick={handleDeleteClick} 
           className="w-[24px] h-[24px] flex items-center justify-center text-gray-950 cursor-pointer hover:bg-gray-50 rounded-full transition-colors"
         >
           <svg 
@@ -52,5 +75,6 @@ export default function ProfileCross({
       )}
 
     </div>
+    </>
   );
 }
