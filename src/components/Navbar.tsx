@@ -10,19 +10,19 @@ export default function Navbar() {
   const isManage = pathname.startsWith('/manage');
   const isDocument = pathname.startsWith('/document');
   const isInterview = pathname.startsWith('/interview');
-  const isSchedule = pathname.startsWith('/schedule');
+  const isSchedule = pathname.startsWith('/schedule') || pathname.startsWith('/smart-schedule');
   const isResult = pathname.startsWith('/result');
 
   return (
-    <nav className="fixed bottom-0 left-0 w-full h-16.25 bg-white z-10 text-10">
+    <nav className="fixed bottom-0 left-0 w-full h-16.25 bg-white z-[60] text-10 px-4">
       <div className="relative h-full">
-        <div className="grid grid-cols-5 items-center h-full mx-auto w-fit">
-          <Link href="/manage" className="flex flex-col items-center gap-2.25 px-6 py-2.25">
+        <div className="grid grid-cols-5 items-center h-full justify-center">
+          <Link href="/manage" className="flex flex-col items-center gap-2.25 py-2.25">
             <Image src={isManage ? '/icons/tool.svg' : '/icons/tool-off.svg'} alt="관리" width={24} height={24} />
             <span className={isManage ? 'text-black' : 'text-gray-500'}>관리</span>
           </Link>
 
-          <Link href="/document" className="flex flex-col items-center gap-2.25 px-6 py-2.25">
+          <Link href="/document" className="flex flex-col items-center gap-2.25 py-2.25">
             <Image
               src={isDocument ? '/icons/document.svg' : '/icons/document-off.svg'}
               alt="서류"
@@ -33,7 +33,7 @@ export default function Navbar() {
           </Link>
           <div />
 
-          <Link href="/interview" className="flex flex-col items-center gap-2.25 px-6 py-2.25">
+          <Link href="/interview" className="flex flex-col items-center gap-2.25 py-2.25">
             <Image
               src={isInterview ? '/icons/interview.svg' : '/icons/interview-off.svg'}
               alt="면접"
@@ -43,7 +43,7 @@ export default function Navbar() {
             <span className={isInterview ? 'text-black' : 'text-gray-500'}>면접</span>
           </Link>
 
-          <Link href="/schedule" className="flex flex-col items-center gap-2.25 px-6 py-2.25">
+          <Link href="/schedule" className="flex flex-col items-center gap-2.25 py-2.25">
             <Image
               src={isSchedule ? '/icons/schedule.svg' : '/icons/schedule-off.svg'}
               alt="시간표"
