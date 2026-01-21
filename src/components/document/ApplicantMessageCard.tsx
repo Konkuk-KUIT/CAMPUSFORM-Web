@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import BottomSheet from '@/components/BottomSheet';
-import ApplicantSummaryCard from '@/components/Card';
+import ApplicantSummaryCard from '@/components/ApplicantSummaryCard';
 import Button from '@/components/Btn';
 
 export default function ApplicantMessageCard() {

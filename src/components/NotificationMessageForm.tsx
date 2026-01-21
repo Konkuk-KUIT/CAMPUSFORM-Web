@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Button from '@/components/Btn';
-import TextboxLarge from '@/components/Textbox_large';
+import TextboxLarge from '@/components/TextboxLarge';
 import Image from 'next/image';
 import Modal from '@/components/Modal';
 
