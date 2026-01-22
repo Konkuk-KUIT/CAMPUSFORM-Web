@@ -31,6 +31,13 @@ export default function ApplicantFileCard({
 }: ApplicantFileCardProps) {
   const [status, setStatus] = useState(initialStatus);
 
+  const handleAppointmentClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (onAppointmentClick) {
+      onAppointmentClick();
+    }
+  };
+
   return (
     <div className="relative w-85.75 h-18.75 bg-white border-b border-gray-100 flex items-center px-5 first:border-t">
       <Link href={`/interview/${id}`} className="flex flex-col flex-1">
@@ -40,10 +47,7 @@ export default function ApplicantFileCard({
             <AppointmentInfoButton
               date={appointmentDate}
               time={appointmentTime}
-              onClick={(e) => {
-                e.preventDefault();
-                onAppointmentClick();
-              }}
+              onClick={handleAppointmentClick}
             />
           )}
         </div>

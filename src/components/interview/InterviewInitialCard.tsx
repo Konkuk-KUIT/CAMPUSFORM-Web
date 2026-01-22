@@ -1,4 +1,5 @@
 'use client';
+//개별 카드 컴포넌트
 
 import Image from 'next/image';
 
@@ -24,7 +25,7 @@ export default function InterviewInitialCard({
     >
       <div className="flex items-center gap-3">
         <div className="w-[30px] h-[30px] flex items-center justify-center flex-shrink-0">
-          <Image src={icon} alt={title} width={45} height={45} />
+          <Image src={icon} alt="" width={45} height={45} />
         </div>
         <div className="flex-1">
           <h3 className="text-subtitle-sm-sb text-primary mb-1">{title}</h3>
