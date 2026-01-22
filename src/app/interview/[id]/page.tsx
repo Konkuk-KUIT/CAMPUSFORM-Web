@@ -1,12 +1,28 @@
 // 면접 상세 페이지
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import ApplicantCardBasic from '@/components/ApplicantCardBasic';
+import ApplicantCardBasic from '@/components/interview/ApplicantCardBasic';
 import QuestionSection from '@/components/document/QuestionSection';
+import AppointmentModal from '@/components/interview/AppointmentModal';
 
 export default function ApplicantDetailPage() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [appointmentDate, setAppointmentDate] = useState('11월 15일 (수)');
+  const [appointmentTime, setAppointmentTime] = useState('14:00');
+
+  const handleAppointmentClick = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleConfirm = (date: string, time: string) => {
+    setAppointmentDate(date);
+    setAppointmentTime(time);
+    setIsModalOpen(false);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* 상세 페이지 헤더 */}
@@ -30,6 +46,9 @@ export default function ApplicantDetailPage() {
           phone="010-1234-5678"
           email="minjun@gmail.com"
           commentCount={3}
+          appointmentDate={appointmentDate}
+          appointmentTime={appointmentTime}
+          onAppointmentClick={handleAppointmentClick}
         />
       </div>
 
@@ -47,6 +66,15 @@ export default function ApplicantDetailPage() {
 
         <QuestionSection title="질문내용" content="질문답변" />
       </div>
+
+      {/* 모달 */}
+      <AppointmentModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onConfirm={handleConfirm}
+        initialDate={appointmentDate}
+        initialTime={appointmentTime}
+      />
     </div>
   );
 }

@@ -17,7 +17,7 @@ export default function InterviewContent() {
   const [isCommentOpen, setCommentOpen] = useState(false);
 
   // 면접 데이터 (실제로는 API에서 가져올 데이터)
-  const interviewData = []; // 빈 배열이면 면접이 없는 상태임. 이거 주석풀면 빈화면
+  const interviewData = []; // 빈 배열이면 면접이 없는 상태
 
   const counts = {
     전체: 3, //interviewData.length
