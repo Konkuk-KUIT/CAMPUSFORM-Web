@@ -34,7 +34,20 @@ export default function ApplicantMessageCard({ type }: ApplicantMessageCardProps
   return (
     <>
       <div className="mt-3">
-        <h3 className="text-subtitle-sm-md pb-3">{title}</h3>
+        <h3 className="text-subtitle-sm-md pb-0.5">{title}</h3>
+        
+        {/* 명단/전화번호 복사 버튼 */}
+        <div className="flex items-center gap-2.5 mb-1">
+          <button className="flex items-center gap-1 text-gray-400 text-[12px] font-medium leading-[22px]">
+            <Image src="/icons/copy-gray.svg" alt="명단 복사하기" width={15} height={15} />
+            <span>명단 복사하기</span>
+          </button>
+          <button className="flex items-center gap-1 text-gray-400 text-[12px] font-medium leading-[22px]">
+            <Image src="/icons/hashtag-gray.svg" alt="전화번호 복사하기" width={15} height={15} />
+            <span>전화번호 복사하기</span>
+          </button>
+        </div>
+
         <div className="-mx-4">
           {type === '합격자' ? (
             <>
