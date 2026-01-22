@@ -3,7 +3,7 @@
 // 컴포넌트 테스트용 페이지
 
 import Textbox from '@/components/Textbox';
-import TextboxLarge from '@/components/Textbox_large';
+import TextboxLarge from '@/components/TextboxLarge';
 import Toggle from '@/components/Toggle';
 import Checkbox from '@/components/Checkbox';
 import Dropdown from '@/components/Dropdown';

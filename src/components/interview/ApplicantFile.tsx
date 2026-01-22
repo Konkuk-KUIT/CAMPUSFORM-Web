@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import Image from 'next/image';
 import StatusDropdown from '@/components/StatusDropdown';
+import AppointmentInfoButton from '@/components/AppointmentInfoButton';
 
 interface ApplicantFileCardProps {
   id: string;
@@ -12,6 +13,9 @@ interface ApplicantFileCardProps {
   initialStatus: '보류' | '합격' | '불합격';
   commentCount?: number;
   onCommentClick?: () => void;
+  appointmentDate?: string;
+  appointmentTime?: string;
+  onAppointmentClick?: () => void;
 }
 
 export default function ApplicantFileCard({
@@ -21,13 +25,28 @@ export default function ApplicantFileCard({
   initialStatus,
   commentCount = 0,
   onCommentClick,
+  appointmentDate,
+  appointmentTime,
+  onAppointmentClick,
 }: ApplicantFileCardProps) {
   const [status, setStatus] = useState(initialStatus);
 
   return (
     <div className="relative w-85.75 h-18.75 bg-white border-b border-gray-100 flex items-center px-5 first:border-t">
-      <Link href={`/document/${id}`} className="flex flex-col flex-1">
-        <h3 className="text-subtitle-sm-md text-gray-950">{name}</h3>
+      <Link href={`/interview/${id}`} className="flex flex-col flex-1">
+        <div className="flex items-center gap-2.5">
+          <h3 className="text-subtitle-sm-md text-gray-950">{name}</h3>
+          {onAppointmentClick && (
+            <AppointmentInfoButton
+              date={appointmentDate}
+              time={appointmentTime}
+              onClick={(e) => {
+                e.preventDefault();
+                onAppointmentClick();
+              }}
+            />
+          )}
+        </div>
         <p className="mt-1 text-body-md text-gray-400">{info}</p>
       </Link>
 
