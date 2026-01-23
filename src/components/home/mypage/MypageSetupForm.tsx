@@ -1,13 +1,22 @@
 'use client';
 
 import { useState } from 'react';
-import ProfileImageButton from '@/components/auth/ProfileImageButton';
 import Button from '@/components/Btn';
 import Textbox from '@/components/Textbox';
+import ProfileImageButton from '@/components/auth/ProfileImageButton';
 
-export default function ProfileSetupForm() {
-  const [nickname, setNickname] = useState('');
-  const [nicknameError, setNicknameError] = useState(false);
+interface MypageSetupFormProps {
+    initialName?: string;
+    initialEmail?: string;
+  }
+
+  export default function MypageSetupForm({ 
+    initialName = '김유저',
+    initialEmail = 'hxxxxx@gmail.com' 
+  }: MypageSetupFormProps) {
+    
+    const [nickname, setNickname] = useState(initialName);
+    const [nicknameError, setNicknameError] = useState(false);
 
   const validateNickname = (): boolean => {
     if (!nickname.trim()) {
@@ -69,7 +78,7 @@ export default function ProfileSetupForm() {
 
       <div className="fixed bottom-0 left-0 right-0 bg-white px-6 py-4 max-w-93.75 mx-auto">
         <Button variant="primary" size="lg" onClick={handleSignup}>
-          가입 완료
+          저장하기
         </Button>
       </div>
     </>

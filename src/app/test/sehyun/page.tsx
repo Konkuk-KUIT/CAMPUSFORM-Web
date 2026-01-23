@@ -1,17 +1,17 @@
 "use client";
 
-import ScheduleSummaryCard from "@/components/Schedule";
+import ScheduleSummaryCard from "@/components/home/Schedule";
 import ProfileCard from "@/components/ProfileCross";
 import ProfileCardArrow from "@/components/Profile";
 import ApplicantInterviewDetail from "@/components/InterviewDetail";
-import NewApplicantNotification from "@/components/NewApplicant";
-import NotificationCard from "@/components/Comment";
+import NewApplicantNotification from "@/components/home/notification/NewApplicant";
+import NotificationCard from "@/components/home/notification/Comment";
 import ApplicantFileCard from "@/components/ApplicantFile";
 import ApplicantInterviewCard from "@/components/ApplicantInterview";
 import ApplicantSummaryCard from "@/components/Card";
 import ApplicantCardBasic from "@/components/FileDetail";
-import RecruitmentCardOn from "@/components/HomeOn";
-import RecruitmentCardOff from "@/components/HomeOff";
+import RecruitmentCardOn from "@/components/home/HomeOn";
+import RecruitmentCardOff from "@/components/home/HomeOff";
 
 export default function TestPage() {
   return (
@@ -85,12 +85,12 @@ export default function TestPage() {
           <ScheduleSummaryCard 
             title="요리퐁 6기 면접 일정"
             timeRange="오후 2:00 - 오후 2:30"
-            isChecked={false}
+            initialChecked={false}
           />
           <ScheduleSummaryCard 
             title="운영진 정기 회의"
             timeRange="오후 4:00 - 오후 5:00"
-            isChecked={true}
+            initialChecked={true}
           />
           <ProfileCard 
             nickname="요리퐁마스터(X)"
