@@ -1,8 +1,22 @@
-import InterviewerAvailabilityForm from '@/components/form/InterviewerAvailabilityForm';
+'use client';
 
-export default function Frame1707483004Page() {
-  return <InterviewerAvailabilityForm />;
+import React, { useState } from 'react';
+import Header from '@/components/Header';
+import Navbar from '@/components/Navbar';
+import Btn from '@/components/Btn';
+
+interface InterviewerAvailability {
+  id: string;
+  name: string;
+  monday: string[];
+  tuesday: string[];
+  wednesday: string[];
+  thursday: string[];
+  friday: string[];
+  maxInterviewsPerDay: number;
 }
+
+export default function InterviewerAvailabilityForm() {
   const [availability, setAvailability] = useState<InterviewerAvailability[]>([
     {
       id: '1',
@@ -61,7 +75,7 @@ export default function Frame1707483004Page() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
-      <Header />
+      <Header title="면접관 일정 관리" />
       <div className="flex-1 px-6 py-8 max-w-7xl mx-auto w-full">
         <h1 className="text-title text-gray-950">면접관 일정 관리</h1>
         <p className="text-text-14 text-gray-500 mt-2 mb-6">면접관별 가용 시간을 설정하세요</p>

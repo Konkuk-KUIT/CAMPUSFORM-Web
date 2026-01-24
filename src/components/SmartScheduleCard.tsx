@@ -7,11 +7,15 @@ interface SmartScheduleCardProps {
   email: string;
   isLeader?: boolean;
   showDivider?: boolean;
+  isSelected?: boolean;
+  onSelect?: () => void;
 }
 
-export default function SmartScheduleCard({ name, email, isLeader = false, showDivider = false }: SmartScheduleCardProps) {
+export default function SmartScheduleCard({ name, email, isLeader = false, showDivider = false, isSelected = false, onSelect }: SmartScheduleCardProps) {
   return (
-    <div className={`w-full flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 transition-colors ${showDivider ? 'border-b border-gray-100' : ''}`}
+    <div 
+      onClick={onSelect}
+      className={`w-full flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 transition-colors cursor-pointer ${showDivider ? 'border-b border-gray-100' : ''}`}
     >
       <div className="flex items-center gap-2.5 flex-1">
         <div className="w-8.75 h-8.75 rounded-full bg-gray-200 flex-shrink-0" />

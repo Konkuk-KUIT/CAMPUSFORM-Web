@@ -1,8 +1,23 @@
-import AIInterviewScheduleTableForm from '@/components/form/AIInterviewScheduleTableForm';
+'use client';
 
-export default function AIInterviewScheduleTablePage() {
-  return <AIInterviewScheduleTableForm />;
+import React, { useState } from 'react';
+import Header from '@/components/Header';
+import Navbar from '@/components/Navbar';
+import Btn from '@/components/Btn';
+import Checkbox from '@/components/Checkbox';
+
+interface InterviewSchedule {
+  id: string;
+  candidateName: string;
+  position: string;
+  date: string;
+  time: string;
+  interviewer: string;
+  status: 'scheduled' | 'completed' | 'cancelled';
+  notes?: string;
 }
+
+export default function AIInterviewScheduleTableForm() {
   const [schedules, setSchedules] = useState<InterviewSchedule[]>([
     {
       id: '1',
@@ -79,7 +94,7 @@ export default function AIInterviewScheduleTablePage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
-      <Header />
+      <Header title="AI 면접 시간표" />
       <div className="flex-1 px-6 py-8 max-w-7xl mx-auto w-full">
         <h1 className="text-title text-gray-950">AI 면접 시간표</h1>
         <p className="text-text-14 text-gray-500 mt-2 mb-6">전체 면접 일정을 한눈에 관리하세요</p>
@@ -119,7 +134,7 @@ export default function AIInterviewScheduleTablePage() {
                   <th className="px-4 py-3 text-left w-12">
                     <Checkbox 
                       checked={selectedItems.length === filteredSchedules.length && filteredSchedules.length > 0}
-                      onChange={(e) => handleSelectAll(e.target.checked)}
+                      onChange={(checked) => handleSelectAll(checked)}
                     />
                   </th>
                   <th className="px-4 py-3 text-left font-semibold text-gray-700">지원자</th>
@@ -138,7 +153,7 @@ export default function AIInterviewScheduleTablePage() {
                     <td className="px-4 py-3">
                       <Checkbox 
                         checked={selectedItems.includes(schedule.id)}
-                        onChange={(e) => handleSelectItem(schedule.id, e.target.checked)}
+                        onChange={(checked) => handleSelectItem(schedule.id, checked)}
                       />
                     </td>
                     <td className="px-4 py-3 font-medium text-gray-900">{schedule.candidateName}</td>

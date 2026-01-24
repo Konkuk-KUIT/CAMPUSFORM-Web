@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 
 interface TimePickerProps {
   startHour: string;
@@ -89,15 +90,27 @@ export default function TimePicker({
     const handleWheel = (e: React.WheelEvent) => {
       e.preventDefault();
       const delta = e.deltaY > 0 ? 1 : -1;
-      const newIndex = Math.max(0, Math.min(items.length - 1, selectedIndex + delta));
+      let newIndex = selectedIndex + delta;
+      
+      // 순환 처리
+      if (newIndex < 0) {
+        newIndex = items.length - 1;
+      } else if (newIndex >= items.length) {
+        newIndex = 0;
+      }
+      
       onChange(newIndex);
     };
 
-    // 컨테이너 높이를 151px로 고정하고, 패딩을 적용하여 위아래 여유 공간 확보
-    const itemsToShow = [];
-    for (let i = Math.max(0, selectedIndex - 2); i <= Math.min(items.length - 1, selectedIndex + 2); i++) {
-      itemsToShow.push({ index: i, item: items[i] });
-    }
+    // 순환 인덱스 계산 함수
+    const getCircularIndex = (index: number) => {
+      if (index < 0) {
+        return items.length + index;
+      } else if (index >= items.length) {
+        return index - items.length;
+      }
+      return index;
+    };
 
     return (
       <div
@@ -116,43 +129,37 @@ export default function TimePicker({
               : formatMinute(items[selectedIndex])}
           </div>
 
-          {/* 위쪽 아이템들 */}
-          {selectedIndex > 0 && (
-            <div 
-              className={`absolute text-gray-300 text-[22px] h-[30px] flex items-center opacity-50 w-full ${isHourField ? 'justify-end' : 'justify-start'}`}
-              style={{ top: 'calc(50% - 50px)' }}
-            >
-              {getItemLabel(items[selectedIndex - 1])}
-            </div>
-          )}
+          {/* 위쪽 아이템 1 (항상 표시) */}
+          <div 
+            className={`absolute text-gray-300 text-[22px] h-[30px] flex items-center opacity-50 w-full ${isHourField ? 'justify-end' : 'justify-start'}`}
+            style={{ top: 'calc(50% - 50px)' }}
+          >
+            {getItemLabel(items[getCircularIndex(selectedIndex - 1)])}
+          </div>
 
-          {selectedIndex > 1 && (
-            <div 
-              className={`absolute text-gray-300 text-[22px] h-[30px] flex items-center opacity-30 w-full ${isHourField ? 'justify-end' : 'justify-start'}`}
-              style={{ top: 'calc(50% - 85px)' }}
-            >
-              {getItemLabel(items[selectedIndex - 2])}
-            </div>
-          )}
+          {/* 위쪽 아이템 2 (항상 표시) */}
+          <div 
+            className={`absolute text-gray-300 text-[22px] h-[30px] flex items-center opacity-30 w-full ${isHourField ? 'justify-end' : 'justify-start'}`}
+            style={{ top: 'calc(50% - 85px)' }}
+          >
+            {getItemLabel(items[getCircularIndex(selectedIndex - 2)])}
+          </div>
 
-          {/* 아래쪽 아이템들 */}
-          {selectedIndex < items.length - 1 && (
-            <div 
-              className={`absolute text-gray-300 text-[22px] h-[30px] flex items-center opacity-50 w-full ${isHourField ? 'justify-end' : 'justify-start'}`}
-              style={{ top: 'calc(50% + 20px)' }}
-            >
-              {getItemLabel(items[selectedIndex + 1])}
-            </div>
-          )}
+          {/* 아래쪽 아이템 1 (항상 표시) */}
+          <div 
+            className={`absolute text-gray-300 text-[22px] h-[30px] flex items-center opacity-50 w-full ${isHourField ? 'justify-end' : 'justify-start'}`}
+            style={{ top: 'calc(50% + 20px)' }}
+          >
+            {getItemLabel(items[getCircularIndex(selectedIndex + 1)])}
+          </div>
 
-          {selectedIndex < items.length - 2 && (
-            <div 
-              className={`absolute text-gray-300 text-[22px] h-[30px] flex items-center opacity-30 w-full ${isHourField ? 'justify-end' : 'justify-start'}`}
-              style={{ top: 'calc(50% + 55px)' }}
-            >
-              {getItemLabel(items[selectedIndex + 2])}
-            </div>
-          )}
+          {/* 아래쪽 아이템 2 (항상 표시) */}
+          <div 
+            className={`absolute text-gray-300 text-[22px] h-[30px] flex items-center opacity-30 w-full ${isHourField ? 'justify-end' : 'justify-start'}`}
+            style={{ top: 'calc(50% + 55px)' }}
+          >
+            {getItemLabel(items[getCircularIndex(selectedIndex + 2)])}
+          </div>
         </div>
       </div>
     );
@@ -171,9 +178,10 @@ export default function TimePicker({
           <span className="text-[14px] text-gray-500">시작 시간</span>
           <button
             onClick={() => openModal('startHour')}
-            className="flex items-center justify-end gap-1 h-8 text-[14px] text-black"
+            className="flex items-center justify-end gap-2 h-8 text-[14px] text-black"
           >
             {String(tempStartHour).padStart(2, '0')} : {formatMinute(tempStartMinute)}
+            <Image src="/icons/chevron-down.svg" alt="dropdown" width={16} height={16} />
           </button>
         </div>
 
@@ -181,9 +189,10 @@ export default function TimePicker({
           <span className="text-[14px] text-gray-500">종료 시간</span>
           <button
             onClick={() => openModal('endHour')}
-            className="flex items-center justify-end gap-1 h-8 text-[14px] text-black"
+            className="flex items-center justify-end gap-2 h-8 text-[14px] text-black"
           >
             {String(tempEndHour).padStart(2, '0')} : {formatMinute(tempEndMinute)}
+            <Image src="/icons/chevron-down.svg" alt="dropdown" width={16} height={16} />
           </button>
         </div>
       </div>

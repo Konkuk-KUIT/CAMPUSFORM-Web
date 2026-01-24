@@ -22,10 +22,10 @@ export default function SmartScheduleDropdown({
   width = 'w-[109px]',
 }: SmartScheduleDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [internalValue, setInternalValue] = useState(options[0]?.id || '');
+  const [internalValue, setInternalValue] = useState('');
 
   const value = controlledValue ?? internalValue;
-  const selectedOption = options.find(opt => opt.id === value) || options[0];
+  const selectedOption = options.find(opt => opt.id === value);
 
   const handleSelect = (id: string) => {
     if (onChange) {
@@ -43,7 +43,7 @@ export default function SmartScheduleDropdown({
         onClick={() => setIsOpen(!isOpen)}
         className="w-[109px] h-[30px] bg-gray-50 border border-gray-200 rounded-[5px] px-[10px] py-[11px] flex items-center justify-between gap-[10px] font-['Pretendard'] font-normal text-[13px] leading-[18px]"
       >
-        <span className="text-gray-950">{selectedOption?.label || '선택'}</span>
+        <span className="text-gray-950">{selectedOption?.label || ''}</span>
         <Image src="/icons/chevron-down.svg" alt="toggle" width={16} height={16} />
       </button>
 
