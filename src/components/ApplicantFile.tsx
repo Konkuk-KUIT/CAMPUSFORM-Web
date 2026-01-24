@@ -25,7 +25,7 @@ export default function ApplicantFileCard({
   const [status, setStatus] = useState(initialStatus);
 
   return (
-    <div className="relative w-85.75 h-18.75 bg-white border-b border-gray-100 flex items-center px-5">
+    <div className="relative w-85.75 h-18.75 bg-white border-b border-gray-100 flex items-center px-5 first:border-t">
       <Link href={`/document/${id}`} className="flex flex-col flex-1">
         <h3 className="text-subtitle-sm-md text-gray-950">{name}</h3>
         <p className="mt-1 text-body-md text-gray-400">{info}</p>

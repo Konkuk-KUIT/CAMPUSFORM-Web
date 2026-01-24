@@ -26,7 +26,8 @@ export default function TopAppBar() {
         href="/home/notification" 
         className="absolute left-[338px] top-3 w-6 h-6 flex items-center justify-center"
       >
-        <div className="relative w-6 h-6">
+
+        <div className="relative w-[16.53px] h-[19.5px]">
           <Image 
             src="/icons/alarm.svg" 
             alt="Alarm" 

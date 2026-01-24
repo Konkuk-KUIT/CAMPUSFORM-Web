@@ -141,6 +141,7 @@
     line-height: 18px;
   }
 
+  /* Body/12/Medium */
   .text-body-xs {
     font-weight: 500;
     font-size: 12px;
@@ -152,5 +153,14 @@
     font-weight: 400;
     font-size: 12px;
     line-height: 17px;
+  }
+
+  /* 스크롤 바 숨기기 */
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }

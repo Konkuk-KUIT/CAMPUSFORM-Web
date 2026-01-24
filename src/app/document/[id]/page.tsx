@@ -1,7 +1,7 @@
 // 서류 상세 페이지
 import Link from 'next/link';
 import Image from 'next/image';
-import ApplicantCardBasic from '@/components/FileDetail';
+import ApplicantCardBasic from '@/components/ApplicantCardBasic';
 import QuestionSection from '@/components/document/QuestionSection';
 
 export default function ApplicantDetailPage() {
@@ -24,7 +24,7 @@ export default function ApplicantDetailPage() {
           name="김민준"
           gender="남"
           status="합격"
-          university="건국대학교/컴퓨터공학과/일반부원"
+          university="건국대/컴퓨터공학과/일반부원"
           phone="010-1234-5678"
           email="minjun@gmail.com"
           commentCount={3}
