@@ -12,7 +12,7 @@ export default function Navbar() {
   const isManage = pathname.startsWith('/manage');
   const isDocument = pathname.startsWith('/document');
   const isInterview = pathname.startsWith('/interview');
-  const isSchedule = pathname.startsWith('/schedule');
+  const isSchedule = pathname.startsWith('/schedule') || pathname.startsWith('/smart-schedule');
   const isResult = pathname.startsWith('/result');
 
   const [isResultOpen, setIsResultOpen] = useState(false);
@@ -50,7 +50,7 @@ export default function Navbar() {
 
             <Link href="/schedule" className="flex flex-col items-center gap-2.25 px-6 py-2.25">
               <Image
-                src={isSchedule ? '/icons/schedule.svg' : '/icons/schedule-off.svg'}
+                src={isSchedule ? '/icons/smart-schedule.svg' : '/icons/schedule-off.svg'}
                 alt="시간표"
                 width={24}
                 height={24}

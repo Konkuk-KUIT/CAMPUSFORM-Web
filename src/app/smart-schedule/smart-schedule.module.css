@@ -1,0 +1,344 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+.content {
+  flex: 1;
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #333;
+  margin: 0 0 8px 0;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #999;
+  margin: 0 0 24px 0;
+}
+
+/* 주간/일간 선택 */
+.viewSelector {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 32px;
+}
+
+.dayButton {
+  padding: 8px 16px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: white;
+  color: #666;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dayButton:hover {
+  border-color: #007aff;
+  color: #007aff;
+}
+
+.dayButton.active {
+  background-color: #007aff;
+  color: white;
+  border-color: #007aff;
+}
+
+/* 메인 컨텐츠 */
+.mainContent {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+/* 시간표 섹션 */
+.scheduleSection {
+  background-color: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.sectionTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 16px 0;
+}
+
+.scheduleList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.scheduleCard {
+  padding: 16px;
+  border-radius: 8px;
+  border-left: 4px solid;
+  background-color: #f9f9f9;
+  transition: all 0.2s ease;
+}
+
+.scheduleCard:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.scheduleCard.interview {
+  border-left-color: #007aff;
+  background-color: rgba(0, 122, 255, 0.05);
+}
+
+.scheduleCard.meeting {
+  border-left-color: #34c759;
+  background-color: rgba(52, 199, 89, 0.05);
+}
+
+.scheduleCard.exam {
+  border-left-color: #ff3b30;
+  background-color: rgba(255, 59, 48, 0.05);
+}
+
+.scheduleCard.other {
+  border-left-color: #ff9500;
+  background-color: rgba(255, 149, 0, 0.05);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge.high {
+  background-color: #ff3b30;
+  color: white;
+}
+
+.badge.medium {
+  background-color: #ff9500;
+  color: white;
+}
+
+.badge.low {
+  background-color: #34c759;
+  color: white;
+}
+
+.cardTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+  flex: 1;
+}
+
+.cardDetails {
+  font-size: 13px;
+  color: #666;
+}
+
+.cardDetails p {
+  margin: 4px 0;
+}
+
+.cardDetails strong {
+  color: #333;
+}
+
+/* 추천 섹션 */
+.recommendationSection {
+  background-color: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.recommendationList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.recommendationCard {
+  padding: 16px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(0, 122, 255, 0.05) 0%, rgba(52, 199, 89, 0.05) 100%);
+  border: 1px solid rgba(0, 122, 255, 0.2);
+  transition: all 0.2s ease;
+}
+
+.recommendationCard:hover {
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+.recHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.recTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.confidence {
+  display: inline-block;
+  padding: 4px 8px;
+  background-color: #007aff;
+  color: white;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.suggestedTime {
+  font-size: 13px;
+  font-weight: 500;
+  color: #007aff;
+  margin: 0 0 8px 0;
+}
+
+.reason {
+  font-size: 13px;
+  color: #666;
+  margin: 0 0 12px 0;
+}
+
+.recActions {
+  display: flex;
+  gap: 8px;
+}
+
+.acceptBtn,
+.declineBtn {
+  flex: 1;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.acceptBtn {
+  background-color: #34c759;
+  color: white;
+}
+
+.acceptBtn:hover {
+  background-color: #30b54a;
+  box-shadow: 0 2px 8px rgba(52, 199, 89, 0.3);
+}
+
+.declineBtn {
+  background-color: #f0f0f0;
+  color: #666;
+  border: 1px solid #ddd;
+}
+
+.declineBtn:hover {
+  background-color: #e8e8e8;
+}
+
+/* 정보 섹션 */
+.infoSection {
+  background-color: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.infoCard {
+  padding: 16px;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  text-align: center;
+  transition: all 0.2s ease;
+  border: 1px solid #eee;
+}
+
+.infoCard:hover {
+  background-color: #f0f0f0;
+  border-color: #007aff;
+  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.1);
+}
+
+.infoIcon {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+.infoCard h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 8px 0;
+}
+
+.infoCard p {
+  font-size: 12px;
+  color: #666;
+  margin: 0;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .mainContent {
+    grid-template-columns: 1fr;
+  }
+
+  .content {
+    padding: 16px;
+  }
+
+  .title {
+    font-size: 24px;
+  }
+
+  .infoGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .viewSelector {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}

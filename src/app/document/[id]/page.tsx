@@ -1,6 +1,4 @@
 // 서류 상세 페이지
-'use client';
-
 import Link from 'next/link';
 import Image from 'next/image';
 import ApplicantCardBasic from '@/components/ApplicantCardBasic';
