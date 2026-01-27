@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import SelectModalWide from '@/components/SelectModalWide';
 
@@ -22,6 +22,8 @@ export default function SearchBar({
   onSortChange,
 }: SearchBarProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [lastRefreshTime, setLastRefreshTime] = useState<Date>(new Date());
+  const [elapsedMinutes, setElapsedMinutes] = useState(0);
 
   const sortOptions = [
     { id: 'name-asc', label: '이름 오름차순' },
@@ -29,13 +31,31 @@ export default function SearchBar({
     { id: 'star', label: '별표 순' },
   ];
 
+  // 새로고침 시간
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = new Date();
+      const diff = Math.floor((now.getTime() - lastRefreshTime.getTime()) / 1000 / 60);
+      setElapsedMinutes(diff);
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, [lastRefreshTime]);
+
   const handleSortChange = (value: string) => {
     onSortChange?.(value);
     setIsOpen(false);
   };
 
+  const handleRefresh = () => {
+    setLastRefreshTime(new Date());
+    setElapsedMinutes(0);
+    // TODO: 데이터 새로고침 로직
+  };
+
   return (
     <div>
+      {/* 검색바 */}
       <div className="bg-gray-50 mx-4 my-2 rounded-5 flex items-center justify-between px-4 py-3">
         <div className="flex items-center gap-3 flex-1">
           <Image src="/icons/search.svg" alt="검색" width={13} height={13} />
@@ -51,8 +71,14 @@ export default function SearchBar({
         </button>
       </div>
 
+      {/* 새로고침, 정렬 */}
       {showSort && (
-        <div className="flex justify-end px-4 py-1 relative ">
+        <div className="flex justify-between items-center px-4 py-1.5 relative">
+          <button onClick={handleRefresh} className="flex items-center gap-1 text-body-sm-rg text-gray-300">
+            <Image src="/icons/arrow-refresh.svg" alt="새로고침" width={17} height={17} />
+            {elapsedMinutes}분 전
+          </button>
+
           <button onClick={() => setIsOpen(!isOpen)} className="flex items-center text-body-sm text-gray-700">
             정렬 방법
             <Image src="/icons/chevron-down.svg" alt="펼치기" width={15} height={15} />

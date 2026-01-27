@@ -39,7 +39,7 @@ export default function DocumentContent() {
       />
 
       {/* 리스트 */}
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto px-4 py-1">
         {selectedTab === '전체' && (
           <>
             <ApplicantFileCard
