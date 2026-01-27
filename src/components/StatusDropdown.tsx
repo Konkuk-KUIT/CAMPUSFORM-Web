@@ -49,16 +49,7 @@ export default function StatusDropdown({ value, onChange }: StatusDropdownProps)
           <div className={`w-1.5 h-1.5 rounded-full ${selectedOption.color} shrink-0`} />
           <span className="text-black text-body-sm-rg whitespace-nowrap">{selectedOption.label}</span>
         </div>
-<<<<<<< Updated upstream
         <Image src="/icons/chevron-down.svg" alt="toggle" width={15} height={15} className="ml-auto" />
-=======
-        <Image
-          src="/icons/chevron-down.svg"
-          alt="toggle"
-          width={15}
-          height={15}
-        />
->>>>>>> Stashed changes
       </button>
 
       {isOpen && (
