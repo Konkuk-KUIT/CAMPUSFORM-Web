@@ -1,17 +1,17 @@
 "use client";
 
-import ScheduleSummaryCard from "@/components/home/Schedule";
+import Schedule from "@/components/home/Schedule";
 import ProfileCard from "@/components/ProfileCross";
 import ProfileCardArrow from "@/components/Profile";
 import ApplicantInterviewDetail from "@/components/InterviewDetail";
-import NewApplicantNotification from "@/components/home/notification/NewApplicant";
-import NotificationCard from "@/components/home/notification/Comment";
+import NewApplicant from "@/components/home/notification/NewApplicant";
+import Comment from "@/components/home/notification/Comment";
 import ApplicantFileCard from "@/components/ApplicantFile";
 import ApplicantInterviewCard from "@/components/ApplicantInterview";
 import ApplicantSummaryCard from "@/components/Card";
 import ApplicantCardBasic from "@/components/FileDetail";
-import RecruitmentCardOn from "@/components/home/HomeOn";
-import RecruitmentCardOff from "@/components/home/HomeOff";
+import HomeOn from "@/components/home/HomeOn";
+import HomeOff from "@/components/home/HomeOff";
 
 export default function TestPage() {
   return (

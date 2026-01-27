@@ -1,6 +1,6 @@
 "use client";
 
-import ScheduleSummaryCard from "./Schedule";
+import Schedule from "./Schedule";
 
 interface ScheduleListProps {
   selectedDate?: Date;

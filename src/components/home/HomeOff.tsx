@@ -2,19 +2,19 @@
 import SelectModal from '@/components/SelectModal'; // 1. 임포트 확인!
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-interface RecruitmentCardProps {
+interface HomeOffProps {
   title: string;
   status: string;
   dateRange: string;
   applicantCount: number;
 }
 
-export default function RecruitmentCard({
+export default function HomeOff({
   title,
   status,
   dateRange,
   applicantCount,
-}: RecruitmentCardProps) {
+}: HomeOffProps) {
 
 // 1. 메뉴 열림 상태 관리
 const [isMenuOpen, setIsMenuOpen] = useState(false);

@@ -1,18 +1,18 @@
 "use client";
 
-interface NotificationCardProps {
+interface CommentProps {
   title: string;
   content: string;
   timeAgo: string;
   isUnread?: boolean;
 }
 
-export default function NotificationCard({
+export default function Comment({
   title,
   content,
   timeAgo,
   isUnread = false,
-}: NotificationCardProps) {
+}: CommentProps) {
   return (
     <div 
       className={`w-[375px] h-[80px] border-t border-gray-100 flex flex-col font-['Pretendard'] cursor-pointer px-[20px] pt-[12px]

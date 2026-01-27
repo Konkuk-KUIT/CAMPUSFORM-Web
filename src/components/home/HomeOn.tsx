@@ -2,19 +2,19 @@
 import SelectModal from '@/components/SelectModal';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-interface RecruitmentCardProps {
+interface HomeOnProps {
   title: string;
   status: string;
   dateRange: string;
   applicantCount: number;
 }
 
-export default function RecruitmentCard({
+export default function HomeOn({
   title,
   status,
   dateRange,
   applicantCount,
-}: RecruitmentCardProps) {
+}: HomeOnProps) {
 
 
 const [isMenuOpen, setIsMenuOpen] = useState(false);
