@@ -48,7 +48,7 @@ export default function Navbar() {
               <span className={isInterview ? 'text-black' : 'text-gray-500'}>면접</span>
             </Link>
 
-            <Link href="/schedule" className="flex flex-col items-center gap-2.25 px-6 py-2.25">
+            <Link href="/smart-schedule" className="flex flex-col items-center gap-2.25 px-6 py-2.25">
               <Image
                 src={isSchedule ? '/icons/smart-schedule.svg' : '/icons/schedule-off.svg'}
                 alt="시간표"
