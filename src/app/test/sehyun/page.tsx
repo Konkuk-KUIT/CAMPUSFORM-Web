@@ -1,17 +1,15 @@
 "use client";
 
-import ScheduleSummaryCard from "@/components/home/Schedule";
+import Schedule from "@/components/home/Schedule";
 import ProfileCard from "@/components/ProfileCross";
 import ProfileCardArrow from "@/components/Profile";
 import ApplicantInterviewDetail from "@/components/InterviewDetail";
-import NewApplicantNotification from "@/components/home/notification/NewApplicant";
-import NotificationCard from "@/components/home/notification/Comment";
 import ApplicantFileCard from "@/components/ApplicantFile";
 import ApplicantInterviewCard from "@/components/ApplicantInterview";
 import ApplicantSummaryCard from "@/components/Card";
 import ApplicantCardBasic from "@/components/FileDetail";
-import RecruitmentCardOn from "@/components/home/HomeOn";
-import RecruitmentCardOff from "@/components/home/HomeOff";
+import HomeOn from "@/components/home/HomeOn";
+import HomeOff from "@/components/home/HomeOff";
 
 export default function TestPage() {
   return (
@@ -21,13 +19,13 @@ export default function TestPage() {
         
         {/* 1. 공고 카드 섹션 (Home On/Off) */}
         <section className="flex flex-col items-center gap-4 pt-6">
-          <RecruitmentCardOn 
+          <HomeOn 
             title="요리퐁 6기 신입부원 모집"
             status="모집 중"
             dateRange="2023.11.01 - 2023.11.15"
             applicantCount={12}
           />
-          <RecruitmentCardOff 
+          <HomeOff 
             title="요리퐁 5기 부원 모집"
             status="모집 마감"
             dateRange="2022.11.01 - 2022.11.15"
@@ -82,12 +80,12 @@ export default function TestPage() {
 
         {/* 5. 일정 및 프로필 섹션 */}
         <section className="flex flex-col items-center gap-4 px-4">
-          <ScheduleSummaryCard 
+          <Schedule 
             title="요리퐁 6기 면접 일정"
             timeRange="오후 2:00 - 오후 2:30"
             initialChecked={false}
           />
-          <ScheduleSummaryCard 
+          <Schedule 
             title="운영진 정기 회의"
             timeRange="오후 4:00 - 오후 5:00"
             initialChecked={true}

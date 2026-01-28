@@ -1,6 +1,6 @@
 "use client";
 
-import ScheduleSummaryCard from "./Schedule";
+import Schedule from "./Schedule";
 
 interface ScheduleListProps {
   selectedDate?: Date;
@@ -41,7 +41,7 @@ export default function ScheduleList({ selectedDate = new Date(), schedules = []
       ) : (
         <div className="flex flex-col gap-[12px]">
           {schedules.map((item, index) => (
-            <ScheduleSummaryCard 
+            <Schedule 
               key={index}
               title={item.title}
               timeRange={item.timeRange}

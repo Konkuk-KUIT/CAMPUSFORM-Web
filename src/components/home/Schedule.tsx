@@ -1,13 +1,13 @@
 "use client";
 import { useState } from "react";
 import Image from "next/image";
-interface ScheduleSummaryCardProps {
+interface ScheduleProps {
   title: string;
   timeRange: string;
   initialChecked?: boolean;
 }
 
-export default function ScheduleSummaryCard({ title, timeRange, initialChecked = false }: ScheduleSummaryCardProps) {
+export default function Schedule({ title, timeRange, initialChecked = false }: ScheduleProps) {
   const [isChecked, setIsChecked] = useState(initialChecked);
   return (
     <div
