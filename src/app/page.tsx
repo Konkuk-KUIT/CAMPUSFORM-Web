@@ -1,7 +1,5 @@
-export default function Home() {
-  return (
-    <div>
-      <p className="max-w-md text-subtitle-md">메인 페이지</p>
-    </div>
-  );
+import { redirect } from 'next/navigation';
+
+export default function MainPage() {
+  redirect('/auth/login');
 }
