@@ -16,7 +16,7 @@ interface ApplicantCardProps {
   onAppointmentClick?: () => void;
 }
 
-export default function ApplicantCard({
+export default function ApplicantCardBasic({
   name,
   gender,
   status,

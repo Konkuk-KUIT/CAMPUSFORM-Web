@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import TopTab from '@/components/TopTab';
 import SearchBar from '@/components/form/SearchBar';
-import ApplicantFileCard from '@/components/interview/ApplicantFile';
+import ApplicantFileCard from '@/components/interview/ApplicantFileCard';
 import BottomSheet from '@/components/BottomSheet';
 import BtnRound from '@/components/BtnRound';
 import InputComment from '@/components/InputComment';
