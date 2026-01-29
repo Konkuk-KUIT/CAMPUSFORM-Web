@@ -6,10 +6,11 @@ import ProfileCardArrow from "@/components/Profile";
 import ApplicantInterviewDetail from "@/components/InterviewDetail";
 import ApplicantFileCard from "@/components/ApplicantFile";
 import ApplicantInterviewCard from "@/components/ApplicantInterview";
-import ApplicantSummaryCard from "@/components/Card";
-import ApplicantCardBasic from "@/components/FileDetail";
+import ApplicantSummaryCard from "@/components/ApplicantSummaryCard";
+import ApplicantCardBasic from "@/components/ApplicantCardBasic";
 import HomeOn from "@/components/home/HomeOn";
 import HomeOff from "@/components/home/HomeOff";
+import NotificationCard from "@/components/home/notification/NotificationCard";
 
 export default function TestPage() {
   return (
@@ -48,7 +49,8 @@ export default function TestPage() {
 
         {/* 3. 알림 카드 섹션 (New Applicant / Comment) */}
         <section className="flex flex-col border-y border-gray-100">
-          <NewApplicantNotification 
+          <NotificationCard 
+            type="applicant"
             title="요리퐁 6기 신입부원 모집"
             subContent="- 이현지 님의 지원서"
             content="새로운 지원서가 도착했습니다."
@@ -56,6 +58,7 @@ export default function TestPage() {
             isUnread={true}
           />
           <NotificationCard 
+            type="comment"
             title="댓글 알림"
             content="한상희 님이 댓글을 작성했어요."
             timeAgo="1분 전"
@@ -70,8 +73,9 @@ export default function TestPage() {
             status="면접 예정" interviewDate="11월 16일 (목) 15:00" commentCount={1}
           />
           <ApplicantFileCard 
+            id="2"
             name="최수아" info="한양대 / 산업디자인과 / 매니저"
-            status="서류 검토" commentCount={0}
+            initialStatus="보류" commentCount={0}
           />
           <ApplicantSummaryCard 
             name="김민준" university="건국대" major="컴퓨터공학과" role="요리사"

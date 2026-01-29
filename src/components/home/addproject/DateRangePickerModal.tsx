@@ -20,10 +20,12 @@ export default function DateRangePickerModal({
   const [startDate, setStartDate] = useState<Date | null>(initialStartDate);
   const [endDate, setEndDate] = useState<Date | null>(initialEndDate);
 
-  const handleDateChange = (dates: [Date | null, Date | null]) => {
-    const [start, end] = dates;
-    setStartDate(start);
-    setEndDate(end);
+  const handleDateChange = (date: Date | [Date | null, Date | null] | null) => {
+    if (Array.isArray(date)) {
+      const [start, end] = date;
+      setStartDate(start);
+      setEndDate(end);
+    }
   };
 
   const handleConfirm = () => {
