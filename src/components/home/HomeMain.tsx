@@ -116,7 +116,11 @@ export default function HomeMain() {
               <section className="w-full flex justify-center shrink-0">
                 <Calendar
                   selected={selectedDate}
-                  onDateChange={setSelectedDate}
+                  onDateChange={(date) => {
+                    if (date && !Array.isArray(date)) {
+                      setSelectedDate(date);
+                    }
+                  }}
                   events={calendarEvents}
                 />
               </section>
