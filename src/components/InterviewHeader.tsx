@@ -1,6 +1,6 @@
 import Image from 'next/image';
 
-export default function DocumentHeader() {
+export default function InterviewHeader() {
   return (
     <header className="flex items-center justify-between h-12 px-4">
       <div className="w-6 h-6">
