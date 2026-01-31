@@ -1,7 +1,7 @@
-import ApplicantCountHeader from '@/components/ApplicantCountHeader';
-import Button from '@/components/Btn';
+import ApplicantCountHeader from '@/components/ui/ApplicantCountHeader';
+import Button from '@/components/ui/Btn';
 import ApplicantMessageCard from '@/components/document/ApplicantMessageCard';
-import NotificationMessageForm from '@/components/NotificationMessageForm';
+import NotificationMessageForm from '@/components/ui/NotificationMessageForm';
 import Link from 'next/link';
 
 export default function DocumentPassedList() {

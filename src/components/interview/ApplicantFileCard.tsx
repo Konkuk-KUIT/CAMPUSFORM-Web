@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import Image from 'next/image';
-import StatusDropdown from '@/components/StatusDropdown';
-import AppointmentInfoButton from '@/components/AppointmentInfoButton';
+import StatusDropdown from '@/components/ui/StatusDropdown';
+import AppointmentInfoButton from '@/components/ui/AppointmentInfoButton';
 
 interface ApplicantFileCardProps {
   id: string;
@@ -44,11 +44,7 @@ export default function ApplicantFileCard({
         <div className="flex items-center gap-2.5">
           <h3 className="text-subtitle-sm-md text-gray-950">{name}</h3>
           {onAppointmentClick && (
-            <AppointmentInfoButton
-              date={appointmentDate}
-              time={appointmentTime}
-              onClick={handleAppointmentClick}
-            />
+            <AppointmentInfoButton date={appointmentDate} time={appointmentTime} onClick={handleAppointmentClick} />
           )}
         </div>
         <p className="mt-1 text-body-md text-gray-400">{info}</p>

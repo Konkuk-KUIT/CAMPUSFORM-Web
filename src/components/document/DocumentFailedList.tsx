@@ -1,6 +1,6 @@
-import ApplicantCountHeader from '@/components/ApplicantCountHeader';
-import Button from '@/components/Btn';
-import NotificationMessageForm from '@/components/NotificationMessageForm';
+import ApplicantCountHeader from '@/components/ui/ApplicantCountHeader';
+import Button from '@/components/ui/Btn';
+import NotificationMessageForm from '@/components/ui/NotificationMessageForm';
 
 export default function DocumentFailedList() {
   return (

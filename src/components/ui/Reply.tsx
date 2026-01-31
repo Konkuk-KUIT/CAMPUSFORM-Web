@@ -1,7 +1,7 @@
 'use client';
 
-import ReplyButton from '@/components/ReplyButton';
-import SelectModal from '@/components/SelectModal';
+import ReplyButton from '@/components/ui/ReplyButton';
+import SelectModal from '@/components/ui/SelectModal';
 import Image from 'next/image';
 import { useState } from 'react';
 

@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import Header from '@/components/Header';
+import Header from '@/components/ui/Header';
 import Navbar from '@/components/Navbar';
-import Btn from '@/components/Btn';
+import Btn from '@/components/ui/Btn';
 
 interface InterviewerAvailability {
   id: string;
@@ -51,16 +51,14 @@ export default function InterviewerAvailabilityForm() {
   const timeSlots = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00'];
 
   const handleTimeToggle = (interviewerId: string, day: string, time: string) => {
-    setAvailability(prev => 
+    setAvailability(prev =>
       prev.map(interviewer => {
         if (interviewer.id === interviewerId) {
           const dayKey = day as keyof InterviewerAvailability;
           const times = interviewer[dayKey] as string[];
           return {
             ...interviewer,
-            [day]: times.includes(time) 
-              ? times.filter(t => t !== time)
-              : [...times, time].sort()
+            [day]: times.includes(time) ? times.filter(t => t !== time) : [...times, time].sort(),
           };
         }
         return interviewer;
@@ -81,7 +79,7 @@ export default function InterviewerAvailabilityForm() {
         <p className="text-text-14 text-gray-500 mt-2 mb-6">면접관별 가용 시간을 설정하세요</p>
 
         <div className="space-y-6">
-          {availability.map((interviewer) => (
+          {availability.map(interviewer => (
             <div key={interviewer.id} className="bg-white rounded-radius-8 p-6 shadow-sm">
               <div className="flex justify-between items-start mb-4">
                 <div>
@@ -112,15 +110,13 @@ export default function InterviewerAvailabilityForm() {
                           const dayKey = day.key as keyof InterviewerAvailability;
                           const times = interviewer[dayKey] as string[];
                           const isAvailable = times.includes(time);
-                          
+
                           return (
                             <td key={day.key} className="px-3 py-2 text-center">
                               <button
                                 onClick={() => handleTimeToggle(interviewer.id, day.key, time)}
                                 className={`px-2 py-1 rounded-radius-5 text-text-11 font-semibold transition-colors ${
-                                  isAvailable
-                                    ? 'bg-blue-500 text-white'
-                                    : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                                  isAvailable ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
                                 }`}
                               >
                                 {isAvailable ? '✓' : '-'}
@@ -142,9 +138,7 @@ export default function InterviewerAvailabilityForm() {
                   return (
                     <div key={day.key} className="text-text-11">
                       <span className="font-semibold text-gray-700">{day.label}:</span>
-                      <span className="text-gray-600 ml-2">
-                        {times.length > 0 ? `${times.length}개` : '없음'}
-                      </span>
+                      <span className="text-gray-600 ml-2">{times.length > 0 ? `${times.length}개` : '없음'}</span>
                     </div>
                   );
                 })}
@@ -155,14 +149,19 @@ export default function InterviewerAvailabilityForm() {
 
         {/* 액션 버튼 */}
         <div className="flex gap-2 justify-end mt-8">
-          <Btn variant="outline" size="md">취소</Btn>
-          <Btn variant="primary" size="md" onClick={handleSave}>저장</Btn>
+          <Btn variant="outline" size="md">
+            취소
+          </Btn>
+          <Btn variant="primary" size="md" onClick={handleSave}>
+            저장
+          </Btn>
         </div>
 
         {/* 안내 */}
         <div className="mt-8 bg-blue-50 border border-blue-200 rounded-radius-8 p-4">
           <p className="text-text-12 text-gray-700">
-            <span className="font-semibold text-gray-950">📋 설명:</span> 각 면접관의 주간 가용 시간을 설정하면, 지원자들이 자동으로 가능한 시간대를 선택할 수 있습니다. 시간을 클릭하여 활성화/비활성화할 수 있습니다.
+            <span className="font-semibold text-gray-950">📋 설명:</span> 각 면접관의 주간 가용 시간을 설정하면,
+            지원자들이 자동으로 가능한 시간대를 선택할 수 있습니다. 시간을 클릭하여 활성화/비활성화할 수 있습니다.
           </p>
         </div>
       </div>

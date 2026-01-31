@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import SelectModalWide from '@/components/SelectModalWide';
+import SelectModalWide from '@/components/ui/SelectModalWide';
 
 interface SearchBarProps {
   placeholder?: string;

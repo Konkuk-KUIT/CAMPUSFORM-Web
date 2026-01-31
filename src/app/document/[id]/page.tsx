@@ -1,7 +1,7 @@
 // 서류 상세 페이지
 import Link from 'next/link';
 import Image from 'next/image';
-import ApplicantCardBasic from '@/components/ApplicantCardBasic';
+import ApplicantCardBasic from '@/components/ui/ApplicantCardBasic';
 import QuestionSection from '@/components/document/QuestionSection';
 
 export default function ApplicantDetailPage() {

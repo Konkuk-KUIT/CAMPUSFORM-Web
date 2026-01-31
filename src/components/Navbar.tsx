@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import ResultSelectionModal from '@/components/ResultSelectionModal';
+import ResultSelectionModal from '@/components/ui/ResultSelectionModal';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -50,7 +50,7 @@ export default function Navbar() {
 
             <Link href="/smart-schedule" className="flex flex-col items-center gap-2.25 px-6 py-2.25">
               <Image
-                src={isSchedule ? '/icons/smart-schedule.svg' : '/icons/schedule-off.svg'}
+                src={isSchedule ? '/icons/schedule.svg' : '/icons/schedule-off.svg'}
                 alt="시간표"
                 width={24}
                 height={24}

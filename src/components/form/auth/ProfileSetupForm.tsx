@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import ProfileImageButton from '@/components/auth/ProfileImageButton';
-import Button from '@/components/Btn';
-import Textbox from '@/components/Textbox';
+import Button from '@/components/ui/Btn';
+import Textbox from '@/components/ui/Textbox';
+import Link from 'next/link';
 
 export default function ProfileSetupForm() {
   const [nickname, setNickname] = useState('');
@@ -35,7 +36,6 @@ export default function ProfileSetupForm() {
     }
 
     setNicknameError(false);
-
   };
 
   const handleNicknameChange = (value: string) => {
@@ -67,11 +67,11 @@ export default function ProfileSetupForm() {
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 bg-white px-6 py-4 max-w-93.75 mx-auto">
+      <Link href="/home" className="fixed bottom-0 left-0 right-0 bg-white px-6 py-4 max-w-93.75 mx-auto">
         <Button variant="primary" size="lg" onClick={handleSignup}>
           가입 완료
         </Button>
-      </div>
+      </Link>
     </>
   );
 }

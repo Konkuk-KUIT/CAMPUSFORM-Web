@@ -1,6 +1,6 @@
 // 프로필 설정 페이지
 import ProfileSetupForm from '@/components/form/auth/ProfileSetupForm';
-import Header from '@/components/Header';
+import Header from '@/components/ui/Header';
 
 export default function SetupPage() {
   return (

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import Image from 'next/image';
-import StatusDropdown from '@/components/StatusDropdown';
+import StatusDropdown from '@/components/ui/StatusDropdown';
 
 interface ApplicantFileCardProps {
   id: string;

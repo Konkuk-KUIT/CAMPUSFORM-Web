@@ -1,22 +1,21 @@
 'use client';
 
 import { useState } from 'react';
-import Button from '@/components/Btn';
-import Textbox from '@/components/Textbox';
+import Button from '@/components/ui/Btn';
+import Textbox from '@/components/ui/Textbox';
 import ProfileImageButton from '@/components/auth/ProfileImageButton';
 
 interface MypageSetupFormProps {
-    initialName?: string;
-    initialEmail?: string;
-  }
+  initialName?: string;
+  initialEmail?: string;
+}
 
-  export default function MypageSetupForm({ 
-    initialName = '김유저',
-    initialEmail = 'hxxxxx@gmail.com' 
-  }: MypageSetupFormProps) {
-    
-    const [nickname, setNickname] = useState(initialName);
-    const [nicknameError, setNicknameError] = useState(false);
+export default function MypageSetupForm({
+  initialName = '김유저',
+  initialEmail = 'hxxxxx@gmail.com',
+}: MypageSetupFormProps) {
+  const [nickname, setNickname] = useState(initialName);
+  const [nicknameError, setNicknameError] = useState(false);
 
   const validateNickname = (): boolean => {
     if (!nickname.trim()) {
@@ -44,7 +43,6 @@ interface MypageSetupFormProps {
     }
 
     setNicknameError(false);
-
   };
 
   const handleNicknameChange = (value: string) => {

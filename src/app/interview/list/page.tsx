@@ -1,5 +1,5 @@
 import InterviewContent from '@/components/interview/InterviewContent';
-import InterviewHeader from '@/components/InterviewHeader';
+import InterviewHeader from '@/components/ui/InterviewHeader';
 import Navbar from '@/components/Navbar';
 
 // 면접 지원자 관리 페이지

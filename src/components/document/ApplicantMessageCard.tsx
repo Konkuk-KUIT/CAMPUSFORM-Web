@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import BottomSheet from '@/components/BottomSheet';
-import ApplicantSummaryCard from '@/components/ApplicantSummaryCard';
-import Button from '@/components/Btn';
+import BottomSheet from '@/components/ui/BottomSheet';
+import ApplicantSummaryCard from '@/components/ui/ApplicantSummaryCard';
+import Button from '@/components/ui/Btn';
 
 export default function ApplicantMessageCard() {
   const [isPersonalMessageOpen, setIsPersonalMessageOpen] = useState(false);
