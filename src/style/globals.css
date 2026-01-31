@@ -1,0 +1,166 @@
+@import 'tailwindcss';
+
+@theme {
+  /* 브랜드 색상  */
+  --color-primary: #5a81fa;
+  --color-navy: #161f48;
+
+  /* 포인트 색상  */
+  --color-point-red: #fe5e5e;
+  --color-point-green: #52e05b;
+  --color-point-yellow: #ffd83d;
+
+  /* 파랑계열  */
+  --color-blue-950: #171954;
+  --color-blue-900: #1e248a;
+  --color-blue-800: #1e22af;
+  --color-blue-700: #1d28d8;
+  --color-blue-600: #253beb;
+  --color-blue-500: #3b5cf6;
+  --color-blue-300: #93affd;
+  --color-blue-200: #bfcefe;
+  --color-blue-100: #dbe3fe;
+  --color-blue-50: #eff3ff;
+
+  /* 회색계열  */
+  --color-gray-950: #1f1f1f;
+  --color-gray-900: #3d3d3d;
+  --color-gray-800: #454545;
+  --color-gray-700: #4f4f4f;
+  --color-gray-600: #5d5d5d;
+  --color-gray-500: #6d6d6d;
+  --color-gray-400: #888888;
+  --color-gray-300: #b0b0b0;
+  --color-gray-200: #d1d1d1;
+  --color-gray-100: #efefef;
+  --color-gray-50: #f6f6f6;
+  --color-white: #ffffff;
+
+  --text-10: 0.625rem;
+  --text-12: 0.75rem;
+  --text-14: 0.875rem;
+  --text-16: 1rem;
+  --text-18: 1.125rem;
+  --text-20: 1.25rem;
+  --text-24: 1.5rem;
+  --text-28: 1.75rem;
+  --text-32: 2rem;
+
+  /* Border Radius */
+  --radius-5: 5px;
+  --radius-8: 8px;
+  --radius-10: 10px;
+}
+
+@layer utilities {
+  /* Header */
+  .text-title {
+    font-weight: 600;
+    font-size: 18px;
+    line-height: 25px;
+  }
+
+  /* Subtitle */
+
+  /* Sub/16/Semibold */
+  .text-subtitle-sb {
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  /* Sub/16/Medium */
+  .text-subtitle-md {
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  /* Sub/16/Regular */
+  .text-subtitle-rg {
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  /* Sub/15/Semibold */
+  .text-subtitle-sm-sb {
+    font-weight: 600;
+    font-size: 15px;
+    line-height: 21px;
+  }
+
+  /* Sub/15/Medium */
+  .text-subtitle-sm-md {
+    font-weight: 500;
+    font-size: 15px;
+    line-height: 21px;
+  }
+
+  /* Sub/15/Regular */
+  .text-subtitle-sm-rg {
+    font-weight: 400;
+    font-size: 15px;
+    line-height: 21px;
+  }
+
+  /* Body */
+
+  /* Body/15/Medium */
+  .text-body {
+    font-weight: 500;
+    font-size: 15px;
+    line-height: 21px;
+  }
+
+  /* Body/14/Medium */
+  .text-body-md {
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  /* Body/14/Regular */
+  .text-body-rg {
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  /* Body/13/Medium */
+  .text-body-sm {
+    font-weight: 500;
+    font-size: 13px;
+    line-height: 18px;
+  }
+
+  /* Body/13/Regular */
+  .text-body-sm-rg {
+    font-weight: 400;
+    font-size: 13px;
+    line-height: 18px;
+  }
+
+  /* Body/12/Medium */
+  .text-body-xs {
+    font-weight: 500;
+    font-size: 12px;
+    line-height: 17px;
+  }
+
+  /* Body/12/Regular */
+  .text-body-xs-rg {
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 17px;
+  }
+
+  /* 스크롤 바 숨기기 */
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
