@@ -14,6 +14,7 @@ interface ApplicantCardProps {
   appointmentDate?: string;
   appointmentTime?: string;
   onAppointmentClick?: () => void;
+  onCommentClick?: () => void;
 }
 
 export default function ApplicantCardBasic({
@@ -29,6 +30,7 @@ export default function ApplicantCardBasic({
   appointmentDate,
   appointmentTime,
   onAppointmentClick,
+  onCommentClick,
 }: ApplicantCardProps) {
   const statusColors = {
     합격: 'bg-point-green',
@@ -64,10 +66,13 @@ export default function ApplicantCardBasic({
           <AppointmentInfoButton date={appointmentDate} time={appointmentTime} onClick={onAppointmentClick} />
 
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1 text-gray-300">
+            <button
+              onClick={onCommentClick}
+              className="flex items-center gap-1 text-gray-300"
+            >
               <Image src="/icons/comment.svg" alt="댓글" width={14} height={14} />
               <span className="text-body-xs">{commentCount}</span>
-            </div>
+            </button>
 
             <button onClick={onToggleFavorite} className="shrink-0">
               <Image
