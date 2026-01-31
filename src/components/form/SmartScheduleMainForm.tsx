@@ -4,11 +4,11 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Navbar from '@/components/Navbar';
-import Btn from '@/components/Btn';
-import AllAccordion from '@/components/AllAccordion';
-import SmartScheduleCard from '@/components/SmartScheduleCard';
-import SmartScheduleButton from '@/components/SmartScheduleButton';
-import SmartScheduleCalendarPreview from '@/components/SmartScheduleCalendarPreview';
+import Btn from '@/components/ui/Btn';
+import AllAccordion from '@/components/ui/AllAccordion';
+import SmartScheduleCard from '@/components/ui/SmartScheduleCard';
+import SmartScheduleButton from '@/components/ui/SmartScheduleButton';
+import SmartScheduleCalendarPreview from '@/components/ui/SmartScheduleCalendarPreview';
 
 export default function SmartScheduleMainForm() {
   const router = useRouter();
@@ -21,7 +21,7 @@ export default function SmartScheduleMainForm() {
   useEffect(() => {
     const isConfigured = localStorage.getItem('interviewInfoConfigured');
     setShowOverlay(!isConfigured);
-    
+
     // TODO: 실제 API에서 스마트 시간표 생성 여부와 대표자 여부를 가져와야 함
     // setHasSchedule(실제 값);
     // setIsRepresentative(실제 값);
@@ -51,17 +51,13 @@ export default function SmartScheduleMainForm() {
         <div className="flex-1 px-4 pt-4 pb-4 overflow-y-auto">
           {/* Step 1: Interview Info Setup */}
           <div className="mb-6">
-            <button 
+            <button
               onClick={() => router.push('/smart-schedule/setting')}
               className="w-full flex items-start justify-between mb-2 group"
             >
               <div className="text-left">
-                <h3 className="text-subtitle-sm-sb text-gray-950 mb-1">
-                  1. 면접 정보 설정
-                </h3>
-                <p className="text-body-xs text-gray-300">
-                  면접 일정과 운영 방식을 설정해 주세요.
-                </p>
+                <h3 className="text-subtitle-sm-sb text-gray-950 mb-1">1. 면접 정보 설정</h3>
+                <p className="text-body-xs text-gray-300">면접 일정과 운영 방식을 설정해 주세요.</p>
               </div>
               <div className="mt-1 flex-shrink-0">
                 <Image src="/icons/chevron-right.svg" alt="next" width={24} height={7} />
@@ -72,12 +68,8 @@ export default function SmartScheduleMainForm() {
           {/* Step 2: Interviewer Time Registration */}
           <div className="mb-6">
             <div className="text-left mb-3">
-              <h3 className="text-subtitle-sm-sb text-gray-950 mb-1">
-                2. 면접관 시간 등록
-              </h3>
-              <p className="text-body-xs text-gray-300">
-                각 면접관 별 가능한 시간을 선택해 입력합니다.
-              </p>
+              <h3 className="text-subtitle-sm-sb text-gray-950 mb-1">2. 면접관 시간 등록</h3>
+              <p className="text-body-xs text-gray-300">각 면접관 별 가능한 시간을 선택해 입력합니다.</p>
             </div>
 
             {/* Calendar preview - 전체 시간표 (항상 표시) */}
@@ -126,14 +118,14 @@ export default function SmartScheduleMainForm() {
                       className={`flex-shrink-0 transition-transform ${selectedInterviewer === idx ? 'rotate-180' : ''}`}
                     />
                   </button>
-                  
+
                   {/* Individual interviewer calendar directly below the card */}
                   {selectedInterviewer === idx && (
                     <div className="w-full bg-white border-b border-gray-200 pb-3">
-                      <SmartScheduleCalendarPreview 
-                        interviewerName={interviewer.name} 
-                        seed={idx + 1} 
-                        showProfiles={false} 
+                      <SmartScheduleCalendarPreview
+                        interviewerName={interviewer.name}
+                        seed={idx + 1}
+                        showProfiles={false}
                         showRequiredSection={true}
                       />
                     </div>
@@ -146,9 +138,7 @@ export default function SmartScheduleMainForm() {
           {/* Step 3: Applicant Response */}
           <div className="mt-6">
             <div className="text-left mb-3">
-              <h3 className="text-subtitle-sm-sb text-gray-950 mb-1">
-                3. 지원자 면접 가능 시간 모집
-              </h3>
+              <h3 className="text-subtitle-sm-sb text-gray-950 mb-1">3. 지원자 면접 가능 시간 모집</h3>
               <p className="text-body-xs text-gray-300">
                 응답 종료 전까지 지원자가 면접 가능 시간을 입력 후 제출합니다.
               </p>
@@ -164,10 +154,10 @@ export default function SmartScheduleMainForm() {
                   onClick={() => router.push('/smart-schedule/applicant-submit')}
                   className="w-full bg-gray-50 border border-gray-100 rounded-radius-5 px-3 py-3 pr-10 text-body-md text-gray-300 placeholder-gray-300 cursor-pointer hover:bg-gray-100 transition-colors"
                 />
-                <button 
+                <button
                   className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 hover:bg-gray-100 rounded transition-colors"
                   aria-label="복사"
-                  onClick={(e) => {
+                  onClick={e => {
                     e.stopPropagation();
                     navigator.clipboard.writeText('https://www.campusform.com/interview/apply');
                   }}
@@ -177,7 +167,7 @@ export default function SmartScheduleMainForm() {
               </div>
 
               {/* Info box - 지원자 시간 페이지 편집 */}
-              <button 
+              <button
                 onClick={() => router.push('/smart-schedule/interview-schedule')}
                 className="w-full bg-[#eff3ff] border-[0.5px] border-[#bfcefe] rounded-[10px] px-2.5 py-2.5 flex items-center justify-center gap-1 hover:bg-[#e5ecff] transition-colors"
               >
@@ -187,17 +177,15 @@ export default function SmartScheduleMainForm() {
 
               {/* Action buttons */}
               <div className="flex gap-1.25">
-                <SmartScheduleButton 
-                  icon="/icons/graph.svg" 
-                  iconWidth={7} 
+                <SmartScheduleButton
+                  icon="/icons/graph.svg"
+                  iconWidth={7}
                   iconHeight={9.3}
                   onClick={() => router.push('/smart-schedule/response-result')}
                 >
                   응답 결과 확인
                 </SmartScheduleButton>
-                <SmartScheduleButton showHash={true}>
-                  지원자 전화번호 복사
-                </SmartScheduleButton>
+                <SmartScheduleButton showHash={true}>지원자 전화번호 복사</SmartScheduleButton>
               </div>
             </div>
           </div>
@@ -214,9 +202,7 @@ export default function SmartScheduleMainForm() {
           {showOverlay && (
             <div className="absolute left-0 right-0 top-[115px] bottom-20 flex items-center justify-center z-50 bg-white/60">
               <div className="text-center">
-                <p className="text-subtitle-md text-gray-950 font-medium">
-                  면접 정보 설정 후 이용 가능합니다.
-                </p>
+                <p className="text-subtitle-md text-gray-950 font-medium">면접 정보 설정 후 이용 가능합니다.</p>
               </div>
             </div>
           )}
@@ -225,9 +211,7 @@ export default function SmartScheduleMainForm() {
           {!hasSchedule && !isRepresentative && !showOverlay && (
             <div className="absolute bg-[rgba(255,255,255,0.85)] h-[647px] left-0 top-[88px] w-[375px] flex items-center justify-center z-40">
               <div className="text-center">
-                <p className="text-subtitle-md text-gray-950 mb-6">
-                  생성된 스마트 시간표가 없습니다.
-                </p>
+                <p className="text-subtitle-md text-gray-950 mb-6">생성된 스마트 시간표가 없습니다.</p>
                 <div className="text-body-rg text-gray-500">
                   <p>다음 단계를 진행하고 싶다면</p>
                   <p>

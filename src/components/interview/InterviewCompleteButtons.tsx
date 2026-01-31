@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Button from '@/components/Btn';
+import Button from '@/components/ui/Btn';
 import ConfirmModal from '@/components/interview/ConfirmModal';
 
 export default function InterviewCompleteButtons() {

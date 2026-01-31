@@ -7,7 +7,7 @@ const pretendard = localFont({
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ko">
+    <html lang="ko" className="overflow-y-scroll">
       <body className={pretendard.className}>
         {' '}
         <div className="w-full max-w-93.75 mx-auto min-h-screen bg-white">{children}</div>

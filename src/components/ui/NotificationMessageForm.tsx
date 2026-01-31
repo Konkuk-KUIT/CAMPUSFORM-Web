@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import Button from '@/components/Btn';
-import TextboxLarge from '@/components/TextboxLarge';
+import Button from '@/components/ui/Btn';
+import TextboxLarge from '@/components/ui/TextboxLarge';
 import Image from 'next/image';
-import Modal from '@/components/Modal';
+import Modal from '@/components/ui/Modal';
 
 interface NotificationMessageFormProps {
   type?: '합격자' | '불합격자';
@@ -12,7 +12,7 @@ interface NotificationMessageFormProps {
 
 export default function NotificationMessageForm({ type = '합격자' }: NotificationMessageFormProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
+
   const title = type === '합격자' ? '합격자 문자 템플릿 입력' : '불합격자 문자 템플릿 입력';
   const modalTitle = type === '합격자' ? '합격자' : '불합격자';
 

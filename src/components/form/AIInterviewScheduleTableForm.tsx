@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import Header from '@/components/Header';
+import Header from '@/components/ui/Header';
 import Navbar from '@/components/Navbar';
-import Btn from '@/components/Btn';
-import Checkbox from '@/components/Checkbox';
+import Btn from '@/components/ui/Btn';
+import Checkbox from '@/components/ui/Checkbox';
 
 interface InterviewSchedule {
   id: string;
@@ -54,9 +54,7 @@ export default function AIInterviewScheduleTableForm() {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [filterStatus, setFilterStatus] = useState('all');
 
-  const filteredSchedules = schedules.filter((s) => 
-    filterStatus === 'all' ? true : s.status === filterStatus
-  );
+  const filteredSchedules = schedules.filter(s => (filterStatus === 'all' ? true : s.status === filterStatus));
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -103,24 +101,32 @@ export default function AIInterviewScheduleTableForm() {
         <div className="bg-white rounded-radius-8 p-4 shadow-sm mb-6">
           <div className="flex justify-between items-center flex-wrap gap-4">
             <div className="flex gap-2">
-              {['all', 'scheduled', 'completed', 'cancelled'].map((status) => (
+              {['all', 'scheduled', 'completed', 'cancelled'].map(status => (
                 <button
                   key={status}
                   onClick={() => setFilterStatus(status)}
                   className={`px-4 py-2 text-text-12 rounded-radius-5 transition-colors ${
-                    filterStatus === status
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    filterStatus === status ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 >
-                  {status === 'all' ? '전체' : status === 'scheduled' ? '예정' : status === 'completed' ? '완료' : '취소'}
+                  {status === 'all'
+                    ? '전체'
+                    : status === 'scheduled'
+                      ? '예정'
+                      : status === 'completed'
+                        ? '완료'
+                        : '취소'}
                 </button>
               ))}
             </div>
-            
+
             <div className="flex gap-2">
-              <Btn variant="outline" size="sm">엑셀 다운로드</Btn>
-              <Btn variant="primary" size="sm">+ 새 일정</Btn>
+              <Btn variant="outline" size="sm">
+                엑셀 다운로드
+              </Btn>
+              <Btn variant="primary" size="sm">
+                + 새 일정
+              </Btn>
             </div>
           </div>
         </div>
@@ -132,9 +138,9 @@ export default function AIInterviewScheduleTableForm() {
               <thead>
                 <tr className="border-b border-gray-200 bg-gray-50">
                   <th className="px-4 py-3 text-left w-12">
-                    <Checkbox 
+                    <Checkbox
                       checked={selectedItems.length === filteredSchedules.length && filteredSchedules.length > 0}
-                      onChange={(checked) => handleSelectAll(checked)}
+                      onChange={checked => handleSelectAll(checked)}
                     />
                   </th>
                   <th className="px-4 py-3 text-left font-semibold text-gray-700">지원자</th>
@@ -148,12 +154,12 @@ export default function AIInterviewScheduleTableForm() {
                 </tr>
               </thead>
               <tbody>
-                {filteredSchedules.map((schedule) => (
+                {filteredSchedules.map(schedule => (
                   <tr key={schedule.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                     <td className="px-4 py-3">
-                      <Checkbox 
+                      <Checkbox
                         checked={selectedItems.includes(schedule.id)}
-                        onChange={(checked) => handleSelectItem(schedule.id, checked)}
+                        onChange={checked => handleSelectItem(schedule.id, checked)}
                       />
                     </td>
                     <td className="px-4 py-3 font-medium text-gray-900">{schedule.candidateName}</td>
@@ -162,7 +168,9 @@ export default function AIInterviewScheduleTableForm() {
                     <td className="px-4 py-3 text-gray-700 font-medium">{schedule.time}</td>
                     <td className="px-4 py-3 text-gray-700">{schedule.interviewer}</td>
                     <td className="px-4 py-3">
-                      <span className={`inline-block px-2 py-1 text-text-11 font-semibold rounded-radius-5 ${getStatusColor(schedule.status)}`}>
+                      <span
+                        className={`inline-block px-2 py-1 text-text-11 font-semibold rounded-radius-5 ${getStatusColor(schedule.status)}`}
+                      >
                         {getStatusLabel(schedule.status)}
                       </span>
                     </td>
@@ -175,7 +183,7 @@ export default function AIInterviewScheduleTableForm() {
               </tbody>
             </table>
           </div>
-          
+
           {filteredSchedules.length === 0 && (
             <div className="text-center py-12">
               <p className="text-gray-500 text-text-14">일정이 없습니다</p>
@@ -191,8 +199,12 @@ export default function AIInterviewScheduleTableForm() {
                 <span className="font-semibold text-gray-950">{selectedItems.length}개</span> 항목 선택
               </p>
               <div className="flex gap-2">
-                <Btn variant="outline" size="sm">일괄 삭제</Btn>
-                <Btn variant="primary" size="sm">일괄 수정</Btn>
+                <Btn variant="outline" size="sm">
+                  일괄 삭제
+                </Btn>
+                <Btn variant="primary" size="sm">
+                  일괄 수정
+                </Btn>
               </div>
             </div>
           </div>

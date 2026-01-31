@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import BottomSheet from '@/components/BottomSheet';
+import BottomSheet from '@/components/ui/BottomSheet';
 import Image from 'next/image';
-import Button from '@/components/Btn';
+import Button from '@/components/ui/Btn';
 
 interface ApplicantCountHeaderProps {
   type: '합격자' | '불합격자';

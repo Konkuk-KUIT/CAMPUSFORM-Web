@@ -1,5 +1,5 @@
 import DocumentContent from '@/components/document/DocumentContent';
-import DocumentHeader from '@/components/DocumentHeader';
+import DocumentHeader from '@/components/ui/DocumentHeader';
 import Navbar from '@/components/Navbar';
 
 // 서류 지원자 관리 페이지

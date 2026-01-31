@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import Image from 'next/image';
-import SelectModal from '../SelectModal';
+import SelectModal from '../ui/SelectModal';
 
 export default function ProfileImageButton() {
   const [isModalOpen, setIsModalOpen] = useState(false);

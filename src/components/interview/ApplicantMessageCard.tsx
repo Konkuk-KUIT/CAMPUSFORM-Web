@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import BottomSheet from '@/components/BottomSheet';
-import ApplicantSummaryCard from '@/components/ApplicantSummaryCard';
-import Button from '@/components/Btn';
+import BottomSheet from '@/components/ui/BottomSheet';
+import ApplicantSummaryCard from '@/components/ui/ApplicantSummaryCard';
+import Button from '@/components/ui/Btn';
 
 interface ApplicantMessageCardProps {
   type: '합격자' | '불합격자';
@@ -25,7 +25,10 @@ export default function ApplicantMessageCard({ type }: ApplicantMessageCardProps
   };
 
   const title = type === '합격자' ? '합격자 개인별 메세지' : '불합격자 개인별 메세지';
-  const resultText = type === '합격자' ? '요리퐁 6기 최종 합격을 축하드립니다!' : '아쉽지만 이번 요리퐁 6기에서는 함께하지 못하게 되었습니다.';
+  const resultText =
+    type === '합격자'
+      ? '요리퐁 6기 최종 합격을 축하드립니다!'
+      : '아쉽지만 이번 요리퐁 6기에서는 함께하지 못하게 되었습니다.';
   const additionalText =
     type === '합격자'
       ? '합격자 오리엔테이션 일정과 안내 자료는 별도로 전달드릴 예정이니 확인 부탁드립니다.'
@@ -35,7 +38,7 @@ export default function ApplicantMessageCard({ type }: ApplicantMessageCardProps
     <>
       <div className="mt-3">
         <h3 className="text-subtitle-sm-md pb-0.5">{title}</h3>
-        
+
         {/* 명단/전화번호 복사 버튼 */}
         <div className="flex items-center gap-2.5 mb-1">
           <button className="flex items-center gap-1 text-gray-400 text-[12px] font-medium leading-[22px]">

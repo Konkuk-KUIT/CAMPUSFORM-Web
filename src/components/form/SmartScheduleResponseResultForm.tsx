@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import Header from '@/components/Header';
+import Header from '@/components/ui/Header';
 import Navbar from '@/components/Navbar';
 
 interface Applicant {
@@ -82,15 +82,15 @@ export default function SmartScheduleResponseResultForm() {
   ];
 
   // 검색 필터링 - 검색어가 있을 때만 필터링, 검색된 지원자가 있는 시간대의 모든 지원자 표시
-  const filteredScheduleData = searchQuery 
-    ? scheduleData.map(dateSchedule => ({
-        ...dateSchedule,
-        slots: dateSchedule.slots.filter(slot => 
-          slot.applicants.some(applicant => 
-            applicant.name.toLowerCase().includes(searchQuery.toLowerCase())
-          )
-        )
-      })).filter(dateSchedule => dateSchedule.slots.length > 0)
+  const filteredScheduleData = searchQuery
+    ? scheduleData
+        .map(dateSchedule => ({
+          ...dateSchedule,
+          slots: dateSchedule.slots.filter(slot =>
+            slot.applicants.some(applicant => applicant.name.toLowerCase().includes(searchQuery.toLowerCase()))
+          ),
+        }))
+        .filter(dateSchedule => dateSchedule.slots.length > 0)
     : scheduleData;
 
   return (
@@ -101,7 +101,8 @@ export default function SmartScheduleResponseResultForm() {
       </div>
 
       {/* Content */}
-      <div className="pb-20">{/* pb-20 = 80px, 네비바 높이(65px)보다 약간 여유있게 */}
+      <div className="pb-20">
+        {/* pb-20 = 80px, 네비바 높이(65px)보다 약간 여유있게 */}
         {/* Search Bar */}
         <div className="px-4 pt-4 pb-3">
           <div className="relative">
@@ -111,7 +112,7 @@ export default function SmartScheduleResponseResultForm() {
             <input
               type="text"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={e => setSearchQuery(e.target.value)}
               placeholder="지원자의 이름을 검색하세요."
               className="w-full h-[38px] bg-gray-50 rounded-[5px] pl-[33px] pr-4 text-body-rg text-gray-950 placeholder:text-gray-400"
             />
@@ -135,27 +136,27 @@ export default function SmartScheduleResponseResultForm() {
 
             {/* Time Slots */}
             {dateSchedule.slots.map((slot, slotIndex) => (
-                <div key={slotIndex} className="bg-white h-[118px] flex items-center px-[26px] gap-0">
-                  {/* Time */}
-                  <p className="text-subtitle-rg text-gray-950 w-[60px] flex-shrink-0 mr-[35px]">{slot.time}</p>
+              <div key={slotIndex} className="bg-white h-[118px] flex items-center px-[26px] gap-0">
+                {/* Time */}
+                <p className="text-subtitle-rg text-gray-950 w-[60px] flex-shrink-0 mr-[35px]">{slot.time}</p>
 
-                  {/* Applicants Card */}
-                  <div className="border-[1.5px] border-gray-200 rounded-[10px] p-[15px] flex flex-col gap-[6px] flex-1 min-w-0 overflow-hidden">
-                    {slot.applicants.map((applicant, appIndex) => (
-                      <p 
-                        key={appIndex} 
-                        className={`text-body-sm-rg truncate ${
-                          searchQuery && applicant.name.toLowerCase().includes(searchQuery.toLowerCase())
-                            ? 'text-primary'
-                            : 'text-gray-950'
-                        }`}
-                      >
-                        {applicant.name}({applicant.school}/{applicant.major}/{applicant.position})
-                      </p>
-                    ))}
-                  </div>
+                {/* Applicants Card */}
+                <div className="border-[1.5px] border-gray-200 rounded-[10px] p-[15px] flex flex-col gap-[6px] flex-1 min-w-0 overflow-hidden">
+                  {slot.applicants.map((applicant, appIndex) => (
+                    <p
+                      key={appIndex}
+                      className={`text-body-sm-rg truncate ${
+                        searchQuery && applicant.name.toLowerCase().includes(searchQuery.toLowerCase())
+                          ? 'text-primary'
+                          : 'text-gray-950'
+                      }`}
+                    >
+                      {applicant.name}({applicant.school}/{applicant.major}/{applicant.position})
+                    </p>
+                  ))}
                 </div>
-              ))}
+              </div>
+            ))}
           </div>
         ))}
       </div>

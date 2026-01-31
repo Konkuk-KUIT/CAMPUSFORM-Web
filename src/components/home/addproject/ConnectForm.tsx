@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Header from '@/components/Header';
-import Button from '@/components/Btn';
+import Header from '@/components/ui/Header';
+import Button from '@/components/ui/Btn';
 import SheetDropdown from '@/components/home/addproject/SheetDropdown';
 
 export default function ConnectForm() {
@@ -32,7 +32,7 @@ export default function ConnectForm() {
   });
 
   const handleMappingChange = (field: keyof typeof mappings, value: string) => {
-    setMappings((prev) => ({ ...prev, [field]: value }));
+    setMappings(prev => ({ ...prev, [field]: value }));
   };
 
   const handleConnect = () => {
@@ -43,7 +43,12 @@ export default function ConnectForm() {
   const renderSection = (label: string, fieldKey: keyof typeof mappings, placeholder: string) => (
     <div className="flex flex-col gap-2">
       <label className="text-[14px] font-bold text-gray-950">{label}</label>
-      <SheetDropdown options={sheetHeaders} value={mappings[fieldKey]} onChange={(val) => handleMappingChange(fieldKey, val)} placeholder={placeholder} />
+      <SheetDropdown
+        options={sheetHeaders}
+        value={mappings[fieldKey]}
+        onChange={val => handleMappingChange(fieldKey, val)}
+        placeholder={placeholder}
+      />
     </div>
   );
 
@@ -54,7 +59,8 @@ export default function ConnectForm() {
 
         <div className="flex-1 px-5 py-6 flex flex-col gap-6 overflow-y-auto scrollbar-hide pb-24">
           <p className="text-[12px] text-gray-500 leading-[18px]">
-            스프레드 시트의 질문을 서비스 표준 항목과 연결해 주세요.<br />
+            스프레드 시트의 질문을 서비스 표준 항목과 연결해 주세요.
+            <br />
             연결된 정보는 이후 서류·면접 관리에 활용됩니다.
           </p>
 

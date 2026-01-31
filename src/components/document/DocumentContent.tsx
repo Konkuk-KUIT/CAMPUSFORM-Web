@@ -1,13 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import TopTab from '@/components/TopTab';
+import TopTab from '@/components/ui/TopTab';
 import SearchBar from '@/components/form/SearchBar';
-import ApplicantFileCard from '@/components/ApplicantFile';
-import BottomSheet from '@/components/BottomSheet';
-import BtnRound from '@/components/BtnRound';
-import InputComment from '@/components/InputComment';
-import Reply from '@/components/Reply';
+import ApplicantFileCard from '@/components/ui/ApplicantFile';
+import BottomSheet from '@/components/ui/BottomSheet';
+import BtnRound from '@/components/ui/BtnRound';
+import InputComment from '@/components/ui/InputComment';
+import Reply from '@/components/ui/Reply';
 
 export default function DocumentContent() {
   const [selectedTab, setSelectedTab] = useState<'전체' | '보류' | '합격' | '불합격'>('전체');

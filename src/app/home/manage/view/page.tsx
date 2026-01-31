@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
-import ProfileCross from '@/components/ProfileCross';
+import ProfileCross from '@/components/ui/ProfileCross';
 
 interface Admin {
   id: number;
@@ -66,7 +66,9 @@ export default function ManageApplicationViewPage() {
           <div className="flex flex-col gap-2">
             <label className="text-[14px] font-bold text-gray-950">모집 기간 설정</label>
             <div className="w-full h-[48px] flex items-center justify-between px-4 text-left rounded-[10px] border border-gray-100 bg-gray-50 text-[14px] text-gray-800">
-              <span>{startDate} - {endDate}</span>
+              <span>
+                {startDate} - {endDate}
+              </span>
               <Image src="/icons/calendar.svg" alt="calendar" width={18} height={18} />
             </div>
           </div>
@@ -87,13 +89,8 @@ export default function ManageApplicationViewPage() {
               </div>
             </div>
             <div className="flex flex-col mt-2 gap-2">
-              {adminList.map((admin) => (
-                <ProfileCross
-                  key={admin.id}
-                  nickname={admin.name}
-                  email={admin.email}
-                  isLeader={admin.isLeader}
-                />
+              {adminList.map(admin => (
+                <ProfileCross key={admin.id} nickname={admin.name} email={admin.email} isLeader={admin.isLeader} />
               ))}
             </div>
           </div>

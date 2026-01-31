@@ -3,11 +3,11 @@
 import React, { useMemo, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import Header from '@/components/Header';
+import Header from '@/components/ui/Header';
 import Navbar from '@/components/Navbar';
-import Btn from '@/components/Btn';
-import SmartScheduleDropdown from '@/components/SmartScheduleDropdown';
-import TimePicker from '@/components/TimePicker';
+import Btn from '@/components/ui/Btn';
+import SmartScheduleDropdown from '@/components/ui/SmartScheduleDropdown';
+import TimePicker from '@/components/ui/TimePicker';
 
 type TimeOption = { label: string; value: string };
 
@@ -144,10 +144,10 @@ export default function InterviewInfoSettingForm() {
       restDuration: restDuration ? `${restDuration}분` : '없음',
     };
     console.log('면접 정보 설정', payload);
-    
+
     // 설정 완료 상태 저장
     localStorage.setItem('interviewInfoConfigured', 'true');
-    
+
     alert('면접 정보가 설정되었습니다');
     // TODO: API call to save data
     router.push('/smart-schedule');
@@ -172,28 +172,43 @@ export default function InterviewInfoSettingForm() {
               <div className="w-[303px] rounded-radius-10 bg-white px-2.5 py-2">
                 {/* Month label */}
                 <div className="flex items-center justify-center gap-2 mb-2">
-                  <button aria-label="prev" className="w-[33px] h-[33px] flex items-center justify-center rotate-180" onClick={handlePrevMonth}>
+                  <button
+                    aria-label="prev"
+                    className="w-[33px] h-[33px] flex items-center justify-center rotate-180"
+                    onClick={handlePrevMonth}
+                  >
                     <Image src="/icons/chevron-right.svg" alt="prev" width={24} height={7} />
                   </button>
                   <span className="text-[14px] font-medium text-gray-950 w-[184px] text-center">
                     {year}년 {month + 1}월
                   </span>
-                  <button aria-label="next" className="w-[33px] h-[33px] flex items-center justify-center" onClick={handleNextMonth}>
+                  <button
+                    aria-label="next"
+                    className="w-[33px] h-[33px] flex items-center justify-center"
+                    onClick={handleNextMonth}
+                  >
                     <Image src="/icons/chevron-right.svg" alt="next" width={24} height={7} />
                   </button>
                 </div>
 
                 {/* Week labels */}
                 <div className="grid grid-cols-7 h-[18px] mb-1">
-                  {['일','월','화','수','목','금','토'].map((w) => (
-                    <div key={w} className="flex items-center justify-center text-[12px] text-gray-400">{w}</div>
+                  {['일', '월', '화', '수', '목', '금', '토'].map(w => (
+                    <div key={w} className="flex items-center justify-center text-[12px] text-gray-400">
+                      {w}
+                    </div>
                   ))}
                 </div>
 
                 {/* Calendar grid */}
                 <div className="grid grid-cols-7 gap-y-[2px]">
                   {calendarCells.map((cell, idx) => {
-                    const isSelected = selectedDate && cell.current && selectedDate.getDate() === cell.d && selectedDate.getMonth() === month && selectedDate.getFullYear() === year;
+                    const isSelected =
+                      selectedDate &&
+                      cell.current &&
+                      selectedDate.getDate() === cell.d &&
+                      selectedDate.getMonth() === month &&
+                      selectedDate.getFullYear() === year;
                     return (
                       <button
                         key={idx}
@@ -201,9 +216,13 @@ export default function InterviewInfoSettingForm() {
                         onClick={() => cell.current && setSelectedDate(new Date(year, month, cell.d))}
                       >
                         <div className="relative w-6 h-6 flex items-center justify-center">
-                          <span className={`text-[14px] z-10 ${
-                            isSelected ? 'text-white font-semibold' : cell.current ? 'text-gray-950' : 'text-gray-300'
-                          }`}>{cell.d}</span>
+                          <span
+                            className={`text-[14px] z-10 ${
+                              isSelected ? 'text-white font-semibold' : cell.current ? 'text-gray-950' : 'text-gray-300'
+                            }`}
+                          >
+                            {cell.d}
+                          </span>
                           {isSelected && <div className="absolute inset-0 rounded-full bg-blue-600" />}
                         </div>
                       </button>
@@ -241,9 +260,21 @@ export default function InterviewInfoSettingForm() {
               <span className="text-[15px] font-medium text-gray-950">타임 당 지원자 수</span>
               <div className="flex items-center justify-end gap-2">
                 <span className="text-[12px] text-gray-950">최대</span>
-                <button aria-label="decrease" className="w-[29px] h-[29px] bg-blue-100 rounded-full flex items-center justify-center text-[18px]" onClick={() => setMaxApplicantsPerSlot(v => Math.max(1, v - 1))}>−</button>
+                <button
+                  aria-label="decrease"
+                  className="w-[29px] h-[29px] bg-blue-100 rounded-full flex items-center justify-center text-[18px]"
+                  onClick={() => setMaxApplicantsPerSlot(v => Math.max(1, v - 1))}
+                >
+                  −
+                </button>
                 <span className="text-[16px] text-gray-600 w-[32px] text-center">{maxApplicantsPerSlot}</span>
-                <button aria-label="increase" className="w-[29px] h-[29px] bg-blue-100 rounded-full flex items-center justify-center text-[18px]" onClick={() => setMaxApplicantsPerSlot(v => v + 1)}>+</button>
+                <button
+                  aria-label="increase"
+                  className="w-[29px] h-[29px] bg-blue-100 rounded-full flex items-center justify-center text-[18px]"
+                  onClick={() => setMaxApplicantsPerSlot(v => v + 1)}
+                >
+                  +
+                </button>
               </div>
             </div>
           </div>
@@ -255,16 +286,40 @@ export default function InterviewInfoSettingForm() {
               {/* 최소 */}
               <div className="flex items-center justify-end gap-2">
                 <span className="text-[12px] text-gray-950">최소</span>
-                <button aria-label="min-dec" className="w-[29px] h-[29px] bg-blue-100 rounded-full flex items-center justify-center text-[18px]" onClick={() => setMinInterviewersPerSlot(v => Math.max(1, v - 1))}>−</button>
+                <button
+                  aria-label="min-dec"
+                  className="w-[29px] h-[29px] bg-blue-100 rounded-full flex items-center justify-center text-[18px]"
+                  onClick={() => setMinInterviewersPerSlot(v => Math.max(1, v - 1))}
+                >
+                  −
+                </button>
                 <span className="text-[16px] text-gray-600 w-[32px] text-center">{minInterviewersPerSlot}</span>
-                <button aria-label="min-inc" className="w-[29px] h-[29px] bg-blue-100 rounded-full flex items-center justify-center text-[18px]" onClick={() => setMinInterviewersPerSlot(v => v + 1)}>+</button>
+                <button
+                  aria-label="min-inc"
+                  className="w-[29px] h-[29px] bg-blue-100 rounded-full flex items-center justify-center text-[18px]"
+                  onClick={() => setMinInterviewersPerSlot(v => v + 1)}
+                >
+                  +
+                </button>
               </div>
               {/* 최대 */}
               <div className="flex items-center justify-end gap-2">
                 <span className="text-[12px] text-gray-950">최대</span>
-                <button aria-label="max-dec" className="w-[29px] h-[29px] bg-blue-100 rounded-full flex items-center justify-center text-[18px]" onClick={() => setMaxInterviewersPerSlot(v => Math.max(1, v - 1))}>−</button>
+                <button
+                  aria-label="max-dec"
+                  className="w-[29px] h-[29px] bg-blue-100 rounded-full flex items-center justify-center text-[18px]"
+                  onClick={() => setMaxInterviewersPerSlot(v => Math.max(1, v - 1))}
+                >
+                  −
+                </button>
                 <span className="text-[16px] text-gray-600 w-[32px] text-center">{maxInterviewersPerSlot}</span>
-                <button aria-label="max-inc" className="w-[29px] h-[29px] bg-blue-100 rounded-full flex items-center justify-center text-[18px]" onClick={() => setMaxInterviewersPerSlot(v => v + 1)}>+</button>
+                <button
+                  aria-label="max-inc"
+                  className="w-[29px] h-[29px] bg-blue-100 rounded-full flex items-center justify-center text-[18px]"
+                  onClick={() => setMaxInterviewersPerSlot(v => v + 1)}
+                >
+                  +
+                </button>
               </div>
             </div>
           </div>
@@ -273,7 +328,9 @@ export default function InterviewInfoSettingForm() {
           <div className="mt-3 px-2">
             <div className="grid grid-cols-2 gap-y-3 py-2">
               <div>
-                <span className="text-[15px] font-medium text-gray-950">예상 소요 시간 <span className="text-[12px] text-gray-600">(분/타임 당)</span></span>
+                <span className="text-[15px] font-medium text-gray-950">
+                  예상 소요 시간 <span className="text-[12px] text-gray-600">(분/타임 당)</span>
+                </span>
               </div>
               <div className="flex items-center justify-end">
                 <SmartScheduleDropdown
@@ -300,7 +357,9 @@ export default function InterviewInfoSettingForm() {
 
           {/* CTA */}
           <div className="mt-4 mb-20 px-4">
-            <Btn variant="primary" size="lg" className="w-full" onClick={handleSubmit}>설정하기</Btn>
+            <Btn variant="primary" size="lg" className="w-full" onClick={handleSubmit}>
+              설정하기
+            </Btn>
           </div>
         </div>
 

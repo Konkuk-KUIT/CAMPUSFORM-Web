@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import TextboxGoogle from '@/components/home/TextboxGoogle';
-import ProfileCross from '@/components/ProfileCross';
+import ProfileCross from '@/components/ui/ProfileCross';
 import DateRangePickerModal from '@/components/home/addproject/DateRangePickerModal';
-import InfoModal from '@/components/InfoModal';
+import InfoModal from '@/components/ui/InfoModal';
 import SheetDropdown from '@/components/home/addproject/SheetDropdown';
 import Navbar from '@/components/Navbar';
-import Button from '@/components/Btn';
+import Button from '@/components/ui/Btn';
 
 interface Admin {
   id: number;
@@ -62,7 +62,7 @@ export default function ManageApplicationForm() {
   };
 
   const handleDeleteAdmin = (id: number) => {
-    setAdminList(adminList.filter((admin) => admin.id !== id));
+    setAdminList(adminList.filter(admin => admin.id !== id));
   };
 
   const handleDateConfirm = (start: Date | null, end: Date | null) => {
@@ -81,10 +81,19 @@ export default function ManageApplicationForm() {
   return (
     <div className="flex justify-center min-h-screen bg-white">
       <style jsx global>{`
-        .react-datepicker-wrapper { width: 100%; }
-        .react-datepicker__header { background-color: var(--color-gray-100); border-bottom: none; }
-        .react-datepicker__day--selected { background-color: var(--color-primary) !important; }
-        .react-datepicker__day--keyboard-selected { background-color: var(--color-blue-500) !important; }
+        .react-datepicker-wrapper {
+          width: 100%;
+        }
+        .react-datepicker__header {
+          background-color: var(--color-gray-100);
+          border-bottom: none;
+        }
+        .react-datepicker__day--selected {
+          background-color: var(--color-primary) !important;
+        }
+        .react-datepicker__day--keyboard-selected {
+          background-color: var(--color-blue-500) !important;
+        }
       `}</style>
 
       <div className="relative w-[375px] bg-white min-h-screen shadow-lg flex flex-col">
@@ -100,9 +109,9 @@ export default function ManageApplicationForm() {
           <div className="flex flex-col gap-2">
             <label className="text-[14px] font-bold text-gray-950">모집 상태</label>
             <SheetDropdown
-              options={["모집 중", "모집 마감"]}
+              options={['모집 중', '모집 마감']}
               value={status}
-              onChange={(val) => setStatus(val)}
+              onChange={val => setStatus(val)}
               placeholder="모집 상태를 선택하세요"
               showNoneOption={false}
             />
@@ -160,7 +169,7 @@ export default function ManageApplicationForm() {
             </div>
 
             <div className="flex flex-col mt-2">
-              {adminList.map((admin) => (
+              {adminList.map(admin => (
                 <ProfileCross
                   key={admin.id}
                   nickname={admin.name}
@@ -203,12 +212,15 @@ export default function ManageApplicationForm() {
                 <Image src="/icons/warning.svg" alt="warning" width={80} height={80} />
               </div>
               <p className="text-[13px] text-gray-950 text-center leading-snug mb-4">
-                같은 포지션이라도 명칭이 다르면<br />
-                서로 다른 그룹으로 분류될 수 있어요.<br />
+                같은 포지션이라도 명칭이 다르면
+                <br />
+                서로 다른 그룹으로 분류될 수 있어요.
+                <br />
                 <span className="text-gray-500 text-[12px] mt-1 block">(예: 디자인팀 / Design팀)</span>
               </p>
               <p className="text-[13px] text-gray-950 text-center leading-snug">
-                원활한 분류를 위해 구글 시트에서<br />
+                원활한 분류를 위해 구글 시트에서
+                <br />
                 <span className="text-primary font-bold">포지션 명칭을 하나로 통일</span> 후 연동해 주세요.
               </p>
             </div>

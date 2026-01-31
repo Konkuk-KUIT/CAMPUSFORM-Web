@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import ResultTab from '@/components/ResultTab';
-import ResultCard from '@/components/ResultCard';
+import ResultTab from '@/components/ui/ResultTab';
+import ResultCard from '@/components/ui/ResultCard';
 import Navbar from '@/components/Navbar';
 import DocumentPassedList from '@/components/document/DocumentPassedList';
 import DocumentFailedList from '@/components/document/DocumentFailedList';

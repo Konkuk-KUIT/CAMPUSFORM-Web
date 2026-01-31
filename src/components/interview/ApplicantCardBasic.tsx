@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import AppointmentInfoButton from '@/components/AppointmentInfoButton';
+import AppointmentInfoButton from '@/components/ui/AppointmentInfoButton';
 
 interface ApplicantCardProps {
   name: string;
@@ -61,11 +61,7 @@ export default function ApplicantCardBasic({
       {/* 하단: 면접 일정 + 댓글/즐겨찾기 */}
       {onAppointmentClick && (
         <div className="flex items-center justify-between mt-2">
-          <AppointmentInfoButton
-            date={appointmentDate}
-            time={appointmentTime}
-            onClick={onAppointmentClick}
-          />
+          <AppointmentInfoButton date={appointmentDate} time={appointmentTime} onClick={onAppointmentClick} />
 
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1 text-gray-300">

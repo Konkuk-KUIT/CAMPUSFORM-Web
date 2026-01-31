@@ -1,4 +1,4 @@
-import InterviewHeader from '@/components/InterviewHeader';
+import InterviewHeader from '@/components/ui/InterviewHeader';
 import Navbar from '@/components/Navbar';
 
 import InterviewInitialCards from '@/components/interview/InterviewInitialCards';
