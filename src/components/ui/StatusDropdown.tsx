@@ -60,7 +60,7 @@ export default function StatusDropdown({ value, onChange }: StatusDropdownProps)
               <button
                 key={option.value}
                 onClick={() => handleSelect(option.value)}
-                className="w-full px-3 py-2.5 flex items-center gap-2 hover:bg-gray-100"
+                className="w-full pl-5 py-2.5 flex items-center gap-2 hover:bg-gray-100"
               >
                 <div className={`w-1.75 h-1.75 rounded-full ${option.color} shrink-0`} />
                 <span className="text-body-sm-rg whitespace-nowrap">{option.label}</span>
