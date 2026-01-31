@@ -4,12 +4,16 @@
 import { useState } from 'react';
 import ApplicantCardBasic from '@/components/interview/ApplicantCardBasic';
 import AppointmentModal from '@/components/interview/AppointmentModal';
+import BottomSheet from '@/components/ui/BottomSheet';
+import InputComment from '@/components/ui/InputComment';
+import Reply from '@/components/ui/Reply';
 
 export default function InterviewDetailClient() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCommentOpen, setCommentOpen] = useState(false);
   const [appointmentDate, setAppointmentDate] = useState('11월 15일 (수)');
   const [appointmentTime, setAppointmentTime] = useState('14:00');
-
+  
   const handleAppointmentClick = () => {
     setIsModalOpen(true);
   };
@@ -32,10 +36,25 @@ export default function InterviewDetailClient() {
           phone="010-1234-5678"
           email="minjun@gmail.com"
           commentCount={3}
+          onCommentClick={() => setCommentOpen(true)}
           appointmentDate={appointmentDate}
           appointmentTime={appointmentTime}
           onAppointmentClick={handleAppointmentClick}
         />
+
+        {/* 댓글 바텀시트 */}
+        <BottomSheet isOpen={isCommentOpen} onClose={() => setCommentOpen(false)}>
+          <InputComment />
+          <Reply
+            id="1"
+            author="Seohee LEE"
+            content="지원동기가 인상적이었어요."
+            createdAt="2025.11.20. 14:20"
+            isAuthor={true}
+            replies={[]}
+          />
+        </BottomSheet>
+
       </div>
 
       {/* 모달 */}
