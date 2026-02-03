@@ -314,7 +314,7 @@ export default function SmartScheduleCalendarPreview({
                       {/* Hover tooltip - 전체 캘린더에서만 표시 */}
                       {!interviewerName && hoveredCell?.day === dayIdx && hoveredCell?.time === timeIdx && (
                         <div
-                          className={`absolute left-full ml-2 bg-white rounded-[10px] shadow-[2px_2px_10px_0px_rgba(0,0,0,0.1)] px-[23px] py-[15px] w-[150px] z-50 flex flex-col gap-[10px] ${hoveredCell.half === 'top' ? 'top-0' : 'top-1/2'}`}
+                          className={`absolute left-full ml-2 bg-white rounded-[10px] px-[23px] py-[15px] w-[150px] z-50 flex flex-col gap-[10px] ${hoveredCell.half === 'top' ? 'top-0' : 'top-1/2'}`}
                         >
                           {getAvailableInterviewers(hoveredCell.half).map((interviewer, idx) => (
                             <div key={idx} className="flex items-start gap-[3px] text-[14px] text-black leading-[20px]">

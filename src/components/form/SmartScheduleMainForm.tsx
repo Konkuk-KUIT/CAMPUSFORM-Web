@@ -34,8 +34,8 @@ export default function SmartScheduleMainForm() {
   ];
 
   return (
-    <main className="min-h-screen flex justify-center bg-white font-['Pretendard']">
-      <div className="relative w-[375px] bg-white min-h-screen shadow-lg flex flex-col overflow-x-hidden">
+    <main className="min-h-screen flex justify-center bg-white ">
+      <div className="relative w-[375px] bg-white min-h-screen flex flex-col overflow-x-hidden">
         {/* Top app bar with logo and alarm */}
         <header className="flex items-center justify-between h-12 px-4 bg-white">
           <div className="w-6 h-6">

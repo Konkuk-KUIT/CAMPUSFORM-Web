@@ -49,7 +49,7 @@ export default function SmartScheduleDropdown({
 
       {/* 드롭다운 메뉴 */}
       {isOpen && (
-        <div className={`absolute top-full right-0 mt-1 z-10 ${width} bg-white rounded-[10px] overflow-hidden shadow-sm border border-gray-200 max-h-[200px] overflow-y-auto`}>
+        <div className={`absolute top-full right-0 mt-1 z-10 ${width} bg-white rounded-[10px] overflow-hidden border border-gray-200 max-h-[200px] overflow-y-auto`}>
           {options.map(option => (
             <button
               key={option.id}
