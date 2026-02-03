@@ -221,6 +221,9 @@ export default function AddProjectForm() {
             생성하기
           </Button>
         </div>
+        
+        {/* Spacer for fixed button */}
+        <div className="h-24" />
 
         {showWarningModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">

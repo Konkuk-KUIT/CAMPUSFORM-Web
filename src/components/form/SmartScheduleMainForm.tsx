@@ -199,7 +199,9 @@ export default function SmartScheduleMainForm() {
               스마트 시간표 생성
             </Btn>
           </div>
-          <div className="h-5" />
+          
+          {/* Spacer for fixed button */}
+          <div className="h-32" />
 
           {/* Overlay message - 면접 정보 미설정 */}
           {showOverlay && (

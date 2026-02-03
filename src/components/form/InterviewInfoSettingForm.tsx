@@ -361,6 +361,9 @@ export default function InterviewInfoSettingForm() {
               설정하기
             </Btn>
           </div>
+          
+          {/* Spacer for fixed button */}
+          <div className="h-32" />
         </div>
 
         {/* Bottom nav */}

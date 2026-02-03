@@ -79,8 +79,9 @@ export default function ConnectForm() {
           <Button variant="primary" size="lg" className="w-full" onClick={handleConnect}>
             연동하기
           </Button>
-        </div>
-      </div>
+        </div>        
+        {/* Spacer for fixed button */}
+        <div className="h-24" />      </div>
     </div>
   );
 }
