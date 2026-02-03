@@ -14,6 +14,7 @@ export default function SmartScheduleMainForm() {
   const router = useRouter();
   const [showOverlay, setShowOverlay] = useState(true);
   const [selectedInterviewer, setSelectedInterviewer] = useState<number | null>(null);
+  const [requiredInterviewers, setRequiredInterviewers] = useState<{ [key: number]: boolean }>({});
   const [hasSchedule, setHasSchedule] = useState(false); // 스마트 시간표 생성 여부
   const [isRepresentative, setIsRepresentative] = useState(true); // 대표자 여부
 
@@ -75,7 +76,7 @@ export default function SmartScheduleMainForm() {
             {/* Calendar preview - 전체 시간표 (항상 표시) */}
             <div className="mb-3">
               <AllAccordion title="전체">
-                <SmartScheduleCalendarPreview seeds={[1, 2, 3]} interviewers={interviewers} />
+                <SmartScheduleCalendarPreview seeds={[1, 2, 3]} interviewers={interviewers.map((int, idx) => ({ ...int, isRequired: requiredInterviewers[idx] || false }))} />
               </AllAccordion>
             </div>
 
@@ -127,6 +128,8 @@ export default function SmartScheduleMainForm() {
                         seed={idx + 1}
                         showProfiles={false}
                         showRequiredSection={true}
+                        requiredInterviewer={requiredInterviewers[idx] || false}
+                        onRequiredInterviewerChange={(value) => setRequiredInterviewers(prev => ({ ...prev, [idx]: value }))} 
                       />
                     </div>
                   )}
