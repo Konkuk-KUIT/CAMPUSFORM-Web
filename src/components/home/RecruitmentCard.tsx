@@ -45,7 +45,7 @@ export default function RecruitmentCard({
   const isActive = status === 'on';
 
   const cardClasses = clsx(
-    "relative w-[343px] h-[130px] rounded-10 shadow-sm overflow-hidden font-['Pretendard'] cursor-pointer transition-all duration-200",
+    "relative w-[343px] h-[130px] rounded-10 shadow-sm overflow-hidden cursor-pointer transition-all duration-200",
     {
       'bg-white border border-gray-100 hover:bg-blue-100 active:bg-blue-200': isActive,
       'group bg-gray-100 border border-gray-100 hover:bg-gray-200 active:bg-gray-300': !isActive,

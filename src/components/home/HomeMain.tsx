@@ -98,8 +98,8 @@ export default function HomeMain() {
   };
 
   return (
-    <main className="min-h-screen flex justify-center bg-gray-50 font-['Pretendard']">
-      <div className="relative w-[375px] bg-gray-50 min-h-screen shadow-lg flex flex-col overflow-y-auto">
+    <main className="min-h-screen flex justify-center bg-gray-50">
+      <div className="relative w-[375px] bg-gray-50 min-h-screen flex flex-col overflow-y-auto">
         <div className="sticky top-0 z-50 bg-white">
           <TopAppBar />
         </div>

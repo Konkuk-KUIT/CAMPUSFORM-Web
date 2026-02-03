@@ -25,7 +25,7 @@ export default function ScheduleList({ selectedDate = new Date(), schedules = []
   const isToday = selectedDate.toDateString() === today.toDateString();
 
   return (
-<section className="mx-auto w-[343px] min-h-[345px] bg-white rounded-t-[20px] px-[21px] pt-[20px] pb-[40px] shadow-sm font-['Pretendard']">
+<section className="mx-auto w-[343px] min-h-[345px] bg-white rounded-t-[20px] px-[21px] pt-[20px] pb-[40px] shadow-sm">
           
       <div className="flex flex-col mb-[8px] pb-[12px] border-b border-gray-200">
         <h2 className="text-[16px] font-bold text-gray-950">{isToday ? "오늘" : "일정"}</h2>

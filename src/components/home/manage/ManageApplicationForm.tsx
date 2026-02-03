@@ -96,7 +96,7 @@ export default function ManageApplicationForm() {
         }
       `}</style>
 
-      <div className="relative w-[375px] bg-white min-h-screen shadow-lg flex flex-col">
+      <div className="relative w-[375px] bg-white min-h-screen flex flex-col">
         <div className="flex items-center justify-between h-12 px-4 bg-white border-b border-gray-100">
           <Image src="/icons/logo.svg" alt="logo" width={21} height={22} />
           <span className="text-[15px] font-semibold text-gray-950">지원서 관리</span>

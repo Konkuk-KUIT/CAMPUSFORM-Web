@@ -54,7 +54,7 @@ export default function ConnectForm() {
 
   return (
     <div className="flex justify-center min-h-screen bg-white">
-      <div className="relative w-[375px] bg-white min-h-screen shadow-lg flex flex-col">
+      <div className="relative w-[375px] bg-white min-h-screen flex flex-col">
         <Header title="스프레드 시트 연동" backTo="/home/addproject" />
 
         <div className="flex-1 px-5 py-6 flex flex-col gap-6 overflow-y-auto scrollbar-hide pb-24">

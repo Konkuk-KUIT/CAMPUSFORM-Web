@@ -69,7 +69,7 @@ export default function Calendar({
   });
 
   const containerClasses = clsx(
-    "w-full flex flex-col items-center justify-center font-['Pretendard'] py-[20px]",
+    "w-full flex flex-col items-center justify-center py-[20px]",
     {
       "calendar-no-today": disableTodayHighlight,
     }
@@ -82,7 +82,6 @@ export default function Calendar({
           .react-datepicker {
             border: none !important;
             background: transparent !important;
-            font-family: 'Pretendard' !important;
             width: 100% !important;
             max-width: 100% !important;
             margin: 0 auto !important;
@@ -251,20 +250,22 @@ export default function Calendar({
               if (!date) return day;
               const eventKey = date.toDateString();
               const dayEvents = eventMap.get(eventKey) || [];
-              const today = new Date();
-              today.setHours(0, 0, 0, 0);
               const compareDate = new Date(date);
               compareDate.setHours(0, 0, 0, 0);
-              const isToday = compareDate.getTime() === today.getTime();
+              const selectedDate = selected ? new Date(selected) : null;
+              if (selectedDate) {
+                selectedDate.setHours(0, 0, 0, 0);
+              }
+              const isSelected = selectedDate && compareDate.getTime() === selectedDate.getTime();
 
               return (
                 <div className="flex flex-col items-center justify-start w-full h-full gap-[2px] pt-[4px]">
-                  <span className={`text-[14px] font-normal ${isToday ? 'w-[24px] h-[24px] flex items-center justify-center rounded-full bg-[var(--color-primary)] text-white' : ''}`}>
+                  <span className={`text-[14px] font-normal ${isSelected ? 'w-[24px] h-[24px] flex items-center justify-center rounded-full bg-[var(--color-primary)] text-white' : ''}`}>
                     {day}
                   </span>
                   {dayEvents.length > 0 && (
                     <div className="w-[40px] h-[14px] bg-blue-200 rounded-[2px] flex items-center justify-center px-[1px] py-[2px]">
-                      <span className="overflow-hidden text-gray-900 text-center text-ellipsis whitespace-nowrap font-['Pretendard'] text-[10px] font-normal leading-[17px] max-w-full">
+                      <span className="overflow-hidden text-gray-900 text-center text-ellipsis whitespace-nowrap text-[10px] font-normal leading-[17px] max-w-full">
                         {dayEvents[0]}
                       </span>
                     </div>

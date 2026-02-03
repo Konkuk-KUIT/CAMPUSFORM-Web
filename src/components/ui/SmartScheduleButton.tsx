@@ -24,7 +24,7 @@ export default function SmartScheduleButton({
       onClick={onClick}
       className="flex-1 border border-[#bfcefe] rounded-[10px] px-4 py-3 hover:bg-blue-50 transition-colors flex items-center justify-center gap-2"
     >
-      <span className="font-['Pretendard'] font-normal text-[13px] leading-[18px] text-[#1f1f1f] text-center tracking-[0.13px] whitespace-nowrap">
+      <span className="font-normal text-[13px] leading-[18px] text-[#1f1f1f] text-center tracking-[0.13px] whitespace-nowrap">
         {children}
       </span>
       {icon && <Image src={icon} alt="icon" width={iconWidth} height={iconHeight} />}
