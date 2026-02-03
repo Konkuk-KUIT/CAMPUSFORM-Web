@@ -30,7 +30,7 @@ export default function HomeOn({ title, status, dateRange, applicantCount }: Hom
   };
 
   return (
-    <div className="relative w-[343px] h-[130px] bg-white border border-gray-100 rounded-[10px] shadow-sm overflow-hidden hover:bg-blue-100 active:bg-blue-200">
+    <div className="relative w-[343px] h-[130px] bg-white border border-gray-100 rounded-[10px] overflow-hidden hover:bg-blue-100 active:bg-blue-200">
       <h2 className="absolute top-[16px] left-[25px] w-[160px] h-[22px] text-subtitle-sb text-gray-950 whitespace-nowrap truncate">
         {title}
       </h2>
