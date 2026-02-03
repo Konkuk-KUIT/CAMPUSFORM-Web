@@ -194,7 +194,7 @@ export default function SmartScheduleMainForm() {
           </div>
 
           {/* CTA Button */}
-          <div className="mb-12">
+          <div className="fixed bottom-20 left-0 right-0 px-5 max-w-93.75 mx-auto">
             <Btn variant="primary" size="lg" className="w-full">
               스마트 시간표 생성
             </Btn>

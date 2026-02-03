@@ -75,7 +75,7 @@ export default function ConnectForm() {
           </div>
         </div>
 
-        <div className="px-5 pb-5 mt-auto bg-white pt-2 border-t border-gray-50">
+        <div className="fixed bottom-0 left-0 right-0 bg-white px-5 py-4 max-w-93.75 mx-auto">
           <Button variant="primary" size="lg" className="w-full" onClick={handleConnect}>
             연동하기
           </Button>

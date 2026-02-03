@@ -356,7 +356,7 @@ export default function InterviewInfoSettingForm() {
           </div>
 
           {/* CTA */}
-          <div className="mt-4 mb-20 px-4">
+          <div className="fixed bottom-20 left-0 right-0 px-5 max-w-93.75 mx-auto">
             <Btn variant="primary" size="lg" className="w-full" onClick={handleSubmit}>
               설정하기
             </Btn>

@@ -216,7 +216,7 @@ export default function AddProjectForm() {
           />
         )}
 
-        <div className="px-5 pb-5 mt-auto bg-white pt-2">
+        <div className="fixed bottom-0 left-0 right-0 bg-white px-5 py-4 max-w-93.75 mx-auto">
           <Button variant="primary" size="lg" disabled={isButtonDisabled} className="w-full">
             생성하기
           </Button>
