@@ -69,7 +69,7 @@ export default function Calendar({
   });
 
   const containerClasses = clsx(
-    "w-full flex flex-col items-center justify-center py-[20px]",
+    "w-full flex flex-col items-center justify-center",
     {
       "calendar-no-today": disableTodayHighlight,
     }
@@ -275,7 +275,7 @@ export default function Calendar({
             },
           })}
           renderCustomHeader={({ date, decreaseMonth, increaseMonth }) => (
-            <div className="flex items-center justify-between mb-[15px]">
+            <div className="flex items-center justify-between mb-[8px]">
               <button
                 onClick={decreaseMonth}
                 className="w-[24px] h-[24px] flex items-center justify-center hover:bg-gray-100 rounded transition"
