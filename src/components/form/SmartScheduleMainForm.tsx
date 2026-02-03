@@ -37,15 +37,15 @@ export default function SmartScheduleMainForm() {
     <main className="min-h-screen flex justify-center bg-white font-['Pretendard']">
       <div className="relative w-[375px] bg-white min-h-screen shadow-lg flex flex-col overflow-x-hidden">
         {/* Top app bar with logo and alarm */}
-        <div className="relative flex items-center justify-center h-12 px-4 bg-white border-b border-gray-200">
-          <div className="absolute left-4 flex items-center gap-2">
-            <Image src="/icons/logo.svg" alt="logo" width={24} height={24} />
+        <header className="flex items-center justify-between h-12 px-4 bg-white">
+          <div className="w-6 h-6">
+            <Image src="/icons/logo.svg" alt="로고" width={22} height={22} />
           </div>
-          <span className="text-title font-semibold">스마트 시간표</span>
-          <button aria-label="alarm" className="absolute right-4 p-1">
-            <Image src="/icons/alarm.svg" alt="alarm" width={16.5} height={19.5} />
+          <span className="text-title">스마트 시간표</span>
+          <button className="w-6 h-6">
+            <Image src="/icons/notification.svg" alt="알림" width={24} height={24} />
           </button>
-        </div>
+        </header>
 
         {/* Main content */}
         <div className="flex-1 px-4 pt-4 pb-4 overflow-y-auto">
