@@ -33,7 +33,7 @@ export default function ProfileCard({
 
       <button 
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-[24px] h-[24px] flex items-center justify-center text-gray-950 transition-transform duration-200"
+        className="w-[24px] h-[24px] flex items-center justify-center text-gray-950"
       >
         <svg 
           width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"

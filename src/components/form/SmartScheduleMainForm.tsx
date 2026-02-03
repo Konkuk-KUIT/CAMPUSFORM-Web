@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -116,7 +116,7 @@ export default function SmartScheduleMainForm() {
                       alt="toggle"
                       width={24}
                       height={24}
-                      className={`flex-shrink-0 transition-transform ${selectedInterviewer === idx ? 'rotate-180' : ''}`}
+                      className={`flex-shrink-0 ${selectedInterviewer === idx ? 'rotate-180' : ''}`}
                     />
                   </button>
 
