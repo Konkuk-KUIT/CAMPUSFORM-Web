@@ -205,7 +205,7 @@ export default function SmartScheduleMainForm() {
 
           {/* Overlay message - 면접 정보 미설정 */}
           {showOverlay && (
-            <div className="absolute left-0 right-0 top-[115px] bottom-20 flex items-center justify-center z-50 bg-white/60">
+            <div className="absolute left-0 right-0 top-[115px] bottom-20 flex items-center justify-center z-50 bg-white/80">
               <div className="text-center">
                 <p className="text-subtitle-md text-gray-950 font-medium">면접 정보 설정 후 이용 가능합니다.</p>
               </div>
