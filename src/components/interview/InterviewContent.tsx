@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import PullToRefresh from '@/components/PullToRefresh';
 import TopTab from '@/components/ui/TopTab';
 import SearchBar from '@/components/form/SearchBar';
 import ApplicantFileCard from '@/components/interview/ApplicantFileCard';
@@ -20,9 +21,14 @@ export default function InterviewContent() {
   const [selectedApplicantId, setSelectedApplicantId] = useState<string>('');
   const [selectedPosition, setSelectedPosition] = useState<string>('전체');
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
-
   const [applicants, setApplicants] = useState(mockInterviewApplicants);
   const [comments, setComments] = useState(mockComments);
+
+  // 새로고침 핸들러
+  const handleRefresh = async () => {
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    setApplicants([...mockInterviewApplicants]);
+  };
 
   // 포지션 목록 추출
   const positions = useMemo(() => {
@@ -119,7 +125,7 @@ export default function InterviewContent() {
   }
 
   return (
-    <>
+    <PullToRefresh onRefresh={handleRefresh}>
       {/* 상단 탭 */}
       <TopTab counts={counts} onTabChange={setSelectedTab} />
 
@@ -199,6 +205,6 @@ export default function InterviewContent() {
           )}
         </div>
       </BottomSheet>
-    </>
+    </PullToRefresh>
   );
 }
