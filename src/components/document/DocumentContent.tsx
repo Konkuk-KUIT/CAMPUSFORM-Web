@@ -19,6 +19,7 @@ export default function DocumentContent() {
   const [isCommentOpen, setCommentOpen] = useState(false);
   const [selectedApplicantId, setSelectedApplicantId] = useState<string>('');
   const [selectedPosition, setSelectedPosition] = useState<string>('전체');
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
   const [applicants, setApplicants] = useState(mockApplicants);
   const [comments, setComments] = useState(mockComments);
@@ -85,6 +86,19 @@ export default function DocumentContent() {
     setCommentOpen(true);
   };
 
+  // 즐겨찾기 토글 핸들러
+  const handleToggleFavorite = (applicantId: string) => {
+    setFavorites((prev) => {
+      const newFavorites = new Set(prev);
+      if (newFavorites.has(applicantId)) {
+        newFavorites.delete(applicantId);
+      } else {
+        newFavorites.add(applicantId);
+      }
+      return newFavorites;
+    });
+  };
+
   return (
     <>
       {/* 상단 탭 */}
@@ -113,6 +127,8 @@ export default function DocumentContent() {
               info={`${applicant.university} / ${applicant.major} / ${applicant.position}`}
               initialStatus={applicant.status}
               commentCount={applicant.commentCount}
+              isFavorite={favorites.has(applicant.id)}
+              onToggleFavorite={() => handleToggleFavorite(applicant.id)}
               onCommentClick={() => handleCommentClick(applicant.id)}
             />
           ))

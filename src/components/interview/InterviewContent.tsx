@@ -19,6 +19,7 @@ export default function InterviewContent() {
   const [isCommentOpen, setCommentOpen] = useState(false);
   const [selectedApplicantId, setSelectedApplicantId] = useState<string>('');
   const [selectedPosition, setSelectedPosition] = useState<string>('전체');
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
   const [applicants, setApplicants] = useState(mockInterviewApplicants);
   const [comments, setComments] = useState(mockComments);
@@ -85,6 +86,19 @@ export default function InterviewContent() {
     setCommentOpen(true);
   };
 
+  // 즐겨찾기 토글 핸들러
+  const handleToggleFavorite = (applicantId: string) => {
+    setFavorites((prev) => {
+      const newFavorites = new Set(prev);
+      if (newFavorites.has(applicantId)) {
+        newFavorites.delete(applicantId);
+      } else {
+        newFavorites.add(applicantId);
+      }
+      return newFavorites;
+    });
+  };
+
   // 면접 일정 클릭 핸들러
   const handleAppointmentClick = (applicantId: string) => {
     console.log(`면접 일정 클릭: ${applicantId}`);
@@ -132,6 +146,8 @@ export default function InterviewContent() {
               info={`${applicant.university} / ${applicant.major} / ${applicant.position}`}
               initialStatus={applicant.interviewStatus}
               commentCount={applicant.commentCount}
+              isFavorite={favorites.has(applicant.id)}
+              onToggleFavorite={() => handleToggleFavorite(applicant.id)}
               onCommentClick={() => handleCommentClick(applicant.id)}
               appointmentDate={applicant.appointmentDate}
               appointmentTime={applicant.appointmentTime}
