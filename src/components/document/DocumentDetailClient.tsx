@@ -1,40 +1,26 @@
-// 면접 상세 페이지 클라이언트 컴포넌트
+// 서류 상세 페이지 클라이언트 컴포넌트
 'use client';
 
 import { useState } from 'react';
-import ApplicantCardBasic from '@/components/interview/ApplicantCardBasic';
-import AppointmentModal from '@/components/interview/AppointmentModal';
+import ApplicantCardBasic from '@/components/ui/ApplicantCardBasic';
 import BottomSheet from '@/components/ui/BottomSheet';
 import InputComment from '@/components/ui/InputComment';
 import Reply from '@/components/ui/Reply';
-import { mockInterviewApplicants } from '@/data/interviews';
+import { mockApplicants } from '@/data/applicants';
 import { mockComments } from '@/data/comments';
 
-interface InterviewDetailClientProps {
+interface DocumentDetailClientProps {
   applicantId: string;
 }
 
-export default function InterviewDetailClient({ applicantId }: InterviewDetailClientProps) {
+export default function DocumentDetailClient({ applicantId }: DocumentDetailClientProps) {
   // 지원자 데이터 가져오기
-  const applicant = mockInterviewApplicants.find((a) => a.id === applicantId);
+  const applicant = mockApplicants.find((a) => a.id === applicantId);
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCommentOpen, setCommentOpen] = useState(false);
-  const [appointmentDate, setAppointmentDate] = useState(applicant?.appointmentDate || '');
-  const [appointmentTime, setAppointmentTime] = useState(applicant?.appointmentTime || '');
 
   // 댓글 데이터 가져오기
   const comments = mockComments.filter((c) => c.applicantId === applicantId);
-
-  const handleAppointmentClick = () => {
-    setIsModalOpen(true);
-  };
-
-  const handleConfirm = (date: string, time: string) => {
-    setAppointmentDate(date);
-    setAppointmentTime(time);
-    setIsModalOpen(false);
-  };
 
   // 지원자를 찾지 못한 경우
   if (!applicant) {
@@ -52,15 +38,12 @@ export default function InterviewDetailClient({ applicantId }: InterviewDetailCl
         <ApplicantCardBasic
           name={applicant.name}
           gender={applicant.gender}
-          status={applicant.interviewStatus}
+          status={applicant.status}
           university={`${applicant.university}/${applicant.major}/${applicant.position}`}
           phone={applicant.phone}
           email={applicant.email}
           commentCount={applicant.commentCount}
           onCommentClick={() => setCommentOpen(true)}
-          appointmentDate={appointmentDate}
-          appointmentTime={appointmentTime}
-          onAppointmentClick={handleAppointmentClick}
         />
 
         {/* 댓글 바텀시트 */}
@@ -85,15 +68,6 @@ export default function InterviewDetailClient({ applicantId }: InterviewDetailCl
           </div>
         </BottomSheet>
       </div>
-
-      {/* 모달 */}
-      <AppointmentModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onConfirm={handleConfirm}
-        initialDate={appointmentDate}
-        initialTime={appointmentTime}
-      />
     </>
   );
 }
