@@ -4,12 +4,16 @@ import Image from 'next/image';
 import InterviewDetailClient from '@/components/interview/InterviewDetailClient';
 import QuestionSection from '@/components/document/QuestionSection';
 
-export default function ApplicantDetailPage() {
+// async 추가!
+export default async function ApplicantDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  // params를 await로 unwrap
+  const { id } = await params;
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* 상세 페이지 헤더 */}
       <header className="flex items-center justify-between h-12 px-4 bg-white">
-        <Link href="/document" className="w-6 h-6">
+        <Link href="/interview" className="w-6 h-6">
           <Image src="/icons/back.svg" alt="뒤로가기" width={24} height={24} />
         </Link>
         <span className="text-title">요리퐁 6기 신입부원 모집</span>
@@ -18,8 +22,8 @@ export default function ApplicantDetailPage() {
         </button>
       </header>
 
-      {/* 클라이언트 컴포넌트 - ApplicantCardBasic과 AppointmentModal */}
-      <InterviewDetailClient />
+      {/* await한 id 전달 */}
+      <InterviewDetailClient applicantId={id} />
 
       {/* 질문 섹션 - 정적 콘텐츠 */}
       <div className="p-4 mx-4 bg-white rounded-10">
