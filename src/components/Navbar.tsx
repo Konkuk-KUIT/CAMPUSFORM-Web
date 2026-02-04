@@ -19,7 +19,7 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="fixed bottom-0 left-0 w-full h-16.25 bg-white z-10 text-10">
+      <nav className="fixed bottom-0 left-0 w-full h-16.25 bg-white z-50 text-10">
         <div className="relative h-full">
           <div className="grid grid-cols-5 items-center h-full mx-auto w-fit">
             <Link href="/manage" className="flex flex-col items-center gap-2.25 px-6 py-2.25">

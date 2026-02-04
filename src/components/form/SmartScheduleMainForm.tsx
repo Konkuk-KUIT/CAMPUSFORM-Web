@@ -12,11 +12,11 @@ import SmartScheduleCalendarPreview from '@/components/ui/SmartScheduleCalendarP
 
 export default function SmartScheduleMainForm() {
   const router = useRouter();
-  const [showOverlay, setShowOverlay] = useState(true);
+  const [showOverlay, setShowOverlay] = useState(false);
   const [selectedInterviewer, setSelectedInterviewer] = useState<number | null>(null);
   const [requiredInterviewers, setRequiredInterviewers] = useState<{ [key: number]: boolean }>({});
   const [hasSchedule, setHasSchedule] = useState(false); // 스마트 시간표 생성 여부
-  const [isRepresentative, setIsRepresentative] = useState(true); // 대표자 여부
+  const [isRepresentative, setIsRepresentative] = useState(false); // 대표자 여부
 
   // 면접 정보 설정 완료 여부 확인
   useEffect(() => {
@@ -205,7 +205,7 @@ export default function SmartScheduleMainForm() {
 
           {/* Overlay message - 면접 정보 미설정 */}
           {showOverlay && (
-            <div className="absolute left-0 right-0 top-[115px] bottom-20 flex items-center justify-center z-50 bg-white/80">
+            <div className="absolute left-0 right-0 top-[115px] bottom-20 flex items-center justify-center z-50 bg-white/85">
               <div className="text-center">
                 <p className="text-subtitle-md text-gray-950 font-medium">면접 정보 설정 후 이용 가능합니다.</p>
               </div>
@@ -214,7 +214,7 @@ export default function SmartScheduleMainForm() {
 
           {/* Overlay message - 스마트 시간표 미생성 & 대표자 아님 */}
           {!hasSchedule && !isRepresentative && !showOverlay && (
-            <div className="absolute bg-[rgba(255,255,255,0.85)] h-[647px] left-0 top-[88px] w-[375px] flex items-center justify-center z-40">
+            <div className="absolute bg-[rgba(255,255,255,0.85)] left-0 right-0 top-12 bottom-0 flex items-center justify-center z-40">
               <div className="text-center">
                 <p className="text-subtitle-md text-gray-950 mb-6">생성된 스마트 시간표가 없습니다.</p>
                 <div className="text-body-rg text-gray-500">
