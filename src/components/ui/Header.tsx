@@ -1,4 +1,6 @@
 // components/Header.tsx
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -10,12 +12,18 @@ interface HeaderProps {
 export default function Header({ title, backTo }: HeaderProps) {
   return (
     <header className="flex items-center justify-center h-12 relative">
-      {backTo && (
-        <Link href={backTo} className="absolute left-4 p-2">
+    <header className="flex items-center justify-between h-12 px-4 bg-white">
+      {backTo ? (
+        <Link href={backTo} className="w-6 h-6">
           <Image src="/icons/back.svg" alt="뒤로가기" width={24} height={24} />
         </Link>
+      ) : (
+        <div className="w-6 h-6" />
       )}
-      <span className="text-title font-semibold">{title}</span>
+      <span className="text-title">{title}</span>
+      <button className="w-6 h-6">
+        <Image src="/icons/notification.svg" alt="알림" width={24} height={24} />
+      </button>
     </header>
   );
 }
