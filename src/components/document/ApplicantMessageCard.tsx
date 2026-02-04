@@ -8,12 +8,18 @@ import Button from '@/components/ui/Btn';
 import { mockApplicants } from '@/data/applicants';
 import type { Applicant } from '@/types/applicant';
 
-export default function ApplicantMessageCard() {
+interface ApplicantMessageCardProps {
+  type: '합격자' | '불합격자';
+}
+
+export default function ApplicantMessageCard({ type }: ApplicantMessageCardProps) {
   const [isPersonalMessageOpen, setIsPersonalMessageOpen] = useState(false);
   const [selectedApplicant, setSelectedApplicant] = useState<Applicant | null>(null);
 
-  // 합격자만 필터링
-  const passedApplicants = mockApplicants.filter((applicant) => applicant.status === '합격');
+  // type에 따라 합격자 또는 불합격자 필터링
+  const filteredApplicants = mockApplicants.filter((applicant) => 
+    type === '합격자' ? applicant.status === '합격' : applicant.status === '불합격'
+  );
 
   // 지원자 클릭 핸들러
   const handleApplicantClick = (applicant: Applicant) => {
@@ -21,10 +27,19 @@ export default function ApplicantMessageCard() {
     setIsPersonalMessageOpen(true);
   };
 
+  // type에 따른 제목과 메시지
+  const title = type === '합격자' ? '합격자 개인별 메세지' : '불합격자 개인별 메세지';
+  const resultMessage = type === '합격자' 
+    ? '서류 전형에 통과하셨습니다!' 
+    : '서류 전형에 선발되지 않았습니다.';
+  const additionalMessage = type === '합격자'
+    ? '다음 단계 면접 일정 조율을 위해...'
+    : '지원해 주신 시간과 관심에 다시 한 번 감사드립니다.';
+
   return (
     <>
       <div className="mt-3">
-        <h3 className="text-subtitle-sm-md pb-0.5">합격자 개인별 메세지</h3>
+        <h3 className="text-subtitle-sm-md pb-0.5">{title}</h3>
         {/* 명단/전화번호 복사 안내 문구 */}
         <div className="flex items-center gap-2.5 mb-1">
           <button className="flex items-center gap-1 text-gray-400 text-[12px] font-medium leading-[22px]">
@@ -38,7 +53,7 @@ export default function ApplicantMessageCard() {
         </div>        
         
         <div className="-mx-4">
-          {passedApplicants.map((applicant) => (
+          {filteredApplicants.map((applicant) => (
             <ApplicantSummaryCard
               key={applicant.id}
               name={applicant.name}
@@ -51,7 +66,7 @@ export default function ApplicantMessageCard() {
         </div>
       </div>
 
-      {/* 바텀시트 - 합격자 개인별 페이지 */}
+      {/* 바텀시트 - 개인별 페이지 */}
       <BottomSheet isOpen={isPersonalMessageOpen} onClose={() => setIsPersonalMessageOpen(false)}>
         {selectedApplicant && (
           <>
@@ -78,12 +93,12 @@ export default function ApplicantMessageCard() {
               <div>
                 <p className="mb-1">요리퐁 6기에 지원해 주셔서 감사합니다.</p>
                 <p>
-                  내부 심사 결과 <span className="text-primary">{selectedApplicant.name}</span> 님은 서류 전형에
-                  통과하셨습니다!
+                  내부 심사 결과 <span className="text-primary">{selectedApplicant.name}</span> 님은{' '}
+                  {resultMessage}
                 </p>
               </div>
 
-              <p>다음 단계 면접 일정 조율을 위해...</p>
+              <p>{additionalMessage}</p>
             </div>
           </>
         )}

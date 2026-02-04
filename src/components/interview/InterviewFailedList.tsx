@@ -6,7 +6,7 @@ import NotificationMessageForm from '@/components/ui/NotificationMessageForm';
 export default function InterviewFailedList() {
   return (
     <>
-      <ApplicantCountHeader type="불합격자" count={5} />
+      <ApplicantCountHeader type="불합격자" />
       <NotificationMessageForm type="불합격자" />
       <ApplicantMessageCard type="불합격자" />
       <div className="bg-gray-50">
