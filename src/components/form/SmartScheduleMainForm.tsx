@@ -195,7 +195,8 @@ export default function SmartScheduleMainForm() {
               <div className="flex gap-1.25">
                 <SmartScheduleButton
                   icon="/icons/graph.svg"
-                  iconClassName="w-[7px] h-[9.3px]"
+                  iconWidth={7}
+                  iconHeight={9.3}
                   onClick={() => router.push('/smart-schedule/response-result')}
                 >
                   응답 결과 확인

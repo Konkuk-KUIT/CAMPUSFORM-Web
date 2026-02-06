@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import Image from 'next/image';
 import Toggle from '@/components/ui/Toggle';
+import ConfirmResetDialog from '@/components/ui/ConfirmResetDialog';
 
 // 가용여부 표시 색상 - CSS 변수에서 가져오기
 const getColorValue = (colorName: string) => {
@@ -104,6 +105,8 @@ export default function SmartScheduleCalendarPreview({
   const [hoveredCell, setHoveredCell] = useState<{ day: number; time: number; half: 'top' | 'bottom' } | null>(null);
   const [internalShowInterviewerView, setInternalShowInterviewerView] = useState(false);
   const [activeTab, setActiveTab] = useState<'participated' | 'notParticipated'>('participated');
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [pendingDate, setPendingDate] = useState<Date | null>(null);
 
   // Use external state if provided, otherwise use internal state
   const showInterviewerView = externalShowInterviewerView !== undefined ? externalShowInterviewerView : internalShowInterviewerView;
@@ -554,9 +557,8 @@ export default function SmartScheduleCalendarPreview({
                   <button
                     key={idx}
                     onClick={() => {
-                      setCurrentStartDate(date);
-                      setSelectedDate(date);
-                      setShowCalendarModal(false);
+                      setPendingDate(date);
+                      setShowConfirmDialog(true);
                     }}
                     className={`
                       h-[30px] flex items-center justify-center text-[14px] leading-[20px] relative
@@ -577,6 +579,22 @@ export default function SmartScheduleCalendarPreview({
           </div>
         </div>
       )}
+
+      {/* Confirm Reset Dialog */}
+      <ConfirmResetDialog
+        isOpen={showConfirmDialog}
+        onClose={() => {
+          setShowConfirmDialog(false);
+          setPendingDate(null);
+        }}
+        onConfirm={() => {
+          if (pendingDate) {
+            setCurrentStartDate(pendingDate);
+            setSelectedDate(pendingDate);
+            setShowCalendarModal(false);
+          }
+        }}
+      />
     </div>
   );
 }
