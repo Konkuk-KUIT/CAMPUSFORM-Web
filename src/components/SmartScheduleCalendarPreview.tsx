@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import Image from 'next/image';
-import Toggle from '@/components/Toggle';
+import Toggle from '@/components/ui/Toggle';
 
 // 가용여부 표시 색상
 const BLUE_COLORS = [

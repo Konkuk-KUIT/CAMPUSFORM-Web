@@ -11,7 +11,6 @@ interface HeaderProps {
 
 export default function Header({ title, backTo }: HeaderProps) {
   return (
-    <header className="flex items-center justify-center h-12 relative">
     <header className="flex items-center justify-between h-12 px-4 bg-white">
       {backTo ? (
         <Link href={backTo} className="w-6 h-6">
