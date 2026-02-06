@@ -7,9 +7,10 @@ import Image from 'next/image';
 interface HeaderProps {
   title: string;
   backTo?: string;
+  hideNotification?: boolean;
 }
 
-export default function Header({ title, backTo }: HeaderProps) {
+export default function Header({ title, backTo, hideNotification = false }: HeaderProps) {
   return (
     <header className="flex items-center justify-between h-12 px-4 bg-white">
       {backTo ? (
@@ -20,9 +21,13 @@ export default function Header({ title, backTo }: HeaderProps) {
         <div className="w-6 h-6" />
       )}
       <span className="text-title">{title}</span>
-      <button className="w-6 h-6">
-        <Image src="/icons/notification.svg" alt="알림" width={24} height={24} />
-      </button>
+      {hideNotification ? (
+        <div className="w-6 h-6" />
+      ) : (
+        <button className="w-6 h-6">
+          <Image src="/icons/notification.svg" alt="알림" width={24} height={24} />
+        </button>
+      )}
     </header>
   );
 }
