@@ -75,6 +75,7 @@ export default function SmartScheduleCalendarPreview({
   showRequiredSection = false,
   requiredInterviewer,
   onRequiredInterviewerChange,
+  interviewDates = [],
 }: {
   interviewerName?: string | null;
   seed?: number;
@@ -84,6 +85,7 @@ export default function SmartScheduleCalendarPreview({
   showRequiredSection?: boolean;
   requiredInterviewer?: boolean;
   onRequiredInterviewerChange?: (value: boolean) => void;
+  interviewDates?: Date[];
 }) {
   const [currentStartDate, setCurrentStartDate] = useState(new Date());
   const [showCalendarModal, setShowCalendarModal] = useState(false);
@@ -153,16 +155,25 @@ export default function SmartScheduleCalendarPreview({
   const calendarDays = useMemo(() => {
     const daysInMonth = getDaysInMonth(selectedDate);
     const firstDay = getFirstDayOfMonth(selectedDate);
-    const days = [];
+    const prevMonthDays = getDaysInMonth(new Date(selectedDate.getFullYear(), selectedDate.getMonth() - 1, 1));
+    const days: Array<{ day: number; isCurrentMonth: boolean; isPrevMonth: boolean; isNextMonth: boolean }> = [];
 
     // 이전 달 날짜 채우기
-    for (let i = 0; i < firstDay; i++) {
-      days.push(null);
+    for (let i = firstDay - 1; i >= 0; i--) {
+      days.push({ day: prevMonthDays - i, isCurrentMonth: false, isPrevMonth: true, isNextMonth: false });
     }
 
     // 이번 달 날짜
     for (let i = 1; i <= daysInMonth; i++) {
-      days.push(i);
+      days.push({ day: i, isCurrentMonth: true, isPrevMonth: false, isNextMonth: false });
+    }
+
+    // 다음 달 날짜 채우기 (7의 배수로 만들기)
+    const remainingDays = 7 - (days.length % 7);
+    if (remainingDays < 7) {
+      for (let i = 1; i <= remainingDays; i++) {
+        days.push({ day: i, isCurrentMonth: false, isPrevMonth: false, isNextMonth: true });
+      }
     }
 
     return days;
@@ -213,14 +224,24 @@ export default function SmartScheduleCalendarPreview({
 
           {/* Day headers */}
           <div className="flex-1 grid gap-4" style={{ gridTemplateColumns: `repeat(${dayCols.length}, 1fr)` }}>
-            {dayCols.map((day, idx) => (
-              <div key={idx} className="flex flex-col items-center gap-1">
-                <span className="text-[12px] text-gray-400">{day.dayOfWeek}</span>
-                <span className={`text-[16px] font-semibold ${idx === 0 ? 'text-blue-600' : 'text-gray-950'}`}>
-                  {day.date}
-                </span>
-              </div>
-            ))}
+            {dayCols.map((day, idx) => {
+              const dayDate = new Date(currentStartDate);
+              dayDate.setDate(currentStartDate.getDate() + idx);
+              const isInterviewDate = interviewDates.some(date => 
+                date.getFullYear() === dayDate.getFullYear() &&
+                date.getMonth() === dayDate.getMonth() &&
+                date.getDate() === dayDate.getDate()
+              );
+              
+              return (
+                <div key={idx} className="flex flex-col items-center gap-1">
+                  <span className="text-[12px] text-gray-400">{day.dayOfWeek}</span>
+                  <span className={`text-[16px] font-semibold ${isInterviewDate ? 'text-blue-600' : 'text-gray-950'}`}>
+                    {day.date}
+                  </span>
+                </div>
+              );
+            })}
           </div>
 
           {/* Right arrow */}
@@ -366,57 +387,124 @@ export default function SmartScheduleCalendarPreview({
       {/* Calendar Modal */}
       {showCalendarModal && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
-          <div className="w-[282px] bg-white rounded-[10px] p-4 flex flex-col gap-4">
-            {/* Month Label */}
-            <div className="text-center text-[14px] font-medium text-gray-950">
-              {selectedDate.getFullYear()}년 {String(selectedDate.getMonth() + 1).padStart(2, '0')}월
+          <div className="bg-white rounded-[10px] p-4 flex flex-col gap-[10px] w-[303px]">
+            {/* Header with title and close button */}
+            <div className="flex items-center justify-between">
+              <span className="text-[14px] font-medium leading-[20px] text-[#1f1f1f]">날짜 선택</span>
+              <button
+                onClick={() => setShowCalendarModal(false)}
+                className="w-6 h-6 flex items-center justify-center"
+                aria-label="닫기"
+              >
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M1 1L11 11M11 1L1 11" stroke="#1f1f1f" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </button>
+            </div>
+
+            {/* Month navigation */}
+            <div className="flex items-center justify-center gap-[10px]">
+              <button
+                onClick={() => {
+                  const newDate = new Date(selectedDate);
+                  newDate.setMonth(newDate.getMonth() - 1);
+                  setSelectedDate(newDate);
+                }}
+                className="w-6 h-6 flex items-center justify-center"
+                aria-label="이전 달"
+              >
+                <svg width="10" height="5" viewBox="0 0 10 5" fill="none">
+                  <path d="M9 4.5L5 0.5L1 4.5" stroke="#1f1f1f" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" transform="rotate(-90 5 2.5)"/>
+                </svg>
+              </button>
+              <div className="text-center text-[14px] font-medium leading-[20px] text-[#1f1f1f] w-[184px]">
+                {selectedDate.getFullYear()}년 {String(selectedDate.getMonth() + 1).padStart(2, '0')}월
+              </div>
+              <button
+                onClick={() => {
+                  const newDate = new Date(selectedDate);
+                  newDate.setMonth(newDate.getMonth() + 1);
+                  setSelectedDate(newDate);
+                }}
+                className="w-6 h-6 flex items-center justify-center"
+                aria-label="다음 달"
+              >
+                <svg width="10" height="5" viewBox="0 0 10 5" fill="none">
+                  <path d="M1 0.5L5 4.5L9 0.5" stroke="#1f1f1f" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" transform="rotate(-90 5 2.5)"/>
+                </svg>
+              </button>
             </div>
 
             {/* Week Labels */}
-            <div className="grid grid-cols-7 gap-2 text-center text-[12px] text-gray-500">
+            <div className="grid grid-cols-7 gap-[10px] h-[18px]">
               {weekDays.map(day => (
-                <div key={day}>{day}</div>
+                <div key={day} className="text-center text-[12px] text-[#6e7781] leading-normal">
+                  {day}
+                </div>
               ))}
             </div>
 
             {/* Calendar Days */}
-            <div className="grid grid-cols-7 gap-2">
-              {calendarDays.map((day, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => {
-                    if (day) {
-                      const newDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), day);
-                      setCurrentStartDate(newDate);
+            <div className="grid grid-cols-7 gap-[10px]">
+              {calendarDays.map((dayObj, idx) => {
+                const { day, isCurrentMonth, isPrevMonth, isNextMonth } = dayObj;
+                
+                // 날짜 객체 생성
+                let date: Date;
+                if (isPrevMonth) {
+                  date = new Date(selectedDate.getFullYear(), selectedDate.getMonth() - 1, day);
+                } else if (isNextMonth) {
+                  date = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, day);
+                } else {
+                  date = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), day);
+                }
+                
+                const isSelected = 
+                  date.getDate() === currentStartDate.getDate() && 
+                  date.getMonth() === currentStartDate.getMonth() && 
+                  date.getFullYear() === currentStartDate.getFullYear();
+                  
+                const isInterviewDate = interviewDates.some(d => 
+                  d.getFullYear() === date.getFullYear() &&
+                  d.getMonth() === date.getMonth() &&
+                  d.getDate() === date.getDate()
+                );
+                
+                // 텍스트 색상 결정
+                let textColor = 'text-[#1f1f1f]'; // 기본 검정
+                if (!isCurrentMonth) {
+                  textColor = 'text-[#888888]'; // 다른 달 = 회색
+                } else if (isSelected && isInterviewDate) {
+                  textColor = 'text-white'; // 선택됨 + 면접날짜 = 흰색
+                } else if (isSelected && !isInterviewDate) {
+                  textColor = 'text-[#1f1f1f]'; // 선택됨 + 면접날짜 아님 = 검정
+                } else if (!isSelected && isInterviewDate) {
+                  textColor = 'text-[#5a81fa]'; // 선택안됨 + 면접날짜 = 파랑
+                }
+                
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      setCurrentStartDate(date);
+                      setSelectedDate(date);
                       setShowCalendarModal(false);
-                    }
-                  }}
-                  disabled={!day}
-                  className={`
-                    w-[30px] h-[30px] rounded-full flex items-center justify-center text-[14px]
-                    ${!day ? 'invisible' : ''}
-                    ${
-                      day === selectedDate.getDate() && selectedDate.getMonth() === new Date().getMonth()
-                        ? 'bg-blue-500 text-white'
-                        : day
-                          ? 'hover:bg-gray-100'
-                          : ''
-                    }
-                  `}
-                >
-                  {day}
-                </button>
-              ))}
-            </div>
-
-            {/* Navigation Buttons */}
-            <div className="flex gap-2 justify-end pt-2">
-              <button
-                onClick={() => setShowCalendarModal(false)}
-                className="px-4 py-2 text-[14px] text-gray-600 hover:bg-gray-50 rounded"
-              >
-                닫기
-              </button>
+                    }}
+                    className={`
+                      h-[30px] flex items-center justify-center text-[14px] leading-[20px] relative
+                      ${textColor}
+                      ${!isSelected ? 'hover:bg-gray-100 rounded-full' : ''}
+                    `}
+                  >
+                    {isSelected && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-[30px] h-[30px] bg-[#5a81fa] rounded-full" />
+                      </div>
+                    )}
+                    <span className="relative z-10">{day}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>

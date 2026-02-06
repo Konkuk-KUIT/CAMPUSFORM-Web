@@ -15,8 +15,8 @@ export default function SmartScheduleMainForm() {
   const [showOverlay, setShowOverlay] = useState(false);
   const [selectedInterviewer, setSelectedInterviewer] = useState<number | null>(null);
   const [requiredInterviewers, setRequiredInterviewers] = useState<{ [key: number]: boolean }>({});
-  const [hasSchedule, setHasSchedule] = useState(false); // 스마트 시간표 생성 여부
-  const [isRepresentative, setIsRepresentative] = useState(false); // 대표자 여부
+  const [hasSchedule, setHasSchedule] = useState(true); // 스마트 시간표 생성 여부 (가정)
+  const [isRepresentative, setIsRepresentative] = useState(true); // 대표자 여부 (가정)
 
   // 면접 정보 설정 완료 여부 확인
   useEffect(() => {
@@ -32,6 +32,12 @@ export default function SmartScheduleMainForm() {
     { name: '면접관 1', email: 'interview1@gmail.com', isLeader: true },
     { name: '면접관 2', email: 'interview2@gmail.com', isLeader: false },
     { name: '면접관 3', email: 'interview3@gmail.com', isLeader: false },
+  ];
+
+  // 생성된 스마트 시간표 가정: 면접 날짜 예시 (6일, 7일)
+  const interviewDates = [
+    new Date(2026, 1, 6), // 2월 6일
+    new Date(2026, 1, 7), // 2월 7일
   ];
 
   return (
@@ -76,7 +82,11 @@ export default function SmartScheduleMainForm() {
             {/* Calendar preview - 전체 시간표 (항상 표시) */}
             <div className="mb-3">
               <AllAccordion title="전체">
-                <SmartScheduleCalendarPreview seeds={[1, 2, 3]} interviewers={interviewers.map((int, idx) => ({ ...int, isRequired: requiredInterviewers[idx] || false }))} />
+                <SmartScheduleCalendarPreview 
+                  seeds={[1, 2, 3]} 
+                  interviewers={interviewers.map((int, idx) => ({ ...int, isRequired: requiredInterviewers[idx] || false }))} 
+                  interviewDates={interviewDates}
+                />
               </AllAccordion>
             </div>
 
