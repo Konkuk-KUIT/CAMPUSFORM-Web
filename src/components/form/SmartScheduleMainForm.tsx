@@ -14,9 +14,10 @@ export default function SmartScheduleMainForm() {
   const router = useRouter();
   const [showOverlay, setShowOverlay] = useState(false);
   const [selectedInterviewer, setSelectedInterviewer] = useState<number | null>(null);
-  const [requiredInterviewers, setRequiredInterviewers] = useState<{ [key: number]: boolean }>({});
+  const [requiredInterviewers, setRequiredInterviewers] = useState<{ [key: number]: boolean }>({ 0: true });
   const [hasSchedule, setHasSchedule] = useState(true); // 스마트 시간표 생성 여부 (가정)
   const [isRepresentative, setIsRepresentative] = useState(true); // 대표자 여부 (가정)
+  const [showInterviewerView, setShowInterviewerView] = useState(false);
 
   // 면접 정보 설정 완료 여부 확인
   useEffect(() => {
@@ -86,6 +87,8 @@ export default function SmartScheduleMainForm() {
                   seeds={[1, 2, 3]} 
                   interviewers={interviewers.map((int, idx) => ({ ...int, isRequired: requiredInterviewers[idx] || false }))} 
                   interviewDates={interviewDates}
+                  showInterviewerView={showInterviewerView}
+                  onShowInterviewerViewChange={setShowInterviewerView}
                 />
               </AllAccordion>
             </div>

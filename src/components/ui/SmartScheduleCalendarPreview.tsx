@@ -83,6 +83,8 @@ export default function SmartScheduleCalendarPreview({
   requiredInterviewer,
   onRequiredInterviewerChange,
   interviewDates = [],
+  showInterviewerView: externalShowInterviewerView,
+  onShowInterviewerViewChange,
 }: {
   interviewerName?: string | null;
   seed?: number;
@@ -93,12 +95,19 @@ export default function SmartScheduleCalendarPreview({
   requiredInterviewer?: boolean;
   onRequiredInterviewerChange?: (value: boolean) => void;
   interviewDates?: Date[];
+  showInterviewerView?: boolean;
+  onShowInterviewerViewChange?: (value: boolean) => void;
 }) {
   const [currentStartDate, setCurrentStartDate] = useState(new Date());
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [hoveredCell, setHoveredCell] = useState<{ day: number; time: number; half: 'top' | 'bottom' } | null>(null);
-  const [showInterviewerView, setShowInterviewerView] = useState(false);
+  const [internalShowInterviewerView, setInternalShowInterviewerView] = useState(false);
+  const [activeTab, setActiveTab] = useState<'participated' | 'notParticipated'>('participated');
+
+  // Use external state if provided, otherwise use internal state
+  const showInterviewerView = externalShowInterviewerView !== undefined ? externalShowInterviewerView : internalShowInterviewerView;
+  const setShowInterviewerView = onShowInterviewerViewChange || setInternalShowInterviewerView;
 
   // seeds가 있으면 모든 seed의 가용도를 합산, 아니면 단일 seed 사용
   const dayCols = useMemo(() => {
@@ -205,8 +214,11 @@ export default function SmartScheduleCalendarPreview({
         </div>
       )}
 
-      {/* Calendar Header with gray background */}
-      <div className="rounded-[10px] bg-gray-50 p-4 mt-3">
+      {/* Calendar - only show if not in interviewer view */}
+      {!showInterviewerView && (
+        <>
+          {/* Calendar Header with gray background */}
+          <div className="rounded-[10px] bg-gray-50 p-4 mt-3">
         {/* Header with month and calendar icon */}
         <div className="flex items-center justify-center relative mb-[15px]">
           <span className="text-[15px] font-medium leading-[20px] text-gray-950">{currentMonthYear}</span>
@@ -371,6 +383,7 @@ export default function SmartScheduleCalendarPreview({
           </div>
           {/* More chevron (24px hit area) */}
           <button
+            onClick={() => setShowInterviewerView(true)}
             style={{ width: '24px', height: '24px' }}
             className="flex items-center justify-center"
             aria-label="더보기"
@@ -379,8 +392,65 @@ export default function SmartScheduleCalendarPreview({
           </button>
         </div>
       )}
+        </>
+      )}
 
+      {/* Interviewer List View - replaces the calendar when shown */}
+      {showInterviewerView && (
+        <div className="bg-white border-b border-gray-200 w-full">
+          {/* Tabs */}
+          <div className="flex border-b border-gray-200">
+            <button 
+              onClick={() => setActiveTab('participated')}
+              className="flex-1 h-[54px] bg-white relative flex items-center justify-center"
+            >
+              <span className={`text-[15px] font-semibold leading-[21px] ${activeTab === 'participated' ? 'text-black' : 'text-gray-400'}`}>
+                참여
+              </span>
+              {activeTab === 'participated' && (
+                <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-black" />
+              )}
+            </button>
+            <button 
+              onClick={() => setActiveTab('notParticipated')}
+              className="flex-1 h-[54px] bg-white relative flex items-center justify-center"
+            >
+              <span className={`text-[15px] font-semibold leading-[21px] ${activeTab === 'notParticipated' ? 'text-black' : 'text-gray-400'}`}>
+                미참여
+              </span>
+              {activeTab === 'notParticipated' && (
+                <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-black" />
+              )}
+            </button>
+          </div>
 
+          {/* Interviewer List */}
+          <div className="flex flex-col mt-[6px]">
+            {interviewers?.map((interviewer, idx) => (
+              <div key={idx} className="w-[343px] h-[55px] flex items-center px-[29px] relative">
+                <div className="w-9 h-9 rounded-full bg-gray-200" />
+                <span className="ml-[11px] text-[14px] leading-[20px] text-black">{interviewer.name}</span>
+                {interviewer.isRequired && (
+                  <div className="absolute left-[130px] bg-gray-100 w-[51px] h-[19.5px] px-[5px] py-px rounded-[10px] flex items-center justify-center gap-1">
+                    <span className="text-[12px] leading-[17px] tracking-[0.12px] text-black">필수</span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Back button */}
+          <div className="h-[63px] px-4 flex items-center justify-end">
+            <button 
+              onClick={() => setShowInterviewerView(false)}
+              className="flex items-center gap-0"
+            >
+              <span className="text-[14px] leading-[20px] text-gray-500 mr-1">시간으로 돌아가기</span>
+              <Image src="/icons/chevron-right.svg" alt="back" width={24} height={24} className="w-6 h-6" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Calendar Modal */}
       {showCalendarModal && (
