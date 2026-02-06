@@ -1,33 +1,27 @@
 ﻿'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Navbar from '@/components/Navbar';
 import Btn from '@/components/ui/Btn';
 import AllAccordion from '@/components/ui/AllAccordion';
-import SmartScheduleCard from '@/components/ui/SmartScheduleCard';
 import SmartScheduleButton from '@/components/ui/SmartScheduleButton';
 import SmartScheduleCalendarPreview from '@/components/ui/SmartScheduleCalendarPreview';
 
 export default function SmartScheduleMainForm() {
   const router = useRouter();
-  const [showOverlay, setShowOverlay] = useState(false);
   const [selectedInterviewer, setSelectedInterviewer] = useState<number | null>(null);
   const [requiredInterviewers, setRequiredInterviewers] = useState<{ [key: number]: boolean }>({ 0: true });
-  const [hasSchedule, setHasSchedule] = useState(true); // 스마트 시간표 생성 여부 (가정)
-  const [isRepresentative, setIsRepresentative] = useState(true); // 대표자 여부 (가정)
+  const hasSchedule = true; // 스마트 시간표 생성 여부 (가정)
+  const isRepresentative = true; // 대표자 여부 (가정)
   const [showInterviewerView, setShowInterviewerView] = useState(false);
 
   // 면접 정보 설정 완료 여부 확인
-  useEffect(() => {
-    const isConfigured = localStorage.getItem('interviewInfoConfigured');
-    setShowOverlay(!isConfigured);
+  const isConfigured = typeof window !== 'undefined' ? localStorage.getItem('interviewInfoConfigured') : null;
+  const showOverlay = !isConfigured;
 
-    // TODO: 실제 API에서 스마트 시간표 생성 여부와 대표자 여부를 가져와야 함
-    // setHasSchedule(실제 값);
-    // setIsRepresentative(실제 값);
-  }, []);
+  // TODO: 실제 API에서 스마트 시간표 생성 여부와 대표자 여부를 가져와야 함
 
   const interviewers = [
     { name: '면접관 1', email: 'interview1@gmail.com', isLeader: true },

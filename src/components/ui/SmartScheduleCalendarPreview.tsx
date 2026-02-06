@@ -5,14 +5,6 @@ import Image from 'next/image';
 import Toggle from '@/components/ui/Toggle';
 import ConfirmResetDialog from '@/components/ui/ConfirmResetDialog';
 
-// 가용여부 표시 색상 - CSS 변수에서 가져오기
-const getColorValue = (colorName: string) => {
-  if (typeof window !== 'undefined') {
-    return getComputedStyle(document.documentElement).getPropertyValue(`--color-${colorName}`).trim();
-  }
-  return '';
-};
-
 const BLUE_COLORS = [
   '#efefef', // 0명 - gray-100
   '#eff3ff', // 1명 - blue-50
@@ -101,7 +93,7 @@ export default function SmartScheduleCalendarPreview({
 }) {
   const [currentStartDate, setCurrentStartDate] = useState(new Date());
   const [showCalendarModal, setShowCalendarModal] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(new Date()); // 캘린더 모달 내부에서만 사용
   const [hoveredCell, setHoveredCell] = useState<{ day: number; time: number; half: 'top' | 'bottom' } | null>(null);
   const [internalShowInterviewerView, setInternalShowInterviewerView] = useState(false);
   const [activeTab, setActiveTab] = useState<'participated' | 'notParticipated'>('participated');
@@ -592,6 +584,7 @@ export default function SmartScheduleCalendarPreview({
             setCurrentStartDate(pendingDate);
             setSelectedDate(pendingDate);
             setShowCalendarModal(false);
+            setPendingDate(null);
           }
         }}
       />
