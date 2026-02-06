@@ -46,7 +46,7 @@ export default function SmartScheduleMainForm() {
         {/* Top app bar with logo and alarm */}
         <header className="flex items-center justify-between h-12 px-4 bg-white">
           <div className="w-6 h-6">
-            <Image src="/icons/logo.svg" alt="로고" width={22} height={22} />
+            <Image src="/icons/logo.svg" alt="로고" width={22} height={22} className="w-[22px] h-[22px]" />
           </div>
           <span className="text-title">스마트 시간표</span>
           <button className="w-6 h-6">
@@ -67,7 +67,7 @@ export default function SmartScheduleMainForm() {
                 <p className="text-body-xs text-gray-300">면접 일정과 운영 방식을 설정해 주세요.</p>
               </div>
               <div className="mt-1 flex-shrink-0">
-                <Image src="/icons/chevron-right.svg" alt="next" width={24} height={7} />
+                <Image src="/icons/chevron-right.svg" alt="next" width={24} height={7} className="w-6 h-[7px]" />
               </div>
             </button>
           </div>
@@ -126,7 +126,7 @@ export default function SmartScheduleMainForm() {
                       alt="toggle"
                       width={24}
                       height={24}
-                      className={`flex-shrink-0 ${selectedInterviewer === idx ? 'rotate-180' : ''}`}
+                      className={`flex-shrink-0 w-6 h-6 ${selectedInterviewer === idx ? 'rotate-180' : ''}`}
                     />
                   </button>
 
@@ -175,25 +175,24 @@ export default function SmartScheduleMainForm() {
                     navigator.clipboard.writeText('https://www.campusform.com/interview/apply');
                   }}
                 >
-                  <Image src="/icons/copy-gray.svg" alt="copy" width={16} height={16} />
+                  <Image src="/icons/copy-gray.svg" alt="copy" width={16} height={16} className="w-4 h-4" />
                 </button>
               </div>
 
               {/* Info box - 지원자 시간 페이지 편집 */}
               <button
                 onClick={() => router.push('/smart-schedule/interview-schedule')}
-                className="w-full bg-[#eff3ff] border-[0.5px] border-[#bfcefe] rounded-[10px] px-2.5 py-2.5 flex items-center justify-center gap-1 hover:bg-[#e5ecff] transition-colors"
+                className="w-full bg-blue-50 border-[0.5px] border-blue-200 rounded-[10px] px-2.5 py-2.5 flex items-center justify-center gap-1 hover:bg-blue-100 transition-colors"
               >
                 <span className="text-body-sm text-gray-950">지원자 시간 페이지 편집</span>
-                <Image src="/icons/edit-blue.svg" alt="edit" width={14} height={13} />
+                <Image src="/icons/edit-blue.svg" alt="edit" width={14} height={13} className="w-[14px] h-[13px]" />
               </button>
 
               {/* Action buttons */}
               <div className="flex gap-1.25">
                 <SmartScheduleButton
                   icon="/icons/graph.svg"
-                  iconWidth={7}
-                  iconHeight={9.3}
+                  iconClassName="w-[7px] h-[9.3px]"
                   onClick={() => router.push('/smart-schedule/response-result')}
                 >
                   응답 결과 확인

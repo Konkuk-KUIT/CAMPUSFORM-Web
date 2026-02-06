@@ -4,7 +4,14 @@ import { useState, useMemo } from 'react';
 import Image from 'next/image';
 import Toggle from '@/components/ui/Toggle';
 
-// 가용여부 표시 색상
+// 가용여부 표시 색상 - CSS 변수에서 가져오기
+const getColorValue = (colorName: string) => {
+  if (typeof window !== 'undefined') {
+    return getComputedStyle(document.documentElement).getPropertyValue(`--color-${colorName}`).trim();
+  }
+  return '';
+};
+
 const BLUE_COLORS = [
   '#efefef', // 0명 - gray-100
   '#eff3ff', // 1명 - blue-50
@@ -20,8 +27,8 @@ const BLUE_COLORS = [
 ];
 
 // 개별 면접관용 2가지 색상
-const GRAY1 = '#efefef'; // 그레이1 - 가용 면접관 적음
-const BLUE2 = '#bfcefe'; // 블루2 - 가용 면접관 많음
+const GRAY1 = '#efefef'; // 그레이1 - gray-100
+const BLUE2 = '#bfcefe'; // 블루2 - blue-200
 
 const dayOfWeekLabels = ['일', '월', '화', '수', '목', '금', '토'];
 const hours = ['12', '13', '14', '15', '16', '17'];
@@ -91,6 +98,7 @@ export default function SmartScheduleCalendarPreview({
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [hoveredCell, setHoveredCell] = useState<{ day: number; time: number; half: 'top' | 'bottom' } | null>(null);
+  const [showInterviewerView, setShowInterviewerView] = useState(false);
 
   // seeds가 있으면 모든 seed의 가용도를 합산, 아니면 단일 seed 사용
   const dayCols = useMemo(() => {
@@ -200,14 +208,14 @@ export default function SmartScheduleCalendarPreview({
       {/* Calendar Header with gray background */}
       <div className="rounded-[10px] bg-gray-50 p-4 mt-3">
         {/* Header with month and calendar icon */}
-        <div className="flex items-center justify-center relative mb-4">
-          <span className="text-[15px] font-medium text-gray-950">{currentMonthYear}</span>
+        <div className="flex items-center justify-center relative mb-[15px]">
+          <span className="text-[15px] font-medium leading-[20px] text-gray-950">{currentMonthYear}</span>
           <button
             onClick={() => setShowCalendarModal(!showCalendarModal)}
             className="absolute right-0"
             aria-label="날짜 선택"
           >
-            <Image src="/icons/calendar-black.svg" alt="calendar" width={20} height={20} />
+            <Image src="/icons/calendar-black.svg" alt="calendar" width={14.3} height={14.3} />
           </button>
         </div>
 
@@ -235,8 +243,8 @@ export default function SmartScheduleCalendarPreview({
               
               return (
                 <div key={idx} className="flex flex-col items-center gap-1">
-                  <span className="text-[12px] text-gray-400">{day.dayOfWeek}</span>
-                  <span className={`text-[16px] font-semibold ${isInterviewDate ? 'text-blue-600' : 'text-gray-950'}`}>
+                  <span className="text-[12px] text-gray-500">{day.dayOfWeek}</span>
+                  <span className={`text-[16px] font-normal ${isInterviewDate ? 'text-primary' : 'text-gray-950'}`}>
                     {day.date}
                   </span>
                 </div>
@@ -257,27 +265,19 @@ export default function SmartScheduleCalendarPreview({
 
       {/* Calendar grid without background */}
       <div className="p-0 pt-3 pr-2">
-        {/* Calendar grid */}
-        <div className="flex gap-2" style={{ minHeight: `${hours.length * 60 + 16}px` }}>
-          {/* Time labels */}
-          <div className="flex flex-col pt-1" style={{ width: '30px' }}>
-            {hours.map(hour => (
-              <div
-                key={hour}
-                className="text-[14px] text-gray-950 font-medium flex items-center justify-start flex-shrink-0"
-                style={{ height: '60px' }}
-              >
+        {/* Calendar grid - Row by row */}
+        <div className="flex flex-col gap-1">
+          {hours.map((hour, timeIdx) => (
+            <div key={hour} className="flex gap-2" style={{ height: '50px' }}>
+              {/* Time label */}
+              <div className="text-[14px] text-gray-950 font-normal flex items-center justify-start flex-shrink-0" style={{ width: '30px' }}>
                 {hour}
               </div>
-            ))}
-          </div>
 
-          {/* Grid cells */}
-          <div className="flex-1 grid gap-1" style={{ gridTemplateColumns: `repeat(${dayCols.length}, 1fr)` }}>
-            {dayCols.map((day, dayIdx) => (
-              <div key={dayIdx} className="flex flex-col gap-1">
-                {day.availability.map((timeSlot, timeIdx) => {
-                  // timeSlot = [상반부, 하반부]
+              {/* Grid cells for this time slot */}
+              <div className="flex-1 grid gap-1" style={{ gridTemplateColumns: `repeat(${dayCols.length}, 1fr)` }}>
+                {dayCols.map((day, dayIdx) => {
+                  const timeSlot = day.availability[timeIdx];
                   const topCount = timeSlot[0];
                   const bottomCount = timeSlot[1];
 
@@ -285,22 +285,18 @@ export default function SmartScheduleCalendarPreview({
                   let bottomColor: string;
 
                   if (interviewerName) {
-                    // 개별 면접관: 그레이1과 블루2 2가지만 사용
                     topColor = topCount >= 1 ? BLUE2 : GRAY1;
                     bottomColor = bottomCount >= 1 ? BLUE2 : GRAY1;
                   } else {
-                    // 전체: 11가지 블루 색상 사용 (0~3 범위)
                     topColor = BLUE_COLORS[Math.min(topCount, 10)];
                     bottomColor = BLUE_COLORS[Math.min(bottomCount, 10)];
                   }
 
-                  // 전체 캘린더에서만 가능한 면접관 목록 계산
                   const getAvailableInterviewers = (half: 'top' | 'bottom') => {
                     if (!seeds || !interviewers) return [];
                     const count = half === 'top' ? topCount : bottomCount;
                     if (count === 0) return [];
 
-                    // 각 seed(면접관)의 가용 여부 확인
                     const available: Interviewer[] = [];
                     seeds.forEach((s, idx) => {
                       const data = generateSampleData(currentStartDate, s);
@@ -316,7 +312,7 @@ export default function SmartScheduleCalendarPreview({
                   };
 
                   return (
-                    <div key={`${dayIdx}-${timeIdx}`} className="flex flex-col h-[60px] w-full relative">
+                    <div key={`${dayIdx}-${timeIdx}`} className="flex flex-col h-full w-full relative">
                       {/* Top half - solid border */}
                       <div
                         className="flex-1 border-t border-white border-solid cursor-pointer hover:opacity-80"
@@ -339,7 +335,7 @@ export default function SmartScheduleCalendarPreview({
                         onMouseLeave={() => !interviewerName && setHoveredCell(null)}
                       />
 
-                      {/* Hover tooltip - 전체 캘린더에서만 표시 */}
+                      {/* Hover tooltip */}
                       {!interviewerName && hoveredCell?.day === dayIdx && hoveredCell?.time === timeIdx && (
                         <div
                           className={`absolute ${dayIdx === dayCols.length - 1 ? 'right-full mr-2' : 'left-full ml-2'} bg-white rounded-[10px] px-[23px] py-[15px] w-[150px] z-50 flex flex-col gap-[10px] ${hoveredCell.half === 'top' ? 'top-0' : 'top-1/2'}`}
@@ -359,30 +355,32 @@ export default function SmartScheduleCalendarPreview({
                   );
                 })}
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
       </div>
 
       {/* Interviewer avatars row (right-aligned) */}
       {showProfiles && (
-        <div className="flex items-center justify-end gap-2 px-4 py-3">
-          {/* Profile avatars (36px, overlap) */}
+        <div className="flex items-center justify-end py-2 pr-2 border-b border-gray-300">
+          {/* Profile avatars (30px, overlap) */}
           <div className="flex items-center -space-x-2">
-            <div className="w-9 h-9 rounded-full bg-gray-200 border-2 border-white" />
-            <div className="w-9 h-9 rounded-full bg-gray-200 border-2 border-white" />
-            <div className="w-9 h-9 rounded-full bg-gray-200 border-2 border-white" />
+            <div className="w-[30px] h-[30px] rounded-full bg-gray-200 border-2 border-white" />
+            <div className="w-[30px] h-[30px] rounded-full bg-gray-200 border-2 border-white" />
+            <div className="w-[30px] h-[30px] rounded-full bg-gray-200 border-2 border-white" />
           </div>
-          {/* More chevron (30px hit area) */}
+          {/* More chevron (24px hit area) */}
           <button
-            style={{ width: '30px', height: '30px' }}
+            style={{ width: '24px', height: '24px' }}
             className="flex items-center justify-center"
             aria-label="더보기"
           >
-            <Image src="/icons/chevron-right.svg" alt="more" width={16} height={16} />
+            <Image src="/icons/chevron-right.svg" alt="more" width={24} height={24} />
           </button>
         </div>
       )}
+
+
 
       {/* Calendar Modal */}
       {showCalendarModal && (
