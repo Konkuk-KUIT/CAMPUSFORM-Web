@@ -22,6 +22,7 @@ export default function ManageApplicationForm() {
   const [showWarningModal, setShowWarningModal] = useState(false);
   const [isDateModalOpen, setIsDateModalOpen] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
+  const [showPositionTooltip, setShowPositionTooltip] = useState(false);
   const [status, setStatus] = useState('모집 중');
   const [url] = useState('');
   const [startDate, setStartDate] = useState<Date | null>(null);
@@ -144,8 +145,50 @@ export default function ManageApplicationForm() {
           </div>
 
           <div className="flex flex-col gap-2">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-1 relative">
+                <label className="text-[14px] font-bold text-gray-950">포지션 설정</label>
+                <div
+                  className="relative"
+                  onMouseEnter={() => setShowPositionTooltip(true)}
+                  onMouseLeave={() => setShowPositionTooltip(false)}
+                >
+                  <Image src="/icons/info-2.svg" alt="info" width={13.5} height={13.5} className="ml-0.5 cursor-pointer" />
+                  {showPositionTooltip && (
+                    <div className="absolute left-[-20px] bottom-full mb-2 z-50">
+                      <div className="relative">
+                        <div className="bg-[#93affd] rounded-[5px] px-3 py-2 whitespace-nowrap">
+                          <p className="text-[13px] font-normal leading-[18px] tracking-[0.13px] text-white">
+                            중복되거나 다른 표기의 포지션이 있으십니까?
+                            <br />
+                            하나의 포지션 표기로 통합해 주세요.
+                          </p>
+                        </div>
+                        <div className="absolute left-6 -bottom-2">
+                          <svg width="14" height="8" viewBox="0 0 14 8" fill="none">
+                            <path d="M7 8L0.937823 0.5L13.0622 0.5L7 8Z" fill="#93affd"/>
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <Link
+                href="/home/addproject/connect/edit-position"
+                className="flex items-center gap-1 text-[13px] font-normal leading-[18px] tracking-[0.13px] text-[var(--color-primary)] underline decoration-solid"
+              >
+                편집하기
+                <svg width="6" height="10" viewBox="0 0 6 10" fill="none">
+                  <path d="M1 1l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </Link>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2">
-              <span className="text-[14px] font-bold text-gray-950">관리자</span>
+              <span className="text-[14px] font-bold text-gray-950">관리자 추가</span>
               <span className="text-[13px] text-gray-500">({adminList.length}명)</span>
             </div>
 
