@@ -12,7 +12,7 @@ export default function Schedule({ title, timeRange, initialChecked = false }: S
   return (
     <div
     onClick={() => setIsChecked(!isChecked)}
-    className="relative w-[311px] h-[54px] bg-blue-50 rounded-[10px] flex items-center font-['Pretendard'] overflow-hidden">
+    className="relative w-[311px] h-[54px] bg-blue-50 rounded-[10px] flex items-center overflow-hidden">
       <div className="absolute left-[6px] top-[8px] w-[7px] h-[38px] bg-primary rounded-[10px]" />
 
       <div className="flex flex-col ml-[27px]">

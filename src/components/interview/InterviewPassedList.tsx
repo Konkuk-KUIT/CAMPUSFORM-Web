@@ -7,7 +7,7 @@ import Link from 'next/link';
 export default function InterviewPassedList() {
   return (
     <>
-      <ApplicantCountHeader type="합격자" count={11} />
+      <ApplicantCountHeader type="합격자" />
       <NotificationMessageForm type="합격자" />
       <ApplicantMessageCard type="합격자" />
       <Link href="/interview/complete" className="">

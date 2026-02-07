@@ -23,7 +23,7 @@ export default function ManageApplicationViewPage() {
 
   return (
     <div className="flex justify-center min-h-screen bg-white">
-      <div className="relative w-[375px] bg-white min-h-screen shadow-lg flex flex-col">
+      <div className="relative w-[375px] bg-white min-h-screen flex flex-col">
         {/* Top bar: logo left, title center, bell right */}
         <div className="flex items-center justify-between h-12 px-4 bg-white border-b border-gray-100">
           <Image src="/icons/logo.svg" alt="logo" width={21} height={22} />

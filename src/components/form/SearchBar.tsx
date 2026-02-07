@@ -63,7 +63,7 @@ export default function SearchBar({
             type="text"
             placeholder={placeholder}
             onChange={e => onSearch?.(e.target.value)}
-            className="flex-1 outline-none text-gray-300 placeholder:text-gray-300 text-body-sm-rg"
+            className="flex-1 outline-none bg-transparent text-black placeholder:text-gray-300 text-body-sm-rg"
           />
         </div>
         <button onClick={onFilterClick} className="cursor-pointer">

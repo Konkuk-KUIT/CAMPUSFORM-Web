@@ -112,7 +112,7 @@ export default function AddProjectForm() {
         }
       `}</style>
 
-      <div className="relative w-[375px] bg-white min-h-screen shadow-lg flex flex-col">
+      <div className="relative w-[375px] bg-white min-h-screen flex flex-col">
         <Header title="새 프로젝트 추가" backTo="/home" />
 
         <div className="flex-1 px-5 py-6 flex flex-col gap-6 overflow-y-auto scrollbar-hide pb-10">
@@ -216,11 +216,14 @@ export default function AddProjectForm() {
           />
         )}
 
-        <div className="px-5 pb-5 mt-auto bg-white pt-2">
+        <div className="fixed bottom-0 left-0 right-0 bg-white px-5 py-4 max-w-93.75 mx-auto">
           <Button variant="primary" size="lg" disabled={isButtonDisabled} className="w-full">
             생성하기
           </Button>
         </div>
+        
+        {/* Spacer for fixed button */}
+        <div className="h-24" />
 
         {showWarningModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">

@@ -43,7 +43,7 @@ export default function StatusDropdown({ value, onChange }: StatusDropdownProps)
     <div className="relative w-20">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full h-6.5 bg-white border border-gray-200 rounded-5 px-2 py-1 flex items-center relative"
+        className="w-full h-6.5 bg-gray-50 border border-gray-200 rounded-5 px-2 py-1 flex items-center relative"
       >
         <div className="flex items-center gap-1 absolute left-[45%] -translate-x-1/2">
           <div className={`w-1.5 h-1.5 rounded-full ${selectedOption.color} shrink-0`} />
@@ -55,12 +55,12 @@ export default function StatusDropdown({ value, onChange }: StatusDropdownProps)
       {isOpen && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
-          <div className="absolute top-full w-21.25 bg-white rounded-10 overflow-hidden z-20">
+          <div className="absolute top-full w-21.25 bg-gray-50 rounded-10 overflow-hidden z-20">
             {options.map(option => (
               <button
                 key={option.value}
                 onClick={() => handleSelect(option.value)}
-                className="w-full px-3 py-2.5 flex items-center gap-2"
+                className="w-full pl-5 py-2.5 flex items-center gap-2 hover:bg-gray-100"
               >
                 <div className={`w-1.75 h-1.75 rounded-full ${option.color} shrink-0`} />
                 <span className="text-body-sm-rg whitespace-nowrap">{option.label}</span>

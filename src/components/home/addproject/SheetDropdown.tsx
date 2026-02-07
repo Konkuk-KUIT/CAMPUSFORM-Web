@@ -39,18 +39,17 @@ export default function SheetDropdown({
 
   return (
     <div className="relative w-full" ref={dropdownRef}>
-      {/* 1. 버튼 부분 (원본 디자인 유지) */}
+      {/* 드롭다운 버튼 */}
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        // w-93.75 대신 w-full을 사용하여 부모 넓이에 맞춤 (스타일은 원본과 동일)
-        className={`w-full h-[50px] px-6 flex items-center justify-between text-[14px] rounded-[10px] border transition-colors ${
+        className={`w-full h-[50px] px-[15px] flex items-center justify-between text-[14px] font-normal leading-[20px] rounded-[5px] border border-solid transition-colors ${
           isOpen 
-            ? 'bg-blue-50 border-primary text-gray-950' 
-            : 'bg-white border-gray-100 text-gray-950'
+            ? 'bg-[var(--color-blue-50)] border-[var(--color-primary)] text-black' 
+            : 'bg-white border-[var(--color-gray-200)] text-black'
         }`}
       >
-        <span className={value ? 'text-gray-950' : 'text-gray-400'}>
+        <span className={value ? 'text-black' : 'text-[#b0b0b0]'}>
           {value || placeholder}
         </span>
         <Image 
@@ -61,13 +60,13 @@ export default function SheetDropdown({
         />
       </button>
 
-      {/* 2. 옵션 목록 부분 (원본에 없어서 새로 추가한 부분) */}
+      {/* 옵션 목록 */}
       {isOpen && (
-        <div className="absolute top-[56px] left-0 w-full max-h-[240px] overflow-y-auto bg-white border border-gray-100 rounded-[10px] shadow-lg z-50 animate-in fade-in zoom-in-95 duration-100 scrollbar-hide">
+        <div className="absolute top-[51px] left-0 w-full max-h-[385px] overflow-y-auto bg-[#f6f6f6] rounded-bl-[10px] rounded-br-[10px] shadow-[2px_5px_10px_0px_rgba(0,0,0,0.1)] z-50 scrollbar-hide">
           {showNoneOption && (
             <button
                onClick={() => handleSelect('선택사항 없음')}
-               className="w-full h-[48px] px-6 text-left text-[14px] text-gray-950 hover:bg-gray-50 border-b border-gray-50"
+               className="w-full h-[35px] pl-[23px] pr-[20px] py-[7px] text-left text-[13px] font-normal leading-[18px] text-black bg-[#f6f6f6] hover:bg-[#ececec] transition-colors"
             >
               선택사항 없음
             </button>
@@ -77,7 +76,7 @@ export default function SheetDropdown({
             <button 
               key={index}
               onClick={() => handleSelect(option)}
-              className="w-full h-[48px] px-6 text-left text-[14px] text-gray-950 hover:bg-gray-50"
+              className="w-full h-[35px] pl-[23px] pr-[20px] py-[7px] text-left text-[13px] font-normal leading-[18px] text-black bg-[#f6f6f6] hover:bg-[#ececec] transition-colors"
             >
               {option}
             </button>

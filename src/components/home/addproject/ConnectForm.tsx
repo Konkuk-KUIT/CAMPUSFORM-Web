@@ -9,6 +9,10 @@ import SheetDropdown from '@/components/home/addproject/SheetDropdown';
 export default function ConnectForm() {
   const router = useRouter();
 
+  const handleEditPosition = () => {
+    router.push('/home/addproject/connect/edit-position');
+  };
+
   const sheetHeaders = [
     '이름을 작성해주세요.',
     '학교를 작성해주세요.',
@@ -40,9 +44,19 @@ export default function ConnectForm() {
     router.back();
   };
 
-  const renderSection = (label: string, fieldKey: keyof typeof mappings, placeholder: string) => (
+  const renderSection = (label: string, fieldKey: keyof typeof mappings, placeholder: string, showEdit = false) => (
     <div className="flex flex-col gap-2">
-      <label className="text-[14px] font-bold text-gray-950">{label}</label>
+      <div className="flex justify-between items-center pr-2">
+        <label className="text-[14px] font-bold text-gray-950">{label}</label>
+        {showEdit && (
+          <button 
+            onClick={handleEditPosition}
+            className="text-body-sm-rg text-[var(--color-primary)] underline"
+          >
+            편집하기
+          </button>
+        )}
+      </div>
       <SheetDropdown
         options={sheetHeaders}
         value={mappings[fieldKey]}
@@ -54,7 +68,7 @@ export default function ConnectForm() {
 
   return (
     <div className="flex justify-center min-h-screen bg-white">
-      <div className="relative w-[375px] bg-white min-h-screen shadow-lg flex flex-col">
+      <div className="relative w-[375px] bg-white min-h-screen flex flex-col">
         <Header title="스프레드 시트 연동" backTo="/home/addproject" />
 
         <div className="flex-1 px-5 py-6 flex flex-col gap-6 overflow-y-auto scrollbar-hide pb-24">
@@ -71,16 +85,17 @@ export default function ConnectForm() {
             {renderSection('성별', 'gender', '성별을 선택해주세요.')}
             {renderSection('전화번호', 'phone', '연락처를 작성해주세요.')}
             {renderSection('이메일', 'email', '이메일 주소')}
-            {renderSection('지원 포지션', 'position', '지원 포지션을 선택해주세요.')}
+            {renderSection('지원 포지션', 'position', '지원 포지션을 선택해주세요.', true)}
           </div>
         </div>
 
-        <div className="px-5 pb-5 mt-auto bg-white pt-2 border-t border-gray-50">
+        <div className="fixed bottom-0 left-0 right-0 bg-white px-5 py-4 max-w-93.75 mx-auto">
           <Button variant="primary" size="lg" className="w-full" onClick={handleConnect}>
             연동하기
           </Button>
-        </div>
-      </div>
+        </div>        
+        {/* Spacer for fixed button */}
+        <div className="h-24" />      </div>
     </div>
   );
 }

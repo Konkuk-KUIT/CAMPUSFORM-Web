@@ -12,8 +12,7 @@ export default function InterviewInitialCards() {
   };
 
   const handleCreateSchedule = () => {
-    console.log('스마트 시간표 생성');
-    // router.push('/interview/schedule');
+    router.push('/smart-schedule');
   };
 
   return (

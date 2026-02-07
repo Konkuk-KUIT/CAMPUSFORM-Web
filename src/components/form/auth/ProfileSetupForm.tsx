@@ -46,9 +46,10 @@ export default function ProfileSetupForm() {
   };
 
   return (
-    <>
-      <div className="px-6 py-8 pb-28 flex flex-col gap-3">
-        <ProfileImageButton />
+    <div className="flex justify-center min-h-screen bg-white">
+      <div className="relative w-[375px] bg-white min-h-screen flex flex-col">
+        <div className="px-6 py-8 pb-28 flex flex-col gap-3">
+          <ProfileImageButton />
 
         <div className="flex flex-col gap-2 mt-15">
           <label className="text-subtitle-sm-md pl-2">이름(닉네임)</label>
@@ -72,6 +73,7 @@ export default function ProfileSetupForm() {
           가입 완료
         </Button>
       </Link>
-    </>
+      </div>
+    </div>
   );
 }

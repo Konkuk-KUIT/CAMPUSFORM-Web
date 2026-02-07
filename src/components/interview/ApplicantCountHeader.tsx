@@ -4,14 +4,18 @@ import { useState } from 'react';
 import BottomSheet from '@/components/ui/BottomSheet';
 import Image from 'next/image';
 import Button from '@/components/ui/Btn';
+import { getPassedInterviewApplicants, getFailedInterviewApplicants } from '@/data/interviews';
 
 interface ApplicantCountHeaderProps {
   type: '합격자' | '불합격자';
-  count?: number;
 }
 
-export default function ApplicantCountHeader({ type, count = 0 }: ApplicantCountHeaderProps) {
+export default function ApplicantCountHeader({ type }: ApplicantCountHeaderProps) {
   const [isApplicantListOpen, setIsApplicantListOpen] = useState(false);
+
+  // 합격자/불합격자 데이터 가져오기
+  const applicants = type === '합격자' ? getPassedInterviewApplicants() : getFailedInterviewApplicants();
+  const count = applicants.length;
 
   const title = type === '합격자' ? '면접 합격자 명단' : '면접 불합격자 명단';
 
@@ -50,26 +54,14 @@ export default function ApplicantCountHeader({ type, count = 0 }: ApplicantCount
 
         {/* 합격자/불합격자 리스트 */}
         <div className="flex flex-col font-normal text-[13px] leading-6.5 py-3">
-          {type === '합격자' ? (
-            <>
-              <p>김민준 (건국대 / 컴퓨터공학과 / 오리사)</p>
-              <p>이서연 (ᄋᄋ대 / 시각디자인과 / 일반부원)</p>
-              <p>최수빈 (ᄋᄋ대 / 경영학과 / 일반부원)</p>
-              <p>황세연 (ᄋᄋ대 / 호텔관광학과 / 조리사)</p>
-              <p>최민혁 (ᄋᄋ대 / 체육학과 / 일반부원)</p>
-              <p>조은채 (ᄋᄋ대 / 문헌정보학과 / 일반부원)</p>
-              <p>백서준 (ᄋᄋ대 / 화학공학과 / 일반부원)</p>
-              <p>오지우 (ᄋᄋ대 / 관광경영학과 / 조리사)</p>
-              <p>이도현 (ᄋᄋ대 / 심리학과 / 일반부원)</p>
-            </>
+          {applicants.length === 0 ? (
+            <p className="text-center text-gray-400 py-4">명단이 없습니다.</p>
           ) : (
-            <>
-              <p>박지민 (서울대 / 경제학과 / 일반부원)</p>
-              <p>정유진 (연세대 / 국어국문학과 / 일반부원)</p>
-              <p>강현우 (고려대 / 전기전자공학과 / 일반부원)</p>
-              <p>송민서 (성균관대 / 글로벌경영학과 / 일반부원)</p>
-              <p>임태현 (한양대 / 건축학과 / 일반부원)</p>
-            </>
+            applicants.map((applicant) => (
+              <p key={applicant.id}>
+                {applicant.name} ({applicant.university} / {applicant.major} / {applicant.position})
+              </p>
+            ))
           )}
         </div>
       </BottomSheet>

@@ -4,9 +4,23 @@ import { useState } from 'react';
 import BottomSheet from '@/components/ui/BottomSheet';
 import Image from 'next/image';
 import Button from '@/components/ui/Btn';
+import { mockApplicants } from '@/data/applicants';
 
-export default function ApplicantCountHeader() {
+interface ApplicantCountHeaderProps {
+  type: '합격자' | '불합격자';
+}
+
+export default function ApplicantCountHeader({ type }: ApplicantCountHeaderProps) {
   const [isApplicantListOpen, setIsApplicantListOpen] = useState(false);
+
+  // type에 따라 합격자 또는 불합격자 필터링
+  const filteredApplicants = mockApplicants.filter((applicant) =>
+    type === '합격자' ? applicant.status === '합격' : applicant.status === '불합격'
+  );
+
+  const title = `서류 ${type} 명단`;
+  const count = filteredApplicants.length;
+
   return (
     <>
       <div
@@ -14,7 +28,7 @@ export default function ApplicantCountHeader() {
         onClick={() => setIsApplicantListOpen(true)}
       >
         <h2 className="text-subtitle-sm-md text-gray-800">
-          서류 합격자 명단 <span className="text-gray-600">(00명)</span>
+          {title} <span className="text-gray-600">({count}명)</span>
         </h2>
         <button className="flex items-center gap-1 text-primary text-body-sm">
           전체보기
@@ -22,10 +36,10 @@ export default function ApplicantCountHeader() {
         </button>
       </div>
 
-      {/* 바텀시트 - 서류 합격자 명단 */}
+      {/* 바텀시트 - 서류 합격자/불합격자 명단 */}
       <BottomSheet isOpen={isApplicantListOpen} onClose={() => setIsApplicantListOpen(false)}>
         <h2 className="text-subtitle-sm-md text-gray-800 pt-3">
-          서류 합격자 명단 <span className="text-gray-600">(00명)</span>
+          {title} <span className="text-gray-600">({count}명)</span>
         </h2>
 
         {/* 버튼 */}
@@ -40,17 +54,13 @@ export default function ApplicantCountHeader() {
           </Button>
         </div>
 
-        {/* 합격자 리스트 */}
+        {/* 합격자/불합격자 리스트 */}
         <div className="flex flex-col font-normal text-[13px] leading-6.5 py-3">
-          <p>김민준 (건국대 / 컴퓨터공학과 / 오리사)</p>
-          <p>이서연 (ㅇㅇ대 / 시각디자인과 / 일반부원)</p>
-          <p>최수빈 (ㅇㅇ대 / 경영학과 / 일반부원)</p>
-          <p>황세연 (ㅇㅇ대 / 호텔관광학과 / 조리사)</p>
-          <p>최민혁 (ㅇㅇ대 / 체육학과 / 일반부원)</p>
-          <p>조은채 (ㅇㅇ대 / 문헌정보학과 / 일반부원)</p>
-          <p>백서준 (ㅇㅇ대 / 화학공학과 / 일반부원)</p>
-          <p>오지우 (ㅇㅇ대 / 관광경영학과 / 조리사)</p>
-          <p>이도현 (ㅇㅇ대 / 심리학과 / 일반부원)</p>
+          {filteredApplicants.map((applicant) => (
+            <p key={applicant.id}>
+              {applicant.name} ({applicant.university} / {applicant.major} / {applicant.position})
+            </p>
+          ))}
         </div>
       </BottomSheet>
     </>

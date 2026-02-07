@@ -11,6 +11,8 @@ interface ApplicantFileCardProps {
   info: string;
   initialStatus: '보류' | '합격' | '불합격';
   commentCount?: number;
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
   onCommentClick?: () => void;
 }
 
@@ -20,6 +22,8 @@ export default function ApplicantFileCard({
   info,
   initialStatus,
   commentCount = 0,
+  isFavorite = false,
+  onToggleFavorite,
   onCommentClick,
 }: ApplicantFileCardProps) {
   const [status, setStatus] = useState(initialStatus);
@@ -41,8 +45,12 @@ export default function ApplicantFileCard({
             </button>
             <span className="text-body-xs-rg text-gray-300">{commentCount}</span>
           </div>
-          <button className="w-4.5 h-4.5 relative">
-            <Image src="/icons/star-off.svg" alt="즐겨찾기" fill />
+          <button className="w-4.5 h-4.5 relative" onClick={onToggleFavorite}>
+            <Image 
+              src={isFavorite ? '/icons/star.svg' : '/icons/star-off.svg'} 
+              alt="즐겨찾기" 
+              fill 
+            />
           </button>
         </div>
       </div>

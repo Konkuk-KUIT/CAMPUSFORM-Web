@@ -98,20 +98,20 @@ export default function HomeMain() {
   };
 
   return (
-    <main className="min-h-screen flex justify-center bg-gray-50 font-['Pretendard']">
-      <div className="relative w-[375px] bg-gray-50 min-h-screen shadow-lg flex flex-col overflow-y-auto">
+    <main className="min-h-screen flex justify-center bg-gray-50">
+      <div className="relative w-[375px] bg-gray-50 min-h-screen flex flex-col overflow-y-auto">
         <div className="sticky top-0 z-50 bg-white">
           <TopAppBar />
         </div>
 
-        <div className="pt-[55px] flex-1 flex flex-col bg-gray-50">
-          <section className="mt-4 mb-4 flex justify-center px-5 shrink-0">
+        <div className="pt-[15px] flex-1 flex flex-col bg-gray-50">
+          <section className="mb-[15px] flex justify-center px-5 shrink-0">
             <SegmentedControl onTabChange={tab => setCurrentTab(tab)} />
           </section>
 
           {currentTab === 'calendar' ? (
-            <div className="flex flex-col animate-in fade-in duration-200 items-center">
-              <section className="w-full flex justify-center shrink-0">
+            <div className="flex flex-col animate-in fade-in duration-200 items-center flex-1">
+              <section className="w-full flex justify-center shrink-0 pt-[15px]">
                 <Calendar
                   selected={selectedDate}
                   onDateChange={date => {
