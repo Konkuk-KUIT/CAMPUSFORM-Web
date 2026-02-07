@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Button from '@/components/ui/Btn';
 import Textbox from '@/components/ui/Textbox';
 import ProfileImageButton from '@/components/auth/ProfileImageButton';
+import Header from '@/components/ui/Header';
 
 interface MypageSetupFormProps {
   initialName?: string;
@@ -53,9 +54,19 @@ export default function MypageSetupForm({
   };
 
   return (
-    <>
-      <div className="px-6 py-8 pb-28 flex flex-col gap-3">
-        <ProfileImageButton />
+    <div className="relative bg-white min-h-screen">
+      <Header title="마이페이지" backTo="/home" hideNotification={true} />
+
+      <div className="absolute top-[14px] right-[16px] z-50">
+        <button className="text-body-md text-[var(--color-gray-500)]">
+          로그아웃
+        </button>
+      </div>
+
+      <div className="flex justify-center min-h-screen bg-white">
+        <div className="relative w-[375px] bg-white min-h-screen flex flex-col">
+          <div className="px-6 py-8 pb-28 flex flex-col gap-3">
+            <ProfileImageButton />
 
         <div className="flex flex-col gap-2 mt-15">
           <label className="text-subtitle-sm-md pl-2">이름(닉네임)</label>
@@ -75,10 +86,22 @@ export default function MypageSetupForm({
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 bg-white px-6 py-4 max-w-93.75 mx-auto">
+        <div className="flex justify-center items-center gap-[5px] mb-5 text-body-sm-rg text-[var(--color-gray-500)]">
+          <span className="text-[var(--color-gray-500)]">캠퍼스폼</span>
+          <span className="text-[var(--color-gray-700)]">|</span>
+          <span className="text-[var(--color-gray-700)]">이용약관</span>
+          <span className="text-[var(--color-gray-700)]">|</span>
+          <span className="text-[var(--color-gray-700)]">개인정보 처리방침</span>
+          <span className="text-[var(--color-gray-700)]">|</span>
+          <span className="text-[var(--color-gray-700)]">문의하기</span>
+        </div>
+        
         <Button variant="primary" size="lg" onClick={handleSignup}>
           저장하기
         </Button>
       </div>
-    </>
+        </div>
+      </div>
+    </div>
   );
 }

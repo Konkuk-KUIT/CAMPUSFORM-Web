@@ -1,10 +1,14 @@
 // 서류 상세 페이지
 import Link from 'next/link';
 import Image from 'next/image';
-import ApplicantCardBasic from '@/components/ui/ApplicantCardBasic';
+import DocumentDetailClient from '@/components/document/DocumentDetailClient';
 import QuestionSection from '@/components/document/QuestionSection';
 
-export default function ApplicantDetailPage() {
+// async 추가!
+export default async function ApplicantDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  // params를 await로 unwrap
+  const { id } = await params;
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* 상세 페이지 헤더 */}
@@ -18,19 +22,10 @@ export default function ApplicantDetailPage() {
         </button>
       </header>
 
-      <div className="p-4">
-        {/* 상세 내용 */}
-        <ApplicantCardBasic
-          name="김민준"
-          gender="남"
-          status="합격"
-          university="건국대/컴퓨터공학과/일반부원"
-          phone="010-1234-5678"
-          email="minjun@gmail.com"
-          commentCount={3}
-        />
-      </div>
+      {/* DocumentDetailClient에 id 전달 */}
+      <DocumentDetailClient applicantId={id} />
 
+      {/* 질문 섹션 */}
       <div className="p-4 mx-4 bg-white rounded-10">
         <QuestionSection
           title="지원동기"

@@ -121,8 +121,8 @@ export default function TimePicker({
         <div className="relative w-full h-full flex items-center justify-center">
           {/* 선택된 중앙 아이템 (파란색) - 정확히 중앙에 위치 */}
           <div 
-            className={`absolute text-blue-500 text-[22px] font-medium h-[30px] flex items-center w-full ${isHourField ? 'justify-end' : 'justify-start'}`}
-            style={{ top: 'calc(50% - 15px)' }}
+            className={`absolute text-blue-500 text-[22px] font-medium h-[30px] flex items-center justify-center w-[50px] tabular-nums`}
+            style={{ top: 'calc(50% - 15px)', left: isHourField ? '0' : 'auto', right: isHourField ? 'auto' : '0' }}
           >
             {isHourField
               ? String(items[selectedIndex]).padStart(2, '0')
@@ -131,32 +131,32 @@ export default function TimePicker({
 
           {/* 위쪽 아이템 1 (항상 표시) */}
           <div 
-            className={`absolute text-gray-300 text-[22px] h-[30px] flex items-center opacity-50 w-full ${isHourField ? 'justify-end' : 'justify-start'}`}
-            style={{ top: 'calc(50% - 50px)' }}
+            className={`absolute text-gray-300 text-[22px] h-[30px] flex items-center justify-center opacity-50 w-[50px] tabular-nums`}
+            style={{ top: 'calc(50% - 50px)', left: isHourField ? '0' : 'auto', right: isHourField ? 'auto' : '0' }}
           >
             {getItemLabel(items[getCircularIndex(selectedIndex - 1)])}
           </div>
 
           {/* 위쪽 아이템 2 (항상 표시) */}
           <div 
-            className={`absolute text-gray-300 text-[22px] h-[30px] flex items-center opacity-30 w-full ${isHourField ? 'justify-end' : 'justify-start'}`}
-            style={{ top: 'calc(50% - 85px)' }}
+            className={`absolute text-gray-300 text-[22px] h-[30px] flex items-center justify-center opacity-30 w-[50px] tabular-nums`}
+            style={{ top: 'calc(50% - 85px)', left: isHourField ? '0' : 'auto', right: isHourField ? 'auto' : '0' }}
           >
             {getItemLabel(items[getCircularIndex(selectedIndex - 2)])}
           </div>
 
           {/* 아래쪽 아이템 1 (항상 표시) */}
           <div 
-            className={`absolute text-gray-300 text-[22px] h-[30px] flex items-center opacity-50 w-full ${isHourField ? 'justify-end' : 'justify-start'}`}
-            style={{ top: 'calc(50% + 20px)' }}
+            className={`absolute text-gray-300 text-[22px] h-[30px] flex items-center justify-center opacity-50 w-[50px] tabular-nums`}
+            style={{ top: 'calc(50% + 20px)', left: isHourField ? '0' : 'auto', right: isHourField ? 'auto' : '0' }}
           >
             {getItemLabel(items[getCircularIndex(selectedIndex + 1)])}
           </div>
 
           {/* 아래쪽 아이템 2 (항상 표시) */}
           <div 
-            className={`absolute text-gray-300 text-[22px] h-[30px] flex items-center opacity-30 w-full ${isHourField ? 'justify-end' : 'justify-start'}`}
-            style={{ top: 'calc(50% + 55px)' }}
+            className={`absolute text-gray-300 text-[22px] h-[30px] flex items-center justify-center opacity-30 w-[50px] tabular-nums`}
+            style={{ top: 'calc(50% + 55px)', left: isHourField ? '0' : 'auto', right: isHourField ? 'auto' : '0' }}
           >
             {getItemLabel(items[getCircularIndex(selectedIndex + 2)])}
           </div>
@@ -180,7 +180,9 @@ export default function TimePicker({
             onClick={() => openModal('startHour')}
             className="flex items-center justify-end gap-2 h-8 text-[14px] text-black"
           >
-            {String(tempStartHour).padStart(2, '0')} : {formatMinute(tempStartMinute)}
+            <span className="min-w-[60px] text-right">
+              {String(tempStartHour).padStart(2, '0')} : {formatMinute(tempStartMinute)}
+            </span>
             <Image src="/icons/chevron-down.svg" alt="dropdown" width={16} height={16} />
           </button>
         </div>
@@ -191,7 +193,9 @@ export default function TimePicker({
             onClick={() => openModal('endHour')}
             className="flex items-center justify-end gap-2 h-8 text-[14px] text-black"
           >
-            {String(tempEndHour).padStart(2, '0')} : {formatMinute(tempEndMinute)}
+            <span className="min-w-[60px] text-right">
+              {String(tempEndHour).padStart(2, '0')} : {formatMinute(tempEndMinute)}
+            </span>
             <Image src="/icons/chevron-down.svg" alt="dropdown" width={16} height={16} />
           </button>
         </div>
@@ -202,7 +206,7 @@ export default function TimePicker({
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
           <div className="w-[241px] bg-white rounded-[10px] p-6 flex flex-col items-center gap-6">
             {/* Hour and Minute wheels */}
-            <div className="flex items-center justify-center gap-6">
+            <div className="flex items-center justify-center gap-2">
               {editingField?.includes('Hour') ? (
                 <>
                   <ScrollerWheel

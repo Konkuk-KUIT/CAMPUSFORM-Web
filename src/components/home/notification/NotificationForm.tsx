@@ -65,7 +65,7 @@ export default function NotificationForm() {
 
   return (
     <div className="flex justify-center min-h-screen bg-white">
-      <div className="relative w-[375px] bg-white min-h-screen shadow-lg flex flex-col">
+      <div className="relative w-[375px] bg-white min-h-screen flex flex-col">
         <HeaderNotification />
 
         <div className="flex items-center justify-between px-5 py-3 bg-white sticky top-12 z-10">

@@ -1,3 +1,5 @@
+'use client';
+
 import Image from 'next/image';
 
 interface ApplicantCardProps {
@@ -10,6 +12,7 @@ interface ApplicantCardProps {
   commentCount?: number;
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
+  onCommentClick?: () => void;
 }
 
 export default function ApplicantCard({
@@ -22,6 +25,7 @@ export default function ApplicantCard({
   commentCount = 0,
   isFavorite = false,
   onToggleFavorite,
+  onCommentClick,
 }: ApplicantCardProps) {
   const statusColors = {
     합격: 'bg-point-green',
@@ -54,10 +58,13 @@ export default function ApplicantCard({
           <p>{email}</p>
 
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1 text-gray-300">
+            <button
+              onClick={onCommentClick}
+              className="flex items-center gap-1 text-gray-300"
+            >
               <Image src="/icons/comment.svg" alt="댓글" width={14} height={14} />
               <span className="text-body-xs">{commentCount}</span>
-            </div>
+            </button>
 
             <button onClick={onToggleFavorite} className="shrink-0">
               <Image

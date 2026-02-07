@@ -69,7 +69,6 @@
   background-color: white;
   border-radius: 12px;
   padding: 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .sectionTitle {
@@ -94,7 +93,6 @@
 }
 
 .scheduleCard:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transform: translateY(-2px);
 }
 
@@ -175,7 +173,6 @@
   background-color: white;
   border-radius: 12px;
   padding: 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .recommendationList {
@@ -193,7 +190,6 @@
 }
 
 .recommendationCard:hover {
-  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.15);
   transform: translateY(-2px);
 }
 
@@ -258,7 +254,6 @@
 
 .acceptBtn:hover {
   background-color: #30b54a;
-  box-shadow: 0 2px 8px rgba(52, 199, 89, 0.3);
 }
 
 .declineBtn {
@@ -276,7 +271,6 @@
   background-color: white;
   border-radius: 12px;
   padding: 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .infoGrid {
@@ -298,7 +292,6 @@
 .infoCard:hover {
   background-color: #f0f0f0;
   border-color: #007aff;
-  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.1);
 }
 
 .infoIcon {

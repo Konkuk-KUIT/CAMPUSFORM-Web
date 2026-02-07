@@ -1,6 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { authService } from '@/services/authService';
 import TopAppBar from '@/components/home/TopAppBar';
 import SegmentedControl from '@/components/ui/SegmentedControl';
 import Calendar from '@/components/home/Calendar';
@@ -11,9 +13,39 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 export default function HomeMain() {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
   const [currentTab, setCurrentTab] = useState('calendar');
   const [isOnlyRecruiting, setIsOnlyRecruiting] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+
+  // 인증 체크
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const authResponse = await authService.getCurrentUser();
+
+        // 로그인 안 되어 있으면 로그인 페이지로
+        if (!authResponse?.isAuthenticated) {
+          router.replace('/auth/login');
+          return;
+        }
+
+        // 프로필 미완성이면 setup 페이지로 (닉네임으로 판별)
+        if (!authService.isProfileCompleted(authResponse.user)) {
+          router.replace('/auth/setup');
+          return;
+        }
+
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Auth check error:', error);
+        router.replace('/auth/login');
+      }
+    };
+
+    checkAuth();
+  }, [router]);
 
   const [schedules] = useState([
     {
@@ -97,21 +129,30 @@ export default function HomeMain() {
     setProjects(projects.filter(p => p.id !== id));
   };
 
+  // 로딩 중일 때
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="text-gray-500">로딩 중...</div>
+      </div>
+    );
+  }
+
   return (
-    <main className="min-h-screen flex justify-center bg-gray-50 font-['Pretendard']">
-      <div className="relative w-[375px] bg-gray-50 min-h-screen shadow-lg flex flex-col overflow-y-auto">
+    <main className="min-h-screen flex justify-center bg-gray-50">
+      <div className="relative w-[375px] bg-gray-50 min-h-screen flex flex-col overflow-y-auto">
         <div className="sticky top-0 z-50 bg-white">
           <TopAppBar />
         </div>
 
-        <div className="pt-[55px] flex-1 flex flex-col bg-gray-50">
-          <section className="mt-4 mb-4 flex justify-center px-5 shrink-0">
+        <div className="pt-[15px] flex-1 flex flex-col bg-gray-50">
+          <section className="mb-[15px] flex justify-center px-5 shrink-0">
             <SegmentedControl onTabChange={tab => setCurrentTab(tab)} />
           </section>
 
           {currentTab === 'calendar' ? (
-            <div className="flex flex-col animate-in fade-in duration-200 items-center">
-              <section className="w-full flex justify-center shrink-0">
+            <div className="flex flex-col animate-in fade-in duration-200 items-center flex-1">
+              <section className="w-full flex justify-center shrink-0 pt-[15px]">
                 <Calendar
                   selected={selectedDate}
                   onDateChange={date => {

@@ -14,7 +14,7 @@ export default function NotificationSettingsForm() {
 
   return (
     <div className="flex justify-center min-h-screen bg-white">
-      <div className="relative w-[375px] bg-white min-h-screen shadow-lg flex flex-col">
+      <div className="relative w-[375px] bg-white min-h-screen flex flex-col">
         <Header title="알림 설정" backTo="/home/notification" />
 
         <div className="px-5 py-6">
