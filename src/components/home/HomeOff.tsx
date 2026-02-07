@@ -35,7 +35,7 @@ export default function HomeOff({ title, status, dateRange, applicantCount }: Ho
 
   return (
     <div
-      className="group relative w-[343px] h-[130px] rounded-[10px] shadow-sm overflow-hidden font-['Pretendard'] transition-all duration-200 cursor-pointer
+      className="group relative w-[343px] h-[130px] rounded-[10px] shadow-sm overflow-hidden transition-all duration-200 cursor-pointer
                     bg-gray-100 hover:bg-gray-200 active:bg-gray-300 border border-gray-100"
     >
       <h2

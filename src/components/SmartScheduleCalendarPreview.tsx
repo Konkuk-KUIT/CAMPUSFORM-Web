@@ -6,22 +6,22 @@ import Toggle from '@/components/ui/Toggle';
 
 // 가용여부 표시 색상
 const BLUE_COLORS = [
-  '#efefef', // 0명 - gray-100
-  '#eff3ff', // 1명 - blue-50
-  '#dbe3fe', // 2명 - blue-100
-  '#bfcefe', // 3명 - blue-200
-  '#93affd', // 4명 - blue-300
-  '#3b5cf6', // 5명 - blue-500
-  '#253beb', // 6명 - blue-600
-  '#1d28d8', // 7명 - blue-700
-  '#1e22af', // 8명 - blue-800
-  '#1e248a', // 9명 - blue-900
-  '#171954', // 10명 - blue-950
+  '#efefef',      // 0명 - gray-100
+  '#eff3ff',      // 1명 - blue-50
+  '#dbe3fe',      // 2명 - blue-100
+  '#bfcefe',      // 3명 - blue-200
+  '#93affd',      // 4명 - blue-300
+  '#3b5cf6',      // 5명 - blue-500
+  '#253beb',      // 6명 - blue-600
+  '#1d28d8',      // 7명 - blue-700
+  '#1e22af',      // 8명 - blue-800
+  '#1e248a',      // 9명 - blue-900
+  '#171954',      // 10명 - blue-950
 ];
 
 // 개별 면접관용 2가지 색상
-const GRAY1 = '#efefef'; // 그레이1 - 가용 면접관 적음
-const BLUE2 = '#bfcefe'; // 블루2 - 가용 면접관 많음
+const GRAY1 = '#efefef';      // 그레이1 - 가용 면접관 적음
+const BLUE2 = '#bfcefe';      // 블루2 - 가용 면접관 많음
 
 const dayOfWeekLabels = ['일', '월', '화', '수', '목', '금', '토'];
 const hours = ['12', '13', '14', '15', '16', '17'];
@@ -36,24 +36,24 @@ interface DayData {
 // 샘플 데이터 생성
 const generateSampleData = (startDate: Date, seed: number = 0): DayData[] => {
   const daysToShow = 3;
-
+  
   const days: DayData[] = [];
   for (let i = 0; i < daysToShow; i++) {
     const date = new Date(startDate);
     date.setDate(date.getDate() + i);
-
+    
     // 시드값을 기반으로 일정한 난수 생성 (0 또는 1: 가능/불가능)
     const seededRandom = (index: number) => {
       const x = Math.sin(seed + index + date.getDate()) * 10000;
       return Math.floor((x - Math.floor(x)) * 2); // 0 또는 1만 반환
     };
-
+    
     days.push({
       dayOfWeek: dayOfWeekLabels[date.getDay()],
       date: date.getDate(),
       availability: hours.map((_, idx) => [
-        seededRandom(idx * 2), // 상반부 (위)
-        seededRandom(idx * 2 + 1), // 하반부 (아래)
+        seededRandom(idx * 2),        // 상반부 (위)
+        seededRandom(idx * 2 + 1),    // 하반부 (아래)
       ]),
     });
   }
@@ -63,33 +63,29 @@ const generateSampleData = (startDate: Date, seed: number = 0): DayData[] => {
 interface Interviewer {
   name: string;
   isLeader?: boolean;
-  isRequired?: boolean;
 }
 
-export default function SmartScheduleCalendarPreview({
-  interviewerName,
-  seed = 0,
-  seeds,
+export default function SmartScheduleCalendarPreview({ 
+  interviewerName, 
+  seed = 0, 
+  seeds, 
   showProfiles = true,
   interviewers,
-  showRequiredSection = false,
-  requiredInterviewer,
-  onRequiredInterviewerChange,
-}: {
-  interviewerName?: string | null;
-  seed?: number;
-  seeds?: number[];
-  showProfiles?: boolean;
-  interviewers?: Interviewer[];
-  showRequiredSection?: boolean;
-  requiredInterviewer?: boolean;
-  onRequiredInterviewerChange?: (value: boolean) => void;
+  showRequiredSection = false
+}: { 
+  interviewerName?: string | null, 
+  seed?: number, 
+  seeds?: number[], 
+  showProfiles?: boolean,
+  interviewers?: Interviewer[],
+  showRequiredSection?: boolean
 }) {
   const [currentStartDate, setCurrentStartDate] = useState(new Date());
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [hoveredCell, setHoveredCell] = useState<{ day: number; time: number; half: 'top' | 'bottom' } | null>(null);
-
+  const [hoveredCell, setHoveredCell] = useState<{day: number, time: number, half: 'top' | 'bottom'} | null>(null);
+  const [requiredInterviewer, setRequiredInterviewer] = useState(false);
+  
   // seeds가 있으면 모든 seed의 가용도를 합산, 아니면 단일 seed 사용
   const dayCols = useMemo(() => {
     if (seeds && seeds.length > 0) {
@@ -97,17 +93,17 @@ export default function SmartScheduleCalendarPreview({
       const allData = seeds.map(s => generateSampleData(currentStartDate, s));
       const daysToShow = 3;
       const mergedDays: DayData[] = [];
-
+      
       for (let i = 0; i < daysToShow; i++) {
         const date = new Date(currentStartDate);
         date.setDate(date.getDate() + i);
-
+        
         // 각 타임별로 모든 면접관의 가용도를 합산 (가능한 면접관 수)
         const combinedAvailability = hours.map((_, hourIdx) => [
           allData.reduce((sum, data) => sum + data[i].availability[hourIdx][0], 0), // 상반부
           allData.reduce((sum, data) => sum + data[i].availability[hourIdx][1], 0), // 하반부
         ]);
-
+        
         mergedDays.push({
           dayOfWeek: dayOfWeekLabels[date.getDay()],
           date: date.getDate(),
@@ -119,7 +115,7 @@ export default function SmartScheduleCalendarPreview({
       return generateSampleData(currentStartDate, seed);
     }
   }, [currentStartDate, seed, seeds]);
-
+  
   // 현재 년월
   const currentMonthYear = useMemo(() => {
     return `${currentStartDate.getFullYear()}년 ${currentStartDate.getMonth() + 1}월`;
@@ -154,17 +150,17 @@ export default function SmartScheduleCalendarPreview({
     const daysInMonth = getDaysInMonth(selectedDate);
     const firstDay = getFirstDayOfMonth(selectedDate);
     const days = [];
-
+    
     // 이전 달 날짜 채우기
     for (let i = 0; i < firstDay; i++) {
       days.push(null);
     }
-
+    
     // 이번 달 날짜
     for (let i = 1; i <= daysInMonth; i++) {
       days.push(i);
     }
-
+    
     return days;
   }, [selectedDate]);
 
@@ -175,10 +171,7 @@ export default function SmartScheduleCalendarPreview({
         <div className="bg-white px-[9px] py-[10px] mb-3 mt-3">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[13px] font-medium text-gray-600">필수 면접관</span>
-            <Toggle 
-              checked={requiredInterviewer || false} 
-              onChange={(value) => onRequiredInterviewerChange?.(value)} 
-            />
+            <Toggle checked={requiredInterviewer} onChange={setRequiredInterviewer} />
           </div>
           <p className="text-[12px] text-gray-500 leading-[17px] tracking-[0.12px]">
             각 타임에 필수 면접관이 최소 1명씩 자동 배정됩니다.
@@ -190,7 +183,9 @@ export default function SmartScheduleCalendarPreview({
       <div className="rounded-[10px] bg-gray-50 p-4 mt-3">
         {/* Header with month and calendar icon */}
         <div className="flex items-center justify-center relative mb-4">
-          <span className="text-[15px] font-medium text-gray-950">{currentMonthYear}</span>
+          <span className="text-[15px] font-medium text-gray-950">
+            {currentMonthYear}
+          </span>
           <button
             onClick={() => setShowCalendarModal(!showCalendarModal)}
             className="absolute right-0"
@@ -203,7 +198,7 @@ export default function SmartScheduleCalendarPreview({
         {/* Navigation arrows and day headers */}
         <div className="flex items-center gap-2 ">
           {/* Left arrow */}
-          <button
+          <button 
             onClick={handlePrevDays}
             className="w-6 h-6 flex items-center justify-center flex-shrink-0"
             aria-label="이전"
@@ -216,15 +211,13 @@ export default function SmartScheduleCalendarPreview({
             {dayCols.map((day, idx) => (
               <div key={idx} className="flex flex-col items-center gap-1">
                 <span className="text-[12px] text-gray-400">{day.dayOfWeek}</span>
-                <span className={`text-[16px] font-semibold ${idx === 0 ? 'text-blue-600' : 'text-gray-950'}`}>
-                  {day.date}
-                </span>
+                <span className={`text-[16px] font-semibold ${idx === 0 ? 'text-blue-600' : 'text-gray-950'}`}>{day.date}</span>
               </div>
             ))}
           </div>
 
           {/* Right arrow */}
-          <button
+          <button 
             onClick={handleNextDays}
             className="w-6 h-6 flex items-center justify-center flex-shrink-0"
             aria-label="다음"
@@ -240,7 +233,7 @@ export default function SmartScheduleCalendarPreview({
         <div className="flex gap-2" style={{ minHeight: `${hours.length * 60 + 16}px` }}>
           {/* Time labels */}
           <div className="flex flex-col pt-1" style={{ width: '30px' }}>
-            {hours.map(hour => (
+            {hours.map((hour) => (
               <div
                 key={hour}
                 className="text-[14px] text-gray-950 font-medium flex items-center justify-start flex-shrink-0"
@@ -259,10 +252,10 @@ export default function SmartScheduleCalendarPreview({
                   // timeSlot = [상반부, 하반부]
                   const topCount = timeSlot[0];
                   const bottomCount = timeSlot[1];
-
+                  
                   let topColor: string;
                   let bottomColor: string;
-
+                  
                   if (interviewerName) {
                     // 개별 면접관: 그레이1과 블루2 2가지만 사용
                     topColor = topCount >= 1 ? BLUE2 : GRAY1;
@@ -272,37 +265,34 @@ export default function SmartScheduleCalendarPreview({
                     topColor = BLUE_COLORS[Math.min(topCount, 10)];
                     bottomColor = BLUE_COLORS[Math.min(bottomCount, 10)];
                   }
-
+                  
                   // 전체 캘린더에서만 가능한 면접관 목록 계산
                   const getAvailableInterviewers = (half: 'top' | 'bottom') => {
                     if (!seeds || !interviewers) return [];
                     const count = half === 'top' ? topCount : bottomCount;
                     if (count === 0) return [];
-
+                    
                     // 각 seed(면접관)의 가용 여부 확인
                     const available: Interviewer[] = [];
                     seeds.forEach((s, idx) => {
                       const data = generateSampleData(currentStartDate, s);
-                      const isAvailable =
-                        half === 'top'
-                          ? data[dayIdx].availability[timeIdx][0] >= 1
-                          : data[dayIdx].availability[timeIdx][1] >= 1;
+                      const isAvailable = half === 'top' 
+                        ? data[dayIdx].availability[timeIdx][0] >= 1
+                        : data[dayIdx].availability[timeIdx][1] >= 1;
                       if (isAvailable && interviewers[idx]) {
                         available.push(interviewers[idx]);
                       }
                     });
                     return available;
                   };
-
+                  
                   return (
                     <div key={`${dayIdx}-${timeIdx}`} className="flex flex-col h-[60px] w-full relative">
                       {/* Top half - solid border */}
                       <div
                         className="flex-1 border-t border-white border-solid cursor-pointer hover:opacity-80"
                         style={{ backgroundColor: topColor }}
-                        onMouseEnter={() =>
-                          !interviewerName && setHoveredCell({ day: dayIdx, time: timeIdx, half: 'top' })
-                        }
+                        onMouseEnter={() => !interviewerName && setHoveredCell({day: dayIdx, time: timeIdx, half: 'top'})}
                         onMouseLeave={() => !interviewerName && setHoveredCell(null)}
                       />
                       {/* Bottom half - dashed border */}
@@ -312,21 +302,21 @@ export default function SmartScheduleCalendarPreview({
                           backgroundColor: bottomColor,
                           borderStyle: 'dashed',
                         }}
-                        onMouseEnter={() =>
-                          !interviewerName && setHoveredCell({ day: dayIdx, time: timeIdx, half: 'bottom' })
-                        }
+                        onMouseEnter={() => !interviewerName && setHoveredCell({day: dayIdx, time: timeIdx, half: 'bottom'})}
                         onMouseLeave={() => !interviewerName && setHoveredCell(null)}
                       />
-
+                      
                       {/* Hover tooltip - 전체 캘린더에서만 표시 */}
                       {!interviewerName && hoveredCell?.day === dayIdx && hoveredCell?.time === timeIdx && (
-                        <div
+                        <div 
                           className={`absolute ${dayIdx === dayCols.length - 1 ? 'right-full mr-2' : 'left-full ml-2'} bg-white rounded-[10px] px-[23px] py-[15px] w-[150px] z-50 flex flex-col gap-[10px] ${hoveredCell.half === 'top' ? 'top-0' : 'top-1/2'}`}
                         >
                           {getAvailableInterviewers(hoveredCell.half).map((interviewer, idx) => (
                             <div key={idx} className="flex items-start gap-[3px] text-[14px] text-black leading-[20px]">
                               <span>{interviewer.name}</span>
-                              {interviewer.isRequired && <span className="text-[14px]">(필수)</span>}
+                              {interviewer.isLeader && (
+                                <span className="text-[14px]">(필수)</span>
+                              )}
                             </div>
                           ))}
                           {getAvailableInterviewers(hoveredCell.half).length === 0 && (
@@ -341,6 +331,7 @@ export default function SmartScheduleCalendarPreview({
             ))}
           </div>
         </div>
+
       </div>
 
       {/* Interviewer avatars row (right-aligned) */}
@@ -374,7 +365,7 @@ export default function SmartScheduleCalendarPreview({
 
             {/* Week Labels */}
             <div className="grid grid-cols-7 gap-2 text-center text-[12px] text-gray-500">
-              {weekDays.map(day => (
+              {weekDays.map((day) => (
                 <div key={day}>{day}</div>
               ))}
             </div>
@@ -395,12 +386,11 @@ export default function SmartScheduleCalendarPreview({
                   className={`
                     w-[30px] h-[30px] rounded-full flex items-center justify-center text-[14px]
                     ${!day ? 'invisible' : ''}
-                    ${
-                      day === selectedDate.getDate() && selectedDate.getMonth() === new Date().getMonth()
-                        ? 'bg-blue-500 text-white'
-                        : day
-                          ? 'hover:bg-gray-100'
-                          : ''
+                    ${day === selectedDate.getDate() && selectedDate.getMonth() === new Date().getMonth()
+                      ? 'bg-blue-500 text-white'
+                      : day
+                      ? 'hover:bg-gray-100'
+                      : ''
                     }
                   `}
                 >

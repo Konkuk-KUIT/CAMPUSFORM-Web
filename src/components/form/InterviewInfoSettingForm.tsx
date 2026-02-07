@@ -155,7 +155,7 @@ export default function InterviewInfoSettingForm() {
 
   return (
     <main className="min-h-screen flex justify-center bg-white font-['Pretendard']">
-      <div className="relative w-[375px] bg-white min-h-screen shadow-lg flex flex-col overflow-x-hidden">
+      <div className="relative w-[375px] bg-white min-h-screen flex flex-col overflow-x-hidden">
         {/* Top bar */}
         <Header title="면접 정보 설정" backTo="/smart-schedule" />
 
@@ -356,11 +356,14 @@ export default function InterviewInfoSettingForm() {
           </div>
 
           {/* CTA */}
-          <div className="mt-4 mb-20 px-4">
+          <div className="fixed bottom-20 left-0 right-0 px-5 max-w-93.75 mx-auto">
             <Btn variant="primary" size="lg" className="w-full" onClick={handleSubmit}>
               설정하기
             </Btn>
           </div>
+          
+          {/* Spacer for fixed button */}
+          <div className="h-32" />
         </div>
 
         {/* Bottom nav */}

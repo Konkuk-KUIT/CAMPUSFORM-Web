@@ -4,7 +4,7 @@ import Image from "next/image";
 
 export default function CalendarHeader() {
   return (
-    <div className="w-[296px] h-[33px] flex justify-between items-center font-['Pretendard']">
+    <div className="w-[296px] h-[33px] flex justify-between items-center">
       
       <button className="w-[33px] h-[33px] flex items-center justify-center">
         <div className="rotate-90 text-gray-200"> 

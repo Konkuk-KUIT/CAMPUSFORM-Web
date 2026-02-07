@@ -34,7 +34,7 @@ export default function DateRangePickerModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 font-['Pretendard']">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-lg w-[375px]">
         <div className="flex justify-between items-center p-4 border-b">
           <h2 className="text-title">모집 기한 설정</h2>

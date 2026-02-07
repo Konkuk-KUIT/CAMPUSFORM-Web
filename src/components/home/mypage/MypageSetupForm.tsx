@@ -4,6 +4,8 @@ import { useState } from 'react';
 import Button from '@/components/ui/Btn';
 import Textbox from '@/components/ui/Textbox';
 import ProfileImageButton from '@/components/auth/ProfileImageButton';
+import Header from '@/components/ui/Header';
+import HeaderLogout from '@/components/home/mypage/HeaderLogout';
 
 interface MypageSetupFormProps {
   initialName?: string;
@@ -53,9 +55,17 @@ export default function MypageSetupForm({
   };
 
   return (
-    <>
-      <div className="px-6 py-8 pb-28 flex flex-col gap-3">
-        <ProfileImageButton />
+    <div className="relative bg-white min-h-screen">
+      <Header title="마이페이지" backTo="/home" />
+
+      <div className="absolute top-0 right-0 h-[56px] flex items-center pr-4 z-50">
+        <HeaderLogout />
+      </div>
+
+      <div className="flex justify-center min-h-screen bg-white">
+        <div className="relative w-[375px] bg-white min-h-screen flex flex-col">
+          <div className="px-6 py-8 pb-28 flex flex-col gap-3">
+            <ProfileImageButton />
 
         <div className="flex flex-col gap-2 mt-15">
           <label className="text-subtitle-sm-md pl-2">이름(닉네임)</label>
@@ -79,6 +89,8 @@ export default function MypageSetupForm({
           저장하기
         </Button>
       </div>
-    </>
+        </div>
+      </div>
+    </div>
   );
 }

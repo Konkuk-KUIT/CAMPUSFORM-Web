@@ -27,7 +27,7 @@ export default function ApplicantCard({
   };
 
   return (
-    <div className="relative w-[343px] h-[155px] bg-white border border-gray-100 rounded-[10px] shadow-sm overflow-hidden font-['Pretendard']">
+    <div className="relative w-[343px] h-[155px] bg-white border border-gray-100 rounded-[10px] overflow-hidden font-['Pretendard']">
       
       <div className="absolute top-[17px] left-[16px] w-[114px] h-[93px] flex flex-col justify-between">
         <h3 className="text-body-md font-semibold text-gray-950 whitespace-nowrap leading-[20px]">

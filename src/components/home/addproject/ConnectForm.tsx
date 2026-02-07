@@ -54,7 +54,7 @@ export default function ConnectForm() {
 
   return (
     <div className="flex justify-center min-h-screen bg-white">
-      <div className="relative w-[375px] bg-white min-h-screen shadow-lg flex flex-col">
+      <div className="relative w-[375px] bg-white min-h-screen flex flex-col">
         <Header title="스프레드 시트 연동" backTo="/home/addproject" />
 
         <div className="flex-1 px-5 py-6 flex flex-col gap-6 overflow-y-auto scrollbar-hide pb-24">
@@ -75,12 +75,13 @@ export default function ConnectForm() {
           </div>
         </div>
 
-        <div className="px-5 pb-5 mt-auto bg-white pt-2 border-t border-gray-50">
+        <div className="fixed bottom-0 left-0 right-0 bg-white px-5 py-4 max-w-93.75 mx-auto">
           <Button variant="primary" size="lg" className="w-full" onClick={handleConnect}>
             연동하기
           </Button>
-        </div>
-      </div>
+        </div>        
+        {/* Spacer for fixed button */}
+        <div className="h-24" />      </div>
     </div>
   );
 }

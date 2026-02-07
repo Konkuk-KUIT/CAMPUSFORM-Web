@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -12,10 +12,11 @@ import SmartScheduleCalendarPreview from '@/components/ui/SmartScheduleCalendarP
 
 export default function SmartScheduleMainForm() {
   const router = useRouter();
-  const [showOverlay, setShowOverlay] = useState(true);
+  const [showOverlay, setShowOverlay] = useState(false);
   const [selectedInterviewer, setSelectedInterviewer] = useState<number | null>(null);
+  const [requiredInterviewers, setRequiredInterviewers] = useState<{ [key: number]: boolean }>({});
   const [hasSchedule, setHasSchedule] = useState(false); // 스마트 시간표 생성 여부
-  const [isRepresentative, setIsRepresentative] = useState(true); // 대표자 여부
+  const [isRepresentative, setIsRepresentative] = useState(false); // 대표자 여부
 
   // 면접 정보 설정 완료 여부 확인
   useEffect(() => {
@@ -34,18 +35,18 @@ export default function SmartScheduleMainForm() {
   ];
 
   return (
-    <main className="min-h-screen flex justify-center bg-white font-['Pretendard']">
-      <div className="relative w-[375px] bg-white min-h-screen shadow-lg flex flex-col overflow-x-hidden">
+    <main className="min-h-screen flex justify-center bg-white ">
+      <div className="relative w-[375px] bg-white min-h-screen flex flex-col overflow-x-hidden">
         {/* Top app bar with logo and alarm */}
-        <div className="relative flex items-center justify-center h-12 px-4 bg-white border-b border-gray-200">
-          <div className="absolute left-4 flex items-center gap-2">
-            <Image src="/icons/logo.svg" alt="logo" width={24} height={24} />
+        <header className="flex items-center justify-between h-12 px-4 bg-white">
+          <div className="w-6 h-6">
+            <Image src="/icons/logo.svg" alt="로고" width={22} height={22} />
           </div>
-          <span className="text-title font-semibold">스마트 시간표</span>
-          <button aria-label="alarm" className="absolute right-4 p-1">
-            <Image src="/icons/alarm.svg" alt="alarm" width={16.5} height={19.5} />
+          <span className="text-title">스마트 시간표</span>
+          <button className="w-6 h-6">
+            <Image src="/icons/notification.svg" alt="알림" width={24} height={24} />
           </button>
-        </div>
+        </header>
 
         {/* Main content */}
         <div className="flex-1 px-4 pt-4 pb-4 overflow-y-auto">
@@ -75,7 +76,7 @@ export default function SmartScheduleMainForm() {
             {/* Calendar preview - 전체 시간표 (항상 표시) */}
             <div className="mb-3">
               <AllAccordion title="전체">
-                <SmartScheduleCalendarPreview seeds={[1, 2, 3]} interviewers={interviewers} />
+                <SmartScheduleCalendarPreview seeds={[1, 2, 3]} interviewers={interviewers.map((int, idx) => ({ ...int, isRequired: requiredInterviewers[idx] || false }))} />
               </AllAccordion>
             </div>
 
@@ -115,7 +116,7 @@ export default function SmartScheduleMainForm() {
                       alt="toggle"
                       width={24}
                       height={24}
-                      className={`flex-shrink-0 transition-transform ${selectedInterviewer === idx ? 'rotate-180' : ''}`}
+                      className={`flex-shrink-0 ${selectedInterviewer === idx ? 'rotate-180' : ''}`}
                     />
                   </button>
 
@@ -127,6 +128,8 @@ export default function SmartScheduleMainForm() {
                         seed={idx + 1}
                         showProfiles={false}
                         showRequiredSection={true}
+                        requiredInterviewer={requiredInterviewers[idx] || false}
+                        onRequiredInterviewerChange={(value) => setRequiredInterviewers(prev => ({ ...prev, [idx]: value }))} 
                       />
                     </div>
                   )}
@@ -191,16 +194,18 @@ export default function SmartScheduleMainForm() {
           </div>
 
           {/* CTA Button */}
-          <div className="mb-12">
+          <div className="fixed bottom-20 left-0 right-0 px-5 max-w-93.75 mx-auto">
             <Btn variant="primary" size="lg" className="w-full">
               스마트 시간표 생성
             </Btn>
           </div>
-          <div className="h-5" />
+          
+          {/* Spacer for fixed button */}
+          <div className="h-32" />
 
           {/* Overlay message - 면접 정보 미설정 */}
           {showOverlay && (
-            <div className="absolute left-0 right-0 top-[115px] bottom-20 flex items-center justify-center z-50 bg-white/60">
+            <div className="absolute left-0 right-0 top-[115px] bottom-20 flex items-center justify-center z-50 bg-white/85">
               <div className="text-center">
                 <p className="text-subtitle-md text-gray-950 font-medium">면접 정보 설정 후 이용 가능합니다.</p>
               </div>
@@ -209,7 +214,7 @@ export default function SmartScheduleMainForm() {
 
           {/* Overlay message - 스마트 시간표 미생성 & 대표자 아님 */}
           {!hasSchedule && !isRepresentative && !showOverlay && (
-            <div className="absolute bg-[rgba(255,255,255,0.85)] h-[647px] left-0 top-[88px] w-[375px] flex items-center justify-center z-40">
+            <div className="absolute bg-white/85 left-0 right-0 top-12 bottom-0 flex items-center justify-center z-40">
               <div className="text-center">
                 <p className="text-subtitle-md text-gray-950 mb-6">생성된 스마트 시간표가 없습니다.</p>
                 <div className="text-body-rg text-gray-500">

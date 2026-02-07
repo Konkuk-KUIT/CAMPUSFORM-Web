@@ -31,7 +31,7 @@ export default function NotificationCard({
 
   return (
     <div 
-      className={`w-[375px] min-h-[80px] border-t border-gray-100 flex flex-col font-['Pretendard'] cursor-pointer px-[20px] py-[12px]
+      className={`w-[375px] min-h-[80px] border-t border-gray-100 flex flex-col cursor-pointer px-[20px] py-[12px]
                   ${isUnread ? "bg-blue-50" : "bg-white"}`}
     >
       <div className="flex items-center w-full">
