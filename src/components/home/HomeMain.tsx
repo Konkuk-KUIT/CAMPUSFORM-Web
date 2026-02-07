@@ -1,6 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { authService } from '@/services/authService';
 import TopAppBar from '@/components/home/TopAppBar';
 import SegmentedControl from '@/components/ui/SegmentedControl';
 import Calendar from '@/components/home/Calendar';
@@ -11,9 +13,39 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 export default function HomeMain() {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
   const [currentTab, setCurrentTab] = useState('calendar');
   const [isOnlyRecruiting, setIsOnlyRecruiting] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+
+  // 인증 체크
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const authResponse = await authService.getCurrentUser();
+
+        // 로그인 안 되어 있으면 로그인 페이지로
+        if (!authResponse?.isAuthenticated) {
+          router.replace('/auth/login');
+          return;
+        }
+
+        // 프로필 미완성이면 setup 페이지로 (닉네임으로 판별)
+        if (!authService.isProfileCompleted(authResponse.user)) {
+          router.replace('/auth/setup');
+          return;
+        }
+
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Auth check error:', error);
+        router.replace('/auth/login');
+      }
+    };
+
+    checkAuth();
+  }, [router]);
 
   const [schedules] = useState([
     {
@@ -96,6 +128,15 @@ export default function HomeMain() {
   const handleDeleteProject = (id: number) => {
     setProjects(projects.filter(p => p.id !== id));
   };
+
+  // 로딩 중일 때
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="text-gray-500">로딩 중...</div>
+      </div>
+    );
+  }
 
   return (
     <main className="min-h-screen flex justify-center bg-gray-50">
