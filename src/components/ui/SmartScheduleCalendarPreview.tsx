@@ -3,8 +3,8 @@
 import { useState, useMemo } from 'react';
 import Image from 'next/image';
 import Toggle from '@/components/ui/Toggle';
+import ConfirmResetDialog from '@/components/ui/ConfirmResetDialog';
 
-// 가용여부 표시 색상
 const BLUE_COLORS = [
   '#efefef', // 0명 - gray-100
   '#eff3ff', // 1명 - blue-50
@@ -20,8 +20,8 @@ const BLUE_COLORS = [
 ];
 
 // 개별 면접관용 2가지 색상
-const GRAY1 = '#efefef'; // 그레이1 - 가용 면접관 적음
-const BLUE2 = '#bfcefe'; // 블루2 - 가용 면접관 많음
+const GRAY1 = '#efefef'; // 그레이1 - gray-100
+const BLUE2 = '#bfcefe'; // 블루2 - blue-200
 
 const dayOfWeekLabels = ['일', '월', '화', '수', '목', '금', '토'];
 const hours = ['12', '13', '14', '15', '16', '17'];
@@ -75,6 +75,9 @@ export default function SmartScheduleCalendarPreview({
   showRequiredSection = false,
   requiredInterviewer,
   onRequiredInterviewerChange,
+  interviewDates = [],
+  showInterviewerView: externalShowInterviewerView,
+  onShowInterviewerViewChange,
 }: {
   interviewerName?: string | null;
   seed?: number;
@@ -84,11 +87,22 @@ export default function SmartScheduleCalendarPreview({
   showRequiredSection?: boolean;
   requiredInterviewer?: boolean;
   onRequiredInterviewerChange?: (value: boolean) => void;
+  interviewDates?: Date[];
+  showInterviewerView?: boolean;
+  onShowInterviewerViewChange?: (value: boolean) => void;
 }) {
   const [currentStartDate, setCurrentStartDate] = useState(new Date());
   const [showCalendarModal, setShowCalendarModal] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(new Date()); // 캘린더 모달 내부에서만 사용
   const [hoveredCell, setHoveredCell] = useState<{ day: number; time: number; half: 'top' | 'bottom' } | null>(null);
+  const [internalShowInterviewerView, setInternalShowInterviewerView] = useState(false);
+  const [activeTab, setActiveTab] = useState<'participated' | 'notParticipated'>('participated');
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [pendingDate, setPendingDate] = useState<Date | null>(null);
+
+  // Use external state if provided, otherwise use internal state
+  const showInterviewerView = externalShowInterviewerView !== undefined ? externalShowInterviewerView : internalShowInterviewerView;
+  const setShowInterviewerView = onShowInterviewerViewChange || setInternalShowInterviewerView;
 
   // seeds가 있으면 모든 seed의 가용도를 합산, 아니면 단일 seed 사용
   const dayCols = useMemo(() => {
@@ -153,16 +167,25 @@ export default function SmartScheduleCalendarPreview({
   const calendarDays = useMemo(() => {
     const daysInMonth = getDaysInMonth(selectedDate);
     const firstDay = getFirstDayOfMonth(selectedDate);
-    const days = [];
+    const prevMonthDays = getDaysInMonth(new Date(selectedDate.getFullYear(), selectedDate.getMonth() - 1, 1));
+    const days: Array<{ day: number; isCurrentMonth: boolean; isPrevMonth: boolean; isNextMonth: boolean }> = [];
 
     // 이전 달 날짜 채우기
-    for (let i = 0; i < firstDay; i++) {
-      days.push(null);
+    for (let i = firstDay - 1; i >= 0; i--) {
+      days.push({ day: prevMonthDays - i, isCurrentMonth: false, isPrevMonth: true, isNextMonth: false });
     }
 
     // 이번 달 날짜
     for (let i = 1; i <= daysInMonth; i++) {
-      days.push(i);
+      days.push({ day: i, isCurrentMonth: true, isPrevMonth: false, isNextMonth: false });
+    }
+
+    // 다음 달 날짜 채우기 (7의 배수로 만들기)
+    const remainingDays = 7 - (days.length % 7);
+    if (remainingDays < 7) {
+      for (let i = 1; i <= remainingDays; i++) {
+        days.push({ day: i, isCurrentMonth: false, isPrevMonth: false, isNextMonth: true });
+      }
     }
 
     return days;
@@ -186,17 +209,20 @@ export default function SmartScheduleCalendarPreview({
         </div>
       )}
 
-      {/* Calendar Header with gray background */}
-      <div className="rounded-[10px] bg-gray-50 p-4 mt-3">
+      {/* Calendar - only show if not in interviewer view */}
+      {!showInterviewerView && (
+        <>
+          {/* Calendar Header with gray background */}
+          <div className="rounded-[10px] bg-gray-50 p-4 mt-3">
         {/* Header with month and calendar icon */}
-        <div className="flex items-center justify-center relative mb-4">
-          <span className="text-[15px] font-medium text-gray-950">{currentMonthYear}</span>
+        <div className="flex items-center justify-center relative mb-[15px]">
+          <span className="text-[15px] font-medium leading-[20px] text-gray-950">{currentMonthYear}</span>
           <button
             onClick={() => setShowCalendarModal(!showCalendarModal)}
             className="absolute right-0"
             aria-label="날짜 선택"
           >
-            <Image src="/icons/calendar-black.svg" alt="calendar" width={20} height={20} />
+            <Image src="/icons/calendar-black.svg" alt="calendar" width={14.3} height={14.3} />
           </button>
         </div>
 
@@ -213,14 +239,24 @@ export default function SmartScheduleCalendarPreview({
 
           {/* Day headers */}
           <div className="flex-1 grid gap-4" style={{ gridTemplateColumns: `repeat(${dayCols.length}, 1fr)` }}>
-            {dayCols.map((day, idx) => (
-              <div key={idx} className="flex flex-col items-center gap-1">
-                <span className="text-[12px] text-gray-400">{day.dayOfWeek}</span>
-                <span className={`text-[16px] font-semibold ${idx === 0 ? 'text-blue-600' : 'text-gray-950'}`}>
-                  {day.date}
-                </span>
-              </div>
-            ))}
+            {dayCols.map((day, idx) => {
+              const dayDate = new Date(currentStartDate);
+              dayDate.setDate(currentStartDate.getDate() + idx);
+              const isInterviewDate = interviewDates.some(date => 
+                date.getFullYear() === dayDate.getFullYear() &&
+                date.getMonth() === dayDate.getMonth() &&
+                date.getDate() === dayDate.getDate()
+              );
+              
+              return (
+                <div key={idx} className="flex flex-col items-center gap-1">
+                  <span className="text-[12px] text-gray-500">{day.dayOfWeek}</span>
+                  <span className={`text-[16px] font-normal ${isInterviewDate ? 'text-primary' : 'text-gray-950'}`}>
+                    {day.date}
+                  </span>
+                </div>
+              );
+            })}
           </div>
 
           {/* Right arrow */}
@@ -236,27 +272,19 @@ export default function SmartScheduleCalendarPreview({
 
       {/* Calendar grid without background */}
       <div className="p-0 pt-3 pr-2">
-        {/* Calendar grid */}
-        <div className="flex gap-2" style={{ minHeight: `${hours.length * 60 + 16}px` }}>
-          {/* Time labels */}
-          <div className="flex flex-col pt-1" style={{ width: '30px' }}>
-            {hours.map(hour => (
-              <div
-                key={hour}
-                className="text-[14px] text-gray-950 font-medium flex items-center justify-start flex-shrink-0"
-                style={{ height: '60px' }}
-              >
+        {/* Calendar grid - Row by row */}
+        <div className="flex flex-col gap-1">
+          {hours.map((hour, timeIdx) => (
+            <div key={hour} className="flex gap-2" style={{ height: '50px' }}>
+              {/* Time label */}
+              <div className="text-[14px] text-gray-950 font-normal flex items-center justify-start flex-shrink-0" style={{ width: '30px' }}>
                 {hour}
               </div>
-            ))}
-          </div>
 
-          {/* Grid cells */}
-          <div className="flex-1 grid gap-1" style={{ gridTemplateColumns: `repeat(${dayCols.length}, 1fr)` }}>
-            {dayCols.map((day, dayIdx) => (
-              <div key={dayIdx} className="flex flex-col gap-1">
-                {day.availability.map((timeSlot, timeIdx) => {
-                  // timeSlot = [상반부, 하반부]
+              {/* Grid cells for this time slot */}
+              <div className="flex-1 grid gap-1" style={{ gridTemplateColumns: `repeat(${dayCols.length}, 1fr)` }}>
+                {dayCols.map((day, dayIdx) => {
+                  const timeSlot = day.availability[timeIdx];
                   const topCount = timeSlot[0];
                   const bottomCount = timeSlot[1];
 
@@ -264,22 +292,18 @@ export default function SmartScheduleCalendarPreview({
                   let bottomColor: string;
 
                   if (interviewerName) {
-                    // 개별 면접관: 그레이1과 블루2 2가지만 사용
                     topColor = topCount >= 1 ? BLUE2 : GRAY1;
                     bottomColor = bottomCount >= 1 ? BLUE2 : GRAY1;
                   } else {
-                    // 전체: 11가지 블루 색상 사용 (0~3 범위)
                     topColor = BLUE_COLORS[Math.min(topCount, 10)];
                     bottomColor = BLUE_COLORS[Math.min(bottomCount, 10)];
                   }
 
-                  // 전체 캘린더에서만 가능한 면접관 목록 계산
                   const getAvailableInterviewers = (half: 'top' | 'bottom') => {
                     if (!seeds || !interviewers) return [];
                     const count = half === 'top' ? topCount : bottomCount;
                     if (count === 0) return [];
 
-                    // 각 seed(면접관)의 가용 여부 확인
                     const available: Interviewer[] = [];
                     seeds.forEach((s, idx) => {
                       const data = generateSampleData(currentStartDate, s);
@@ -295,7 +319,7 @@ export default function SmartScheduleCalendarPreview({
                   };
 
                   return (
-                    <div key={`${dayIdx}-${timeIdx}`} className="flex flex-col h-[60px] w-full relative">
+                    <div key={`${dayIdx}-${timeIdx}`} className="flex flex-col h-full w-full relative">
                       {/* Top half - solid border */}
                       <div
                         className="flex-1 border-t border-white border-solid cursor-pointer hover:opacity-80"
@@ -318,7 +342,7 @@ export default function SmartScheduleCalendarPreview({
                         onMouseLeave={() => !interviewerName && setHoveredCell(null)}
                       />
 
-                      {/* Hover tooltip - 전체 캘린더에서만 표시 */}
+                      {/* Hover tooltip */}
                       {!interviewerName && hoveredCell?.day === dayIdx && hoveredCell?.time === timeIdx && (
                         <div
                           className={`absolute ${dayIdx === dayCols.length - 1 ? 'right-full mr-2' : 'left-full ml-2'} bg-white rounded-[10px] px-[23px] py-[15px] w-[150px] z-50 flex flex-col gap-[10px] ${hoveredCell.half === 'top' ? 'top-0' : 'top-1/2'}`}
@@ -338,89 +362,232 @@ export default function SmartScheduleCalendarPreview({
                   );
                 })}
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
       </div>
 
       {/* Interviewer avatars row (right-aligned) */}
       {showProfiles && (
-        <div className="flex items-center justify-end gap-2 px-4 py-3">
-          {/* Profile avatars (36px, overlap) */}
+        <div className="flex items-center justify-end py-2 pr-2 border-b border-gray-300">
+          {/* Profile avatars (30px, overlap) */}
           <div className="flex items-center -space-x-2">
-            <div className="w-9 h-9 rounded-full bg-gray-200 border-2 border-white" />
-            <div className="w-9 h-9 rounded-full bg-gray-200 border-2 border-white" />
-            <div className="w-9 h-9 rounded-full bg-gray-200 border-2 border-white" />
+            <div className="w-[30px] h-[30px] rounded-full bg-gray-200 border-2 border-white" />
+            <div className="w-[30px] h-[30px] rounded-full bg-gray-200 border-2 border-white" />
+            <div className="w-[30px] h-[30px] rounded-full bg-gray-200 border-2 border-white" />
           </div>
-          {/* More chevron (30px hit area) */}
+          {/* More chevron (24px hit area) */}
           <button
-            style={{ width: '30px', height: '30px' }}
+            onClick={() => setShowInterviewerView(true)}
+            style={{ width: '24px', height: '24px' }}
             className="flex items-center justify-center"
             aria-label="더보기"
           >
-            <Image src="/icons/chevron-right.svg" alt="more" width={16} height={16} />
+            <Image src="/icons/chevron-right.svg" alt="more" width={24} height={24} />
           </button>
+        </div>
+      )}
+        </>
+      )}
+
+      {/* Interviewer List View - replaces the calendar when shown */}
+      {showInterviewerView && (
+        <div className="bg-white border-b border-gray-200 w-full">
+          {/* Tabs */}
+          <div className="flex border-b border-gray-200">
+            <button 
+              onClick={() => setActiveTab('participated')}
+              className="flex-1 h-[54px] bg-white relative flex items-center justify-center"
+            >
+              <span className={`text-[15px] font-semibold leading-[21px] ${activeTab === 'participated' ? 'text-black' : 'text-gray-400'}`}>
+                참여
+              </span>
+              {activeTab === 'participated' && (
+                <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-black" />
+              )}
+            </button>
+            <button 
+              onClick={() => setActiveTab('notParticipated')}
+              className="flex-1 h-[54px] bg-white relative flex items-center justify-center"
+            >
+              <span className={`text-[15px] font-semibold leading-[21px] ${activeTab === 'notParticipated' ? 'text-black' : 'text-gray-400'}`}>
+                미참여
+              </span>
+              {activeTab === 'notParticipated' && (
+                <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-black" />
+              )}
+            </button>
+          </div>
+
+          {/* Interviewer List */}
+          <div className="flex flex-col mt-[6px]">
+            {interviewers?.map((interviewer, idx) => (
+              <div key={idx} className="w-[343px] h-[55px] flex items-center px-[29px] relative">
+                <div className="w-9 h-9 rounded-full bg-gray-200" />
+                <span className="ml-[11px] text-[14px] leading-[20px] text-black">{interviewer.name}</span>
+                {interviewer.isRequired && (
+                  <div className="absolute left-[130px] bg-gray-100 w-[51px] h-[19.5px] px-[5px] py-px rounded-[10px] flex items-center justify-center gap-1">
+                    <span className="text-[12px] leading-[17px] tracking-[0.12px] text-black">필수</span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Back button */}
+          <div className="h-[63px] px-4 flex items-center justify-end">
+            <button 
+              onClick={() => setShowInterviewerView(false)}
+              className="flex items-center gap-0"
+            >
+              <span className="text-[14px] leading-[20px] text-gray-500 mr-1">시간으로 돌아가기</span>
+              <Image src="/icons/chevron-right.svg" alt="back" width={24} height={24} className="w-6 h-6" />
+            </button>
+          </div>
         </div>
       )}
 
       {/* Calendar Modal */}
       {showCalendarModal && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
-          <div className="w-[282px] bg-white rounded-[10px] p-4 flex flex-col gap-4">
-            {/* Month Label */}
-            <div className="text-center text-[14px] font-medium text-gray-950">
-              {selectedDate.getFullYear()}년 {String(selectedDate.getMonth() + 1).padStart(2, '0')}월
+          <div className="bg-white rounded-[10px] p-4 flex flex-col gap-[10px] w-[303px]">
+            {/* Header with title and close button */}
+            <div className="flex items-center justify-between">
+              <span className="text-[14px] font-medium leading-[20px] text-[#1f1f1f]">날짜 선택</span>
+              <button
+                onClick={() => setShowCalendarModal(false)}
+                className="w-6 h-6 flex items-center justify-center"
+                aria-label="닫기"
+              >
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M1 1L11 11M11 1L1 11" stroke="#1f1f1f" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </button>
+            </div>
+
+            {/* Month navigation */}
+            <div className="flex items-center justify-center gap-[10px]">
+              <button
+                onClick={() => {
+                  const newDate = new Date(selectedDate);
+                  newDate.setMonth(newDate.getMonth() - 1);
+                  setSelectedDate(newDate);
+                }}
+                className="w-6 h-6 flex items-center justify-center"
+                aria-label="이전 달"
+              >
+                <svg width="10" height="5" viewBox="0 0 10 5" fill="none">
+                  <path d="M9 4.5L5 0.5L1 4.5" stroke="#1f1f1f" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" transform="rotate(-90 5 2.5)"/>
+                </svg>
+              </button>
+              <div className="text-center text-[14px] font-medium leading-[20px] text-[#1f1f1f] w-[184px]">
+                {selectedDate.getFullYear()}년 {String(selectedDate.getMonth() + 1).padStart(2, '0')}월
+              </div>
+              <button
+                onClick={() => {
+                  const newDate = new Date(selectedDate);
+                  newDate.setMonth(newDate.getMonth() + 1);
+                  setSelectedDate(newDate);
+                }}
+                className="w-6 h-6 flex items-center justify-center"
+                aria-label="다음 달"
+              >
+                <svg width="10" height="5" viewBox="0 0 10 5" fill="none">
+                  <path d="M1 0.5L5 4.5L9 0.5" stroke="#1f1f1f" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" transform="rotate(-90 5 2.5)"/>
+                </svg>
+              </button>
             </div>
 
             {/* Week Labels */}
-            <div className="grid grid-cols-7 gap-2 text-center text-[12px] text-gray-500">
+            <div className="grid grid-cols-7 gap-[10px] h-[18px]">
               {weekDays.map(day => (
-                <div key={day}>{day}</div>
+                <div key={day} className="text-center text-[12px] text-[#6e7781] leading-normal">
+                  {day}
+                </div>
               ))}
             </div>
 
             {/* Calendar Days */}
-            <div className="grid grid-cols-7 gap-2">
-              {calendarDays.map((day, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => {
-                    if (day) {
-                      const newDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), day);
-                      setCurrentStartDate(newDate);
-                      setShowCalendarModal(false);
-                    }
-                  }}
-                  disabled={!day}
-                  className={`
-                    w-[30px] h-[30px] rounded-full flex items-center justify-center text-[14px]
-                    ${!day ? 'invisible' : ''}
-                    ${
-                      day === selectedDate.getDate() && selectedDate.getMonth() === new Date().getMonth()
-                        ? 'bg-blue-500 text-white'
-                        : day
-                          ? 'hover:bg-gray-100'
-                          : ''
-                    }
-                  `}
-                >
-                  {day}
-                </button>
-              ))}
-            </div>
-
-            {/* Navigation Buttons */}
-            <div className="flex gap-2 justify-end pt-2">
-              <button
-                onClick={() => setShowCalendarModal(false)}
-                className="px-4 py-2 text-[14px] text-gray-600 hover:bg-gray-50 rounded"
-              >
-                닫기
-              </button>
+            <div className="grid grid-cols-7 gap-[10px]">
+              {calendarDays.map((dayObj, idx) => {
+                const { day, isCurrentMonth, isPrevMonth, isNextMonth } = dayObj;
+                
+                // 날짜 객체 생성
+                let date: Date;
+                if (isPrevMonth) {
+                  date = new Date(selectedDate.getFullYear(), selectedDate.getMonth() - 1, day);
+                } else if (isNextMonth) {
+                  date = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, day);
+                } else {
+                  date = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), day);
+                }
+                
+                const isSelected = 
+                  date.getDate() === currentStartDate.getDate() && 
+                  date.getMonth() === currentStartDate.getMonth() && 
+                  date.getFullYear() === currentStartDate.getFullYear();
+                  
+                const isInterviewDate = interviewDates.some(d => 
+                  d.getFullYear() === date.getFullYear() &&
+                  d.getMonth() === date.getMonth() &&
+                  d.getDate() === date.getDate()
+                );
+                
+                // 텍스트 색상 결정
+                let textColor = 'text-[#1f1f1f]'; // 기본 검정
+                if (!isCurrentMonth) {
+                  textColor = 'text-[#888888]'; // 다른 달 = 회색
+                } else if (isSelected && isInterviewDate) {
+                  textColor = 'text-white'; // 선택됨 + 면접날짜 = 흰색
+                } else if (isSelected && !isInterviewDate) {
+                  textColor = 'text-[#1f1f1f]'; // 선택됨 + 면접날짜 아님 = 검정
+                } else if (!isSelected && isInterviewDate) {
+                  textColor = 'text-[#5a81fa]'; // 선택안됨 + 면접날짜 = 파랑
+                }
+                
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      setPendingDate(date);
+                      setShowConfirmDialog(true);
+                    }}
+                    className={`
+                      h-[30px] flex items-center justify-center text-[14px] leading-[20px] relative
+                      ${textColor}
+                      ${!isSelected ? 'hover:bg-gray-100 rounded-full' : ''}
+                    `}
+                  >
+                    {isSelected && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-[30px] h-[30px] bg-[#5a81fa] rounded-full" />
+                      </div>
+                    )}
+                    <span className="relative z-10">{day}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
       )}
+
+      {/* Confirm Reset Dialog */}
+      <ConfirmResetDialog
+        isOpen={showConfirmDialog}
+        onClose={() => {
+          setShowConfirmDialog(false);
+          setPendingDate(null);
+        }}
+        onConfirm={() => {
+          if (pendingDate) {
+            setCurrentStartDate(pendingDate);
+            setSelectedDate(pendingDate);
+            setShowCalendarModal(false);
+            setPendingDate(null);
+          }
+        }}
+      />
     </div>
   );
 }
