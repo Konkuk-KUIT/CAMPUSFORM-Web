@@ -20,6 +20,7 @@ export default function InterviewDetailClient({ applicantId }: InterviewDetailCl
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCommentOpen, setCommentOpen] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
   const [appointmentDate, setAppointmentDate] = useState(applicant?.appointmentDate || '');
   const [appointmentTime, setAppointmentTime] = useState(applicant?.appointmentTime || '');
 
@@ -34,6 +35,11 @@ export default function InterviewDetailClient({ applicantId }: InterviewDetailCl
     setAppointmentDate(date);
     setAppointmentTime(time);
     setIsModalOpen(false);
+  };
+
+  // 즐겨찾기 토글 핸들러
+  const handleToggleFavorite = () => {
+    setIsFavorite((prev) => !prev);
   };
 
   // 지원자를 찾지 못한 경우
@@ -57,6 +63,8 @@ export default function InterviewDetailClient({ applicantId }: InterviewDetailCl
           phone={applicant.phone}
           email={applicant.email}
           commentCount={applicant.commentCount}
+          isFavorite={isFavorite}
+          onToggleFavorite={handleToggleFavorite}
           onCommentClick={() => setCommentOpen(true)}
           appointmentDate={appointmentDate}
           appointmentTime={appointmentTime}

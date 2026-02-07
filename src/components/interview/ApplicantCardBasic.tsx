@@ -1,3 +1,5 @@
+'use client';
+
 import Image from 'next/image';
 import AppointmentInfoButton from '@/components/ui/AppointmentInfoButton';
 

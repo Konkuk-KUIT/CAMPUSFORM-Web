@@ -18,9 +18,15 @@ export default function DocumentDetailClient({ applicantId }: DocumentDetailClie
   const applicant = mockApplicants.find((a) => a.id === applicantId);
 
   const [isCommentOpen, setCommentOpen] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
 
   // 댓글 데이터 가져오기
   const comments = mockComments.filter((c) => c.applicantId === applicantId);
+
+  // 즐겨찾기 토글 핸들러
+  const handleToggleFavorite = () => {
+    setIsFavorite((prev) => !prev);
+  };
 
   // 지원자를 찾지 못한 경우
   if (!applicant) {
@@ -43,6 +49,8 @@ export default function DocumentDetailClient({ applicantId }: DocumentDetailClie
           phone={applicant.phone}
           email={applicant.email}
           commentCount={applicant.commentCount}
+          isFavorite={isFavorite}
+          onToggleFavorite={handleToggleFavorite}
           onCommentClick={() => setCommentOpen(true)}
         />
 

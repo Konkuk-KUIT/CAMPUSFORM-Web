@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import PullToRefresh from '@/components/PullToRefresh';
 import TopTab from '@/components/ui/TopTab';
 import SearchBar from '@/components/form/SearchBar';
 import ApplicantFileCard from '@/components/interview/ApplicantFileCard';
@@ -19,9 +20,15 @@ export default function InterviewContent() {
   const [isCommentOpen, setCommentOpen] = useState(false);
   const [selectedApplicantId, setSelectedApplicantId] = useState<string>('');
   const [selectedPosition, setSelectedPosition] = useState<string>('전체');
-
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [applicants, setApplicants] = useState(mockInterviewApplicants);
   const [comments, setComments] = useState(mockComments);
+
+  // 새로고침 핸들러
+  const handleRefresh = async () => {
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    setApplicants([...mockInterviewApplicants]);
+  };
 
   // 포지션 목록 추출
   const positions = useMemo(() => {
@@ -85,6 +92,19 @@ export default function InterviewContent() {
     setCommentOpen(true);
   };
 
+  // 즐겨찾기 토글 핸들러
+  const handleToggleFavorite = (applicantId: string) => {
+    setFavorites((prev) => {
+      const newFavorites = new Set(prev);
+      if (newFavorites.has(applicantId)) {
+        newFavorites.delete(applicantId);
+      } else {
+        newFavorites.add(applicantId);
+      }
+      return newFavorites;
+    });
+  };
+
   // 면접 일정 클릭 핸들러
   const handleAppointmentClick = (applicantId: string) => {
     console.log(`면접 일정 클릭: ${applicantId}`);
@@ -105,7 +125,7 @@ export default function InterviewContent() {
   }
 
   return (
-    <>
+    <PullToRefresh onRefresh={handleRefresh}>
       {/* 상단 탭 */}
       <TopTab counts={counts} onTabChange={setSelectedTab} />
 
@@ -132,6 +152,8 @@ export default function InterviewContent() {
               info={`${applicant.university} / ${applicant.major} / ${applicant.position}`}
               initialStatus={applicant.interviewStatus}
               commentCount={applicant.commentCount}
+              isFavorite={favorites.has(applicant.id)}
+              onToggleFavorite={() => handleToggleFavorite(applicant.id)}
               onCommentClick={() => handleCommentClick(applicant.id)}
               appointmentDate={applicant.appointmentDate}
               appointmentTime={applicant.appointmentTime}
@@ -183,6 +205,6 @@ export default function InterviewContent() {
           )}
         </div>
       </BottomSheet>
-    </>
+    </PullToRefresh>
   );
 }

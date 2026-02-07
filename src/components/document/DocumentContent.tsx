@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import PullToRefresh from '@/components/PullToRefresh';
 import TopTab from '@/components/ui/TopTab';
 import SearchBar from '@/components/form/SearchBar';
 import ApplicantFileCard from '@/components/ui/ApplicantFile';
@@ -19,9 +20,17 @@ export default function DocumentContent() {
   const [isCommentOpen, setCommentOpen] = useState(false);
   const [selectedApplicantId, setSelectedApplicantId] = useState<string>('');
   const [selectedPosition, setSelectedPosition] = useState<string>('전체');
-
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [applicants, setApplicants] = useState(mockApplicants);
   const [comments, setComments] = useState(mockComments);
+
+   // 새로고침 핸들러
+  const handleRefresh = async () => {
+    // 실제로는 API 호출 등을 수행
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    // 데이터 다시 불러오기
+    setApplicants([...mockApplicants]);
+  };
 
   // 포지션 목록 추출
   const positions = useMemo(() => {
@@ -85,8 +94,21 @@ export default function DocumentContent() {
     setCommentOpen(true);
   };
 
+  // 즐겨찾기 토글 핸들러
+  const handleToggleFavorite = (applicantId: string) => {
+    setFavorites((prev) => {
+      const newFavorites = new Set(prev);
+      if (newFavorites.has(applicantId)) {
+        newFavorites.delete(applicantId);
+      } else {
+        newFavorites.add(applicantId);
+      }
+      return newFavorites;
+    });
+  };
+
   return (
-    <>
+    <PullToRefresh onRefresh={handleRefresh}>
       {/* 상단 탭 */}
       <TopTab counts={counts} onTabChange={setSelectedTab} />
 
@@ -113,6 +135,8 @@ export default function DocumentContent() {
               info={`${applicant.university} / ${applicant.major} / ${applicant.position}`}
               initialStatus={applicant.status}
               commentCount={applicant.commentCount}
+              isFavorite={favorites.has(applicant.id)}
+              onToggleFavorite={() => handleToggleFavorite(applicant.id)}
               onCommentClick={() => handleCommentClick(applicant.id)}
             />
           ))
@@ -161,6 +185,6 @@ export default function DocumentContent() {
           )}
         </div>
       </BottomSheet>
-    </>
+    </PullToRefresh>
   );
 }
