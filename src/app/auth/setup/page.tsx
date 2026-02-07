@@ -1,5 +1,4 @@
 // 프로필 설정 페이지
-'use client';
 
 import ProfileSetupForm from '@/components/form/auth/ProfileSetupForm';
 import Header from '@/components/ui/Header';

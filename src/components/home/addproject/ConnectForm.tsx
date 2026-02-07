@@ -9,6 +9,10 @@ import SheetDropdown from '@/components/home/addproject/SheetDropdown';
 export default function ConnectForm() {
   const router = useRouter();
 
+  const handleEditPosition = () => {
+    router.push('/home/addproject/connect/edit-position');
+  };
+
   const sheetHeaders = [
     '이름을 작성해주세요.',
     '학교를 작성해주세요.',
@@ -40,9 +44,19 @@ export default function ConnectForm() {
     router.back();
   };
 
-  const renderSection = (label: string, fieldKey: keyof typeof mappings, placeholder: string) => (
+  const renderSection = (label: string, fieldKey: keyof typeof mappings, placeholder: string, showEdit = false) => (
     <div className="flex flex-col gap-2">
-      <label className="text-[14px] font-bold text-gray-950">{label}</label>
+      <div className="flex justify-between items-center pr-2">
+        <label className="text-[14px] font-bold text-gray-950">{label}</label>
+        {showEdit && (
+          <button 
+            onClick={handleEditPosition}
+            className="text-body-sm-rg text-[var(--color-primary)] underline"
+          >
+            편집하기
+          </button>
+        )}
+      </div>
       <SheetDropdown
         options={sheetHeaders}
         value={mappings[fieldKey]}
@@ -71,7 +85,7 @@ export default function ConnectForm() {
             {renderSection('성별', 'gender', '성별을 선택해주세요.')}
             {renderSection('전화번호', 'phone', '연락처를 작성해주세요.')}
             {renderSection('이메일', 'email', '이메일 주소')}
-            {renderSection('지원 포지션', 'position', '지원 포지션을 선택해주세요.')}
+            {renderSection('지원 포지션', 'position', '지원 포지션을 선택해주세요.', true)}
           </div>
         </div>
 
