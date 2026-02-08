@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Header from '@/components/ui/Header';
 import Textbox from '@/components/ui/Textbox';
 import TextboxGoogle from '@/components/home/TextboxGoogle';
@@ -10,6 +10,8 @@ import Button from '@/components/ui/Btn';
 import ProfileCross from '@/components/ui/ProfileCross';
 import DateRangePickerModal from '@/components/home/addproject/DateRangePickerModal';
 import InfoModal from '@/components/ui/InfoModal';
+import { authService } from '@/services/authService';
+import { createProject, type RequireMappings } from '@/services/projectService';
 
 interface Admin {
   id: number;
@@ -19,6 +21,7 @@ interface Admin {
 }
 
 export default function AddProjectForm() {
+  const router = useRouter();
   const [showWarningModal, setShowWarningModal] = useState(true);
   const [isDateModalOpen, setIsDateModalOpen] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
@@ -32,6 +35,21 @@ export default function AddProjectForm() {
   const [adminList, setAdminList] = useState<Admin[]>([
     { id: 1, name: '나(대표)', email: 'myemail@gmail.com', isLeader: true },
   ]);
+  const [mappings, setMappings] = useState<RequireMappings | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // sessionStorage에서 매핑 데이터 로드
+  useEffect(() => {
+    const savedMappings = sessionStorage.getItem('projectMappings');
+    if (savedMappings) {
+      const parsedMappings = JSON.parse(savedMappings) as RequireMappings;
+      setMappings(parsedMappings);
+      setIsConnected(true);
+      // 사용 후 삭제
+      sessionStorage.removeItem('projectMappings');
+    }
+  }, []);
 
   const handleTitleChange = (newValue: string) => {
     setTitle(newValue);
@@ -92,7 +110,66 @@ export default function AddProjectForm() {
       .padStart(2, '0')}`;
   };
 
-  const isButtonDisabled = title.length === 0 || isTitleError;
+  const handleSubmit = async () => {
+    // 유효성 검사
+    if (!title || isTitleError) {
+      alert('프로젝트 제목을 올바르게 입력해주세요.');
+      return;
+    }
+
+    if (!url) {
+      alert('구글 스프레드시트 URL을 입력해주세요.');
+      return;
+    }
+
+    if (!startDate || !endDate) {
+      alert('모집 기간을 설정해주세요.');
+      return;
+    }
+
+    if (!mappings || !isConnected) {
+      alert('스프레드시트 연동을 완료해주세요.');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // 현재 사용자 정보 가져오기
+      const authResponse = await authService.getCurrentUser();
+      
+      if (!authResponse.isAuthenticated || !authResponse.user) {
+        alert('로그인이 필요합니다.');
+        router.push('/auth/login');
+        return;
+      }
+
+      const userId = authResponse.user.id;
+
+      // 관리자 ID 배열 생성 (현재는 자신만 포함, 실제로는 추가된 관리자들의 ID를 포함해야 함)
+      const adminIds = [userId];
+
+      // API 호출
+      await createProject(userId, {
+        title,
+        sheetUrl: url,
+        startAt: formatDate(startDate),
+        endAt: formatDate(endDate),
+        admins: adminIds,
+        requireMappings: mappings,
+      });
+
+      alert('프로젝트가 성공적으로 생성되었습니다!');
+      router.push('/home');
+    } catch (error) {
+      console.error('프로젝트 생성 실패:', error);
+      alert('프로젝트 생성에 실패했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const isButtonDisabled = title.length === 0 || isTitleError || !mappings || isSubmitting;
 
   return (
     <div className="flex justify-center min-h-screen bg-white">
@@ -140,14 +217,24 @@ export default function AddProjectForm() {
                   onChange={handleUrlChange}
                 />
               </div>
-              <Link href="/home/addproject/connect">
                 <Button
                   variant="primary"
-                  className="!w-[50px] !h-[50px] !rounded-[10px] shrink-0 text-[13px] font-medium bg-white !text-primary border !border-primary hover:bg-blue-50"
+                  className={`!w-[50px] !h-[50px] !rounded-[10px] shrink-0 text-[13px] font-medium ${
+                    isConnected
+                      ? 'bg-green-500 !text-white border-green-500 hover:bg-green-600'
+                      : 'bg-white !text-primary border !border-primary hover:bg-blue-50'
+                  }`}
+                  onClick={() => {
+                    if (!url) {
+                      alert('구글 스프레드시트 URL을 먼저 입력해주세요.');
+                      return;
+                    }
+                    sessionStorage.setItem('sheetUrl', url);
+                    router.push('/home/addproject/connect');
+                  }}
                 >
-                  연동
+                  {isConnected ? '완료' : '연동'}
                 </Button>
-              </Link>
             </div>
           </div>
 
@@ -217,8 +304,14 @@ export default function AddProjectForm() {
         )}
 
         <div className="fixed bottom-0 left-0 right-0 bg-white px-5 py-4 max-w-93.75 mx-auto">
-          <Button variant="primary" size="lg" disabled={isButtonDisabled} className="w-full">
-            생성하기
+          <Button 
+            variant="primary" 
+            size="lg" 
+            disabled={isButtonDisabled} 
+            className="w-full"
+            onClick={handleSubmit}
+          >
+            {isSubmitting ? '생성 중...' : '생성하기'}
           </Button>
         </div>
         
