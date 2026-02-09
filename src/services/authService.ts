@@ -5,7 +5,16 @@ class AuthService {
   // Google OAuth 시작
   loginWithGoogle(): void {
     const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL;
-    window.location.href = `${baseURL}/oauth2/authorization/google`;
+    const redirectUri = process.env.NEXT_PUBLIC_REDIRECT_URI;
+
+    let loginUrl = `${baseURL}/oauth2/authorization/google`;
+
+    // 로컬 개발 환경에서만 redirect_uri 추가
+    if (redirectUri) {
+      loginUrl += `?redirect_uri=${encodeURIComponent(redirectUri)}`;
+    }
+
+    window.location.href = loginUrl;
   }
 
   // 현재 사용자 정보 확인
