@@ -9,6 +9,7 @@ import Header from '@/components/ui/Header';
 import ConfirmModal from '@/components/home/mypage/ConfirmModal';
 import { authService } from '@/services/authService';
 import type { User } from '@/types/auth';
+import Loading from '@/components/ui/Loading';
 
 export default function MypageSetupForm() {
   const router = useRouter();
@@ -100,11 +101,7 @@ export default function MypageSetupForm() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p>로딩 중...</p>
-      </div>
-    );
+    return <Loading />;
   }
 
   if (!user) {

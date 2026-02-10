@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { authService } from '@/services/authService';
+import Loading from '@/components/ui/Loading';
 
 export default function AuthCallbackClient() {
   const router = useRouter();
@@ -37,13 +38,5 @@ export default function AuthCallbackClient() {
     handleCallback();
   }, [router]);
 
-  return (
-    // TODO : 로딩
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="text-center">
-        <p className="text-lg font-semibold mb-2">로그인 처리 중...</p>
-        <p className="text-sm text-gray-500">잠시만 기다려주세요</p>
-      </div>
-    </div>
-  );
+  return <Loading />;
 }
