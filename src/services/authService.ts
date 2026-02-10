@@ -38,11 +38,7 @@ class AuthService {
     const formData = new FormData();
     formData.append('image', imageFile);
 
-    const response = await apiClient.patch('/users/profile-image', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    const response = await apiClient.patch('/users/profile-image', formData);
     return response.data;
   }
 
@@ -56,6 +52,20 @@ class AuthService {
   isProfileCompleted(user: User | null): boolean {
     if (!user) return false;
     return !!(user.nickname && user.nickname.trim() !== '');
+  }
+
+  // GET : 이메일로 전체 사용자 정보 조회
+  async getUserDetailByEmail(email: string): Promise<{
+    exists: boolean;
+    userId: number;
+    nickname: string;
+    email: string;
+    profileImageUrl: string;
+  }> {
+    const response = await apiClient.get('/users/exists', {
+      params: { email },
+    });
+    return response.data;
   }
 
   // POST : 로그아웃
