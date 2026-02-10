@@ -1,6 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { getSmartSchedulePreview } from '@/services/smartScheduleService';
+import { mockProjects } from '@/data/projects';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Header from '@/components/ui/Header';
@@ -8,16 +10,22 @@ import Navbar from '@/components/Navbar';
 import Btn from '@/components/ui/Btn';
 
 interface Applicant {
+  id: number;
   name: string;
   school: string;
   major: string;
   position: string;
 }
 
+interface Interviewer {
+  id: number;
+  name: string;
+}
+
 interface TimeSlot {
   time: string;
   applicants: Applicant[];
-  interviewers: string[];
+  interviewers: Interviewer[];
 }
 
 interface DateSchedule {
@@ -32,53 +40,37 @@ interface UnassignedApplicant extends Applicant {
 export default function SmartScheduleResultForm() {
   const router = useRouter();
   const [showInfo, setShowInfo] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<string>('9월 1일 (월)');
+  // selectedDate는 useEffect에서 최초 세팅됨
 
-  // 샘플 데이터
-  const scheduleData: DateSchedule[] = [
-    {
-      date: '9월 1일 (월)',
-      slots: [
-        {
-          time: '9:00 - 9:15',
-          applicants: [
-            { name: '김민준', school: '건국대', major: '컴퓨터공학과', position: '요리사' },
-            { name: '백서준', school: '○○대', major: '화학공학과', position: '일반부원' },
-            { name: '오지우', school: '○○대', major: '관광경영학과', position: '조리사' },
-          ],
-          interviewers: ['운영진A', '운영진B', '운영진C'],
-        },
-        {
-          time: '9:20 - 9:35',
-          applicants: [
-            { name: '김민준', school: '건국대', major: '컴퓨터공학과', position: '요리사' },
-            { name: '백서준', school: '○○대', major: '화학공학과', position: '일반부원' },
-            { name: '오지우', school: '○○대', major: '관광경영학과', position: '조리사' },
-          ],
-          interviewers: ['운영진A', '운영진B', '운영진C'],
-        },
-        {
-          time: '9:40 - 9:55',
-          applicants: [
-            { name: '김민준', school: '건국대', major: '컴퓨터공학과', position: '요리사' },
-            { name: '백서준', school: '○○대', major: '화학공학과', position: '일반부원' },
-            { name: '오지우', school: '○○대', major: '관광경영학과', position: '조리사' },
-          ],
-          interviewers: ['운영진A', '운영진B', '운영진C'],
-        },
-      ],
-    },
-  ];
 
-  const unassignedApplicants: UnassignedApplicant[] = [
-    {
-      name: '김민준',
-      school: '건국대',
-      major: '컴퓨터공학과',
-      position: '요리사',
-      reason: '면접관과 시간이 중복되지 않습니다.',
-    },
-  ];
+  // 실제 API 데이터 연동
+  const [scheduleData, setScheduleData] = useState<DateSchedule[]>([]);
+  const [unassignedApplicants, setUnassignedApplicants] = useState<UnassignedApplicant[]>([]);
+  const [selectedDate, setSelectedDate] = useState<string>('');
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const projectId = mockProjects[0].id; // 실제 프로젝트에서는 동적으로 받아와야 함
+        const res = await getSmartSchedulePreview(projectId);
+        const data = res.data;
+        setScheduleData(data.days || []);
+        setUnassignedApplicants(data.unassignedApplicants || []);
+        if (data.days && data.days.length > 0) {
+          setSelectedDate(formatDateToKorean(data.days[0].date));
+        }
+      } catch (e) {
+        // 에러 핸들링
+      }
+    };
+    fetchData();
+  }, []);
+
+  // 날짜 YYYY-MM-DD → 'M월 D일 (요일)' 변환
+  function formatDateToKorean(dateStr: string) {
+    const date = new Date(dateStr);
+    const week = ['일', '월', '화', '수', '목', '금', '토'];
+    return `${date.getMonth() + 1}월 ${date.getDate()}일 (${week[date.getDay()]})`;
+  }
 
   const handleConfirm = () => {
     alert('면접 시간이 확정되었습니다.');
@@ -122,38 +114,51 @@ export default function SmartScheduleResultForm() {
         )}
 
         {/* Date Header */}
-        <div className="w-full h-[50px] border-b border-gray-100 flex items-center px-[26px]">
-          <span className="text-subtitle-sm-md text-gray-950">{selectedDate}</span>
+        {/* 날짜 선택 탭 */}
+        <div className="flex gap-2 px-4 pt-4 pb-2">
+          {scheduleData.map((day, idx) => (
+            <button
+              key={day.date}
+              className={`px-3 py-1 rounded ${selectedDate === formatDateToKorean(day.date) ? 'bg-primary text-white' : 'bg-gray-100 text-gray-700'}`}
+              onClick={() => setSelectedDate(formatDateToKorean(day.date))}
+            >
+              {formatDateToKorean(day.date)}
+            </button>
+          ))}
         </div>
 
         {/* Schedule Cards */}
         <div className="px-4 pt-3 pb-4 space-y-3">
-          {scheduleData[0].slots.map((slot, index) => (
-            <div key={index} className="h-[169px] border-[1.5px] border-gray-200 rounded-[10px] p-4 flex flex-col">
-              {/* Time */}
-              <p className="text-subtitle-rg text-primary mb-[10px]">{slot.time}</p>
+          {scheduleData
+            .find((d) => formatDateToKorean(d.date) === selectedDate)?.slots
+            ?.map((slot, index) => (
+              <div key={index} className="h-[169px] border-[1.5px] border-gray-200 rounded-[10px] p-4 flex flex-col">
+                {/* Time */}
+                <p className="text-subtitle-rg text-primary mb-[10px]">{slot.time}</p>
 
-              {/* Applicants */}
-              <div className="mb-3">
-                <div className="flex gap-[15px]">
-                  <span className="text-body-md text-gray-950 w-[56px] flex-shrink-0">지원자</span>
-                  <div className="flex-1 space-y-[6px]">
-                    {slot.applicants.map((applicant, appIndex) => (
-                      <p key={appIndex} className="text-body-rg text-gray-950">
-                        {applicant.name}({applicant.school}/{applicant.major}/{applicant.position})
-                      </p>
-                    ))}
+                {/* Applicants */}
+                <div className="mb-3">
+                  <div className="flex gap-[15px]">
+                    <span className="text-body-md text-gray-950 w-[56px] flex-shrink-0">지원자</span>
+                    <div className="flex-1 space-y-[6px]">
+                      {slot.applicants.map((applicant, appIndex) => (
+                        <p key={appIndex} className="text-body-rg text-gray-950">
+                          {applicant.name}({applicant.school}/{applicant.major}/{applicant.position})
+                        </p>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Interviewers */}
-              <div className="flex gap-[15px]">
-                <span className="text-body-md text-gray-950 w-[56px] flex-shrink-0">면접관</span>
-                <p className="text-body-rg text-gray-950 flex-1">{slot.interviewers.join(', ')}</p>
+                {/* Interviewers */}
+                <div className="flex gap-[15px]">
+                  <span className="text-body-md text-gray-950 w-[56px] flex-shrink-0">면접관</span>
+                  <p className="text-body-rg text-gray-950 flex-1">
+                    {slot.interviewers.map((i) => i.name).join(', ')}
+                  </p>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
         </div>
       </div>
 

@@ -1,6 +1,8 @@
 ﻿'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createSmartSchedule } from '@/services/smartScheduleService';
+import { mockProjects } from '@/data/projects';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Navbar from '@/components/Navbar';
@@ -17,9 +19,14 @@ export default function SmartScheduleMainForm() {
   const isRepresentative = true; // 대표자 여부 (가정)
   const [showInterviewerView, setShowInterviewerView] = useState(false);
 
-  // 면접 정보 설정 완료 여부 확인
-  const isConfigured = typeof window !== 'undefined' ? localStorage.getItem('interviewInfoConfigured') : null;
-  const showOverlay = !isConfigured;
+  // Hydration 에러 방지: 클라이언트에서만 localStorage 접근
+  const [isConfigured, setIsConfigured] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsConfigured(!!localStorage.getItem('interviewInfoConfigured'));
+    }
+  }, []);
+  const showOverlay = isConfigured === false;
 
   // TODO: 실제 API에서 스마트 시간표 생성 여부와 대표자 여부를 가져와야 함
 
@@ -202,7 +209,22 @@ export default function SmartScheduleMainForm() {
 
           {/* CTA Button */}
           <div className="fixed bottom-20 left-0 right-0 px-5 max-w-93.75 mx-auto">
-            <Btn variant="primary" size="lg" className="w-full">
+            <Btn
+              variant="primary"
+              size="lg"
+              className="w-full"
+              onClick={async () => {
+                try {
+                  // 실제 프로젝트에서는 projectId를 동적으로 받아와야 함
+                  const projectId = mockProjects[0].id;
+                  await createSmartSchedule(projectId);
+                  alert('스마트 시간표가 성공적으로 생성되었습니다!');
+                  // 필요시 결과 페이지로 이동 등 추가 처리
+                } catch (e) {
+                  alert('스마트 시간표 생성에 실패했습니다.');
+                }
+              }}
+            >
               스마트 시간표 생성
             </Btn>
           </div>
