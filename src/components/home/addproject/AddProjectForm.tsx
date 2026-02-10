@@ -267,10 +267,10 @@ export default function AddProjectForm() {
         return;
       }
 
-      const userId = authResponse.user.id;
+      const userId = authResponse.user.userId;
 
       // 관리자 ID 배열 생성 (현재는 자신만 포함, 실제로는 추가된 관리자들의 ID를 포함해야 함)
-      const adminIds = [userId];
+      const admins = [userId];
 
       // API 호출
       const result = await createProject(userId, {
@@ -278,8 +278,8 @@ export default function AddProjectForm() {
         sheetUrl: url,
         startAt: formatDate(startDate),
         endAt: formatDate(endDate),
-        adminIds: adminIds,
-        requiredMappings: mappings,
+        admins: admins,
+        requireMappings: mappings,
       });
 
       console.log('프로젝트 생성 성공:', result);
