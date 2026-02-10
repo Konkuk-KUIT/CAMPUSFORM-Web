@@ -2,15 +2,20 @@
 const nextConfig = {
   images: {
     remotePatterns: [
+      // S3 프로필 이미지
       {
         protocol: 'https',
         hostname: 'campus-form-bucket.s3.ap-northeast-2.amazonaws.com',
         pathname: '/profile-images/**',
       },
-      // 또는 모든 S3 경로 허용
       {
         protocol: 'https',
         hostname: 'campus-form-bucket.s3.ap-northeast-2.amazonaws.com',
+      },
+      // 구글 프로필 이미지
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
       },
     ],
   },

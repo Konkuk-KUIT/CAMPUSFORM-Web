@@ -27,6 +27,20 @@ class AuthService {
     }
   }
 
+  // GET : 이메일로 전체 사용자 정보 조회 (exists 필드 포함)
+  async getUserDetailByEmail(email: string): Promise<{
+    exists: boolean;
+    userId: number;
+    nickname: string;
+    email: string;
+    profileImageUrl: string;
+  }> {
+    const response = await apiClient.get('/users/exists', {
+      params: { email },
+    });
+    return response.data;
+  }
+
   // PATCH : 닉네임 변경
   async updateNickname(nickname: string): Promise<{ nickname: string }> {
     const response = await apiClient.patch('/users/nickname', { nickname });
@@ -52,20 +66,6 @@ class AuthService {
   isProfileCompleted(user: User | null): boolean {
     if (!user) return false;
     return !!(user.nickname && user.nickname.trim() !== '');
-  }
-
-  // GET : 이메일로 전체 사용자 정보 조회
-  async getUserDetailByEmail(email: string): Promise<{
-    exists: boolean;
-    userId: number;
-    nickname: string;
-    email: string;
-    profileImageUrl: string;
-  }> {
-    const response = await apiClient.get('/users/exists', {
-      params: { email },
-    });
-    return response.data;
   }
 
   // POST : 로그아웃
