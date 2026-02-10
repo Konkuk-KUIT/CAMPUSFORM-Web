@@ -3,10 +3,17 @@
 import { useState, useRef } from 'react';
 import Image from 'next/image';
 import SelectModal from '../ui/SelectModal';
+import { authService } from '@/services/authService';
 
-export default function ProfileImageButton() {
+interface ProfileImageButtonProps {
+  profileImageUrl?: string | null;
+  onImageUpdate?: (imageUrl: string | null) => void;
+}
+
+export default function ProfileImageButton({ profileImageUrl, onImageUpdate }: ProfileImageButtonProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [imgSrc, setImgSrc] = useState('');
+  const [imgSrc, setImgSrc] = useState(profileImageUrl || '');
+  const [isUploading, setIsUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const profileOptions = [
@@ -24,8 +31,8 @@ export default function ProfileImageButton() {
     setIsModalOpen(false);
   };
 
-  // 이미지 선택 시 미리보기
-  const attachImgPath = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // 이미지 선택 시 서버 업로드
+  const attachImgPath = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -34,7 +41,7 @@ export default function ProfileImageButton() {
       return;
     }
 
-    // 이미지 미리보기
+    // 미리보기 먼저 표시
     const reader = new FileReader();
     reader.readAsDataURL(file);
 
@@ -44,23 +51,58 @@ export default function ProfileImageButton() {
       }
     };
 
-    // TODO: 나중에 서버 연동할때 파일 부모 컴포넌트로 전달
+    // 서버에 업로드
+    setIsUploading(true);
+    try {
+      const response = await authService.updateProfileImage(file);
+      setImgSrc(response.profileImageUrl);
+      onImageUpdate?.(response.profileImageUrl);
+      alert('프로필 이미지가 변경되었습니다.');
+    } catch (error) {
+      console.error('Failed to upload image:', error);
+      alert('이미지 업로드에 실패했습니다.');
+      setImgSrc(profileImageUrl || '');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   // 이미지 삭제
-  const imgRemove = () => {
-    setImgSrc('');
-    if (inputRef.current) {
-      inputRef.current.value = '';
+  const imgRemove = async () => {
+    if (!imgSrc) return;
+
+    setIsUploading(true);
+    try {
+      await authService.deleteProfileImage();
+      setImgSrc('');
+      onImageUpdate?.(null);
+      if (inputRef.current) {
+        inputRef.current.value = '';
+      }
+      alert('프로필 이미지가 삭제되었습니다.');
+    } catch (error) {
+      console.error('Failed to delete image:', error);
+      alert('이미지 삭제에 실패했습니다.');
+    } finally {
+      setIsUploading(false);
     }
   };
 
   return (
     <div className="relative">
-      <button onClick={() => setIsModalOpen(!isModalOpen)} className="relative cursor-pointer block mx-auto">
+      <button
+        onClick={() => setIsModalOpen(!isModalOpen)}
+        className="relative cursor-pointer block mx-auto"
+        disabled={isUploading}
+      >
         {imgSrc ? (
           <div className="w-22.5 h-22.5 relative">
             <Image src={imgSrc} alt="프로필 이미지" fill className="rounded-full object-cover" />
+            {isUploading && (
+              <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
+                <p className="text-white text-sm">업로드 중...</p>
+              </div>
+            )}
           </div>
         ) : (
           <Image src="/icons/profile.svg" alt="프로필" width={90} height={90} loading="eager" />

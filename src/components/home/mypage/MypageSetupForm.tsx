@@ -1,22 +1,45 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/Btn';
 import Textbox from '@/components/ui/Textbox';
 import ProfileImageButton from '@/components/auth/ProfileImageButton';
 import Header from '@/components/ui/Header';
+import ConfirmModal from '@/components/home/mypage/ConfirmModal';
+import { authService } from '@/services/authService';
+import type { User } from '@/types/auth';
 
-interface MypageSetupFormProps {
-  initialName?: string;
-  initialEmail?: string;
-}
-
-export default function MypageSetupForm({
-  initialName = '김유저',
-  initialEmail = 'hxxxxx@gmail.com',
-}: MypageSetupFormProps) {
-  const [nickname, setNickname] = useState(initialName);
+export default function MypageSetupForm() {
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [nickname, setNickname] = useState('');
   const [nicknameError, setNicknameError] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const authResponse = await authService.getCurrentUser();
+
+        if (!authResponse.isAuthenticated || !authResponse.user) {
+          router.push('/auth/login');
+          return;
+        }
+
+        setUser(authResponse.user);
+        setNickname(authResponse.user.nickname || '');
+      } catch (error) {
+        console.error('Failed to fetch user:', error);
+        router.push('/auth/login');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, [router]);
 
   const validateNickname = (): boolean => {
     if (!nickname.trim()) {
@@ -38,12 +61,24 @@ export default function MypageSetupForm({
     return true;
   };
 
-  const handleSignup = () => {
+  const handleSave = async () => {
     if (!validateNickname()) {
       return;
     }
 
     setNicknameError(false);
+
+    try {
+      await authService.updateNickname(nickname);
+      alert('변경사항이 저장되었습니다.');
+
+      if (user) {
+        setUser({ ...user, nickname });
+      }
+    } catch (error) {
+      console.error('Failed to update nickname:', error);
+      alert('저장에 실패했습니다.');
+    }
   };
 
   const handleNicknameChange = (value: string) => {
@@ -53,12 +88,35 @@ export default function MypageSetupForm({
     }
   };
 
+  const handleImageUpdate = (imageUrl: string | null) => {
+    if (user) {
+      setUser({ ...user, profileImageUrl: imageUrl });
+    }
+  };
+
+  const handleLogout = async () => {
+    setShowLogoutModal(false);
+    await authService.logout();
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p>로딩 중...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
+
   return (
     <div className="relative bg-white min-h-screen">
       <Header title="마이페이지" backTo="/home" hideNotification={true} />
 
       <div className="absolute top-[14px] right-[16px] z-50">
-        <button className="text-body-md text-[var(--color-gray-500)]">
+        <button onClick={() => setShowLogoutModal(true)} className="text-body-md text-gray-500 cursor-pointer">
           로그아웃
         </button>
       </div>
@@ -66,42 +124,47 @@ export default function MypageSetupForm({
       <div className="flex justify-center min-h-screen bg-white">
         <div className="relative w-[375px] bg-white min-h-screen flex flex-col">
           <div className="px-6 py-8 pb-28 flex flex-col gap-3">
-            <ProfileImageButton />
+            <ProfileImageButton
+              profileImageUrl={user.profileImageUrl || user.image}
+              onImageUpdate={handleImageUpdate}
+            />
 
-        <div className="flex flex-col gap-2 mt-15">
-          <label className="text-subtitle-sm-md pl-2">이름(닉네임)</label>
-          <Textbox
-            placeholder="이름 또는 닉네임을 입력해주세요. (1-12자)"
-            value={nickname}
-            onChange={handleNicknameChange}
-            error={nicknameError}
-            errorMessage="이름에는 한글, 영문만 입력 가능합니다."
-          />
-        </div>
+            <div className="flex flex-col gap-2 mt-15">
+              <label className="text-subtitle-sm-md pl-2">이름(닉네임)</label>
+              <Textbox
+                placeholder="이름 또는 닉네임을 입력해주세요. (1-12자)"
+                value={nickname}
+                onChange={handleNicknameChange}
+                error={nicknameError}
+                errorMessage="이름에는 한글, 영문만 입력 가능합니다."
+              />
+            </div>
 
-        <div className="flex flex-col gap-2">
-          <label className="text-subtitle-sm-md pl-2">구글 계정</label>
-          <Textbox placeholder="hxxxxx@gmail.com" disabled />
+            <div className="flex flex-col gap-2">
+              <label className="text-subtitle-sm-md pl-2">구글 계정</label>
+              <Textbox value={user.email} disabled />
+            </div>
+          </div>
+
+          <div className="fixed bottom-0 left-0 right-0 bg-white px-6 py-4 max-w-93.75 mx-auto">
+            <div className="flex justify-center items-center gap-[5px] mb-5 text-body-sm-rg text-gray-500">
+              <span className="text-gray-500">캠퍼스폼</span>
+              <span className="text-gray-700">|</span>
+              <span className="text-gray-700">이용약관</span>
+              <span className="text-gray-700">|</span>
+              <span className="text-gray-700">개인정보 처리방침</span>
+              <span className="text-gray-700">|</span>
+              <span className="text-gray-700">문의하기</span>
+            </div>
+
+            <Button variant="primary" size="lg" onClick={handleSave}>
+              저장하기
+            </Button>
+          </div>
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 bg-white px-6 py-4 max-w-93.75 mx-auto">
-        <div className="flex justify-center items-center gap-[5px] mb-5 text-body-sm-rg text-[var(--color-gray-500)]">
-          <span className="text-[var(--color-gray-500)]">캠퍼스폼</span>
-          <span className="text-[var(--color-gray-700)]">|</span>
-          <span className="text-[var(--color-gray-700)]">이용약관</span>
-          <span className="text-[var(--color-gray-700)]">|</span>
-          <span className="text-[var(--color-gray-700)]">개인정보 처리방침</span>
-          <span className="text-[var(--color-gray-700)]">|</span>
-          <span className="text-[var(--color-gray-700)]">문의하기</span>
-        </div>
-        
-        <Button variant="primary" size="lg" onClick={handleSignup}>
-          저장하기
-        </Button>
-      </div>
-        </div>
-      </div>
+      <ConfirmModal isOpen={showLogoutModal} onConfirm={handleLogout} onCancel={() => setShowLogoutModal(false)} />
     </div>
   );
 }
