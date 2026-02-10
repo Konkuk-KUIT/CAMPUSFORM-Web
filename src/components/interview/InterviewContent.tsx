@@ -7,10 +7,8 @@ import SearchBar from '@/components/form/SearchBar';
 import ApplicantFileCard from '@/components/interview/ApplicantFileCard';
 import BottomSheet from '@/components/ui/BottomSheet';
 import BtnRound from '@/components/ui/BtnRound';
-import InputComment from '@/components/ui/InputComment';
-import Reply from '@/components/ui/Reply';
+import CommentSection from '@/components/sections/CommentSection';
 import { mockInterviewApplicants } from '@/data/interviews';
-import { mockComments } from '@/data/comments';
 
 export default function InterviewContent() {
   const [selectedTab, setSelectedTab] = useState<'전체' | '보류' | '합격' | '불합격'>('전체');
@@ -22,7 +20,10 @@ export default function InterviewContent() {
   const [selectedPosition, setSelectedPosition] = useState<string>('전체');
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [applicants, setApplicants] = useState(mockInterviewApplicants);
-  const [comments, setComments] = useState(mockComments);
+
+  // TODO: 실제 값으로 교체 필요
+  const projectId = 1;
+  const currentUserId = 1;
 
   // 새로고침 핸들러
   const handleRefresh = async () => {
@@ -32,7 +33,7 @@ export default function InterviewContent() {
 
   // 포지션 목록 추출
   const positions = useMemo(() => {
-    const uniquePositions = Array.from(new Set(applicants.map((a) => a.position)));
+    const uniquePositions = Array.from(new Set(applicants.map(a => a.position)));
     return ['전체', ...uniquePositions];
   }, [applicants]);
 
@@ -42,17 +43,17 @@ export default function InterviewContent() {
 
     // 탭 필터링 (면접 결과 기준)
     if (selectedTab !== '전체') {
-      result = result.filter((a) => a.interviewStatus === selectedTab);
+      result = result.filter(a => a.interviewStatus === selectedTab);
     }
 
     // 검색 필터링
     if (searchQuery) {
-      result = result.filter((a) => a.name.toLowerCase().includes(searchQuery.toLowerCase()));
+      result = result.filter(a => a.name.toLowerCase().includes(searchQuery.toLowerCase()));
     }
 
     // 포지션 필터링
     if (selectedPosition !== '전체') {
-      result = result.filter((a) => a.position === selectedPosition);
+      result = result.filter(a => a.position === selectedPosition);
     }
 
     // 정렬
@@ -74,17 +75,12 @@ export default function InterviewContent() {
   const counts = useMemo(
     () => ({
       전체: applicants.length,
-      보류: applicants.filter((a) => a.interviewStatus === '보류').length,
-      합격: applicants.filter((a) => a.interviewStatus === '합격').length,
-      불합격: applicants.filter((a) => a.interviewStatus === '불합격').length,
+      보류: applicants.filter(a => a.interviewStatus === '보류').length,
+      합격: applicants.filter(a => a.interviewStatus === '합격').length,
+      불합격: applicants.filter(a => a.interviewStatus === '불합격').length,
     }),
     [applicants]
   );
-
-  // 선택된 지원자의 댓글 가져오기
-  const selectedApplicantComments = useMemo(() => {
-    return comments.filter((c) => c.applicantId === selectedApplicantId);
-  }, [comments, selectedApplicantId]);
 
   // 댓글 열기 핸들러
   const handleCommentClick = (applicantId: string) => {
@@ -94,7 +90,7 @@ export default function InterviewContent() {
 
   // 즐겨찾기 토글 핸들러
   const handleToggleFavorite = (applicantId: string) => {
-    setFavorites((prev) => {
+    setFavorites(prev => {
       const newFavorites = new Set(prev);
       if (newFavorites.has(applicantId)) {
         newFavorites.delete(applicantId);
@@ -144,7 +140,7 @@ export default function InterviewContent() {
         {filteredApplicants.length === 0 ? (
           <div className="text-center py-8 text-gray-400">검색 결과가 없습니다.</div>
         ) : (
-          filteredApplicants.map((applicant) => (
+          filteredApplicants.map(applicant => (
             <ApplicantFileCard
               key={applicant.id}
               id={applicant.id}
@@ -168,7 +164,7 @@ export default function InterviewContent() {
         <h2 className="text-subtitle-md">지원 포지션</h2>
 
         <div className="mt-4 flex flex-wrap gap-2">
-          {positions.map((position) => (
+          {positions.map(position => (
             <BtnRound
               key={position}
               size="sm"
@@ -184,27 +180,15 @@ export default function InterviewContent() {
         </div>
       </BottomSheet>
 
-      {/* 바텀시트 - 댓글 */}
-      <BottomSheet isOpen={isCommentOpen} onClose={() => setCommentOpen(false)}>
-        <InputComment />
-        <div className="space-y-4 mt-4">
-          {selectedApplicantComments.length === 0 ? (
-            <p className="text-center text-gray-400 py-4">아직 댓글이 없습니다.</p>
-          ) : (
-            selectedApplicantComments.map((comment) => (
-              <Reply
-                key={comment.id}
-                id={comment.id}
-                author={comment.author}
-                content={comment.content}
-                createdAt={comment.createdAt}
-                isAuthor={comment.isAuthor}
-                replies={comment.replies}
-              />
-            ))
-          )}
-        </div>
-      </BottomSheet>
+      {/* 댓글 섹션 */}
+      <CommentSection
+        isOpen={isCommentOpen}
+        onClose={() => setCommentOpen(false)}
+        projectId={projectId}
+        applicantId={selectedApplicantId}
+        stage="INTERVIEW"
+        currentUserId={currentUserId}
+      />
     </PullToRefresh>
   );
 }
