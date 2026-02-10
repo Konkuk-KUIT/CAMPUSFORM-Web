@@ -11,7 +11,7 @@ import ProfileCross from '@/components/ui/ProfileCross';
 import DateRangePickerModal from '@/components/home/addproject/DateRangePickerModal';
 import InfoModal from '@/components/ui/InfoModal';
 import { authService } from '@/services/authService';
-import { createProject, type RequireMappings } from '@/services/projectService';
+import { createProject, getSheetHeaders, getGoogleAuthUrl, type RequireMappings } from '@/services/projectService';
 
 interface Admin {
   id: number;
@@ -38,9 +38,12 @@ export default function AddProjectForm() {
   const [mappings, setMappings] = useState<RequireMappings | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [needsOAuth, setNeedsOAuth] = useState(false);
 
-  // sessionStorage에서 매핑 데이터 로드
+  // sessionStorage에서 저장된 폼 데이터 로드
   useEffect(() => {
+    // 매핑 데이터 복원
     const savedMappings = sessionStorage.getItem('projectMappings');
     if (savedMappings) {
       const parsedMappings = JSON.parse(savedMappings) as RequireMappings;
@@ -48,6 +51,23 @@ export default function AddProjectForm() {
       setIsConnected(true);
       // 사용 후 삭제
       sessionStorage.removeItem('projectMappings');
+    }
+
+    // 폼 데이터 복원
+    const savedFormData = sessionStorage.getItem('addProjectFormData');
+    if (savedFormData) {
+      try {
+        const formData = JSON.parse(savedFormData);
+        if (formData.title) setTitle(formData.title);
+        if (formData.url) setUrl(formData.url);
+        if (formData.startDate) setStartDate(new Date(formData.startDate));
+        if (formData.endDate) setEndDate(new Date(formData.endDate));
+        if (formData.adminInput) setAdminInput(formData.adminInput);
+        if (formData.adminList) setAdminList(formData.adminList);
+        if (formData.isConnected !== undefined) setIsConnected(formData.isConnected);
+      } catch (err) {
+        console.error('Failed to restore form data:', err);
+      }
     }
   }, []);
 
@@ -102,6 +122,96 @@ export default function AddProjectForm() {
     setEndDate(end);
   };
 
+  const handleConnect = async () => {
+    console.log('=== handleConnect 호출됨 ===');
+    console.log('url:', url);
+    
+    if (!url) {
+      console.log('URL 없음');
+      alert('구글 스프레드시트 URL을 먼저 입력해주세요.');
+      return;
+    }
+
+    // URL 유효성 검사
+    if (!url.includes('docs.google.com/spreadsheets')) {
+      console.log('URL 형식 오류');
+      alert('올바른 구글 스프레드시트 URL을 입력해주세요.');
+      return;
+    }
+
+    console.log('유효성 검사 통과, API 호출 시작');
+    setIsConnecting(true);
+    setNeedsOAuth(false);
+
+    try {
+      // 헤더 조회 시도
+      console.log('getSheetHeaders 호출 중...');
+      const headers = await getSheetHeaders(url);
+      console.log('getSheetHeaders 결과:', headers);
+      
+      if (headers && headers.length > 0) {
+        // 성공: sessionStorage에 저장하고 ConnectForm으로 이동
+        sessionStorage.setItem('sheetUrl', url);
+        sessionStorage.setItem('sheetHeaders', JSON.stringify(headers));
+        
+        // 현재 폼 데이터 저장
+        const formData = {
+          title,
+          url,
+          startDate: startDate?.toISOString(),
+          endDate: endDate?.toISOString(),
+          adminInput,
+          adminList,
+          isConnected: true,
+        };
+        sessionStorage.setItem('addProjectFormData', JSON.stringify(formData));
+        
+        setIsConnected(true);
+        router.push('/home/addproject/connect');
+      } else {
+        alert('스프레드시트가 비어있습니다. 데이터를 확인해주세요.');
+      }
+    } catch (error: any) {
+      console.error('시트 연동 실패:', error);
+      
+      if (error.response?.status === 403) {
+        // OAuth 인증 필요
+        setNeedsOAuth(true);
+        alert('구글 시트 접근 권한이 필요합니다.\n아래 "구글 인증" 버튼을 클릭하여 권한을 부여해주세요.');
+      } else if (error.response?.status === 400) {
+        alert('구글 시트 URL이 올바르지 않습니다.\n\n확인사항:\n1. 링크가 올바른지 확인\n2. 시트가 공유 설정되어 있는지 확인');
+      } else if (error.response?.status === 404) {
+        alert('해당 구글 시트를 찾을 수 없습니다.\n링크를 다시 확인해주세요.');
+      } else {
+        alert('시트 연동에 실패했습니다.\n\n해결 방법:\n1. 구글 시트를 "링크가 있는 모든 사용자" 권한으로 공유\n2. 또는 구글 인증을 통해 접근 권한 부여');
+        setNeedsOAuth(true);
+      }
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  const handleGoogleAuth = async () => {
+    try {
+      const authUrlResponse = await getGoogleAuthUrl();
+      // 리다이렉트 URI는 현재 도메인 + callback 경로
+      const redirectUri = `${window.location.origin}/auth/google/callback`;
+      sessionStorage.setItem('googleAuthRedirectUri', redirectUri);
+      sessionStorage.setItem('pendingSheetUrl', url);
+      
+      // Swagger 응답이 additionalProperties 형태이므로 첫 번째 값 사용
+      const authUrl = Object.values(authUrlResponse)[0] as string;
+      if (authUrl) {
+        window.location.href = authUrl;
+      } else {
+        alert('구글 인증 URL 생성에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('구글 인증 URL 가져오기 실패:', error);
+      alert('구글 인증을 시작할 수 없습니다.');
+    }
+  };
+
   const formatDate = (date: Date | null) => {
     if (!date) return '';
     return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date
@@ -111,27 +221,40 @@ export default function AddProjectForm() {
   };
 
   const handleSubmit = async () => {
+    console.log('=== handleSubmit 호출됨 ===');
+    console.log('title:', title);
+    console.log('url:', url);
+    console.log('startDate:', startDate);
+    console.log('endDate:', endDate);
+    console.log('mappings:', mappings);
+    console.log('isConnected:', isConnected);
+    
     // 유효성 검사
     if (!title || isTitleError) {
+      console.log('제목 오류');
       alert('프로젝트 제목을 올바르게 입력해주세요.');
       return;
     }
 
     if (!url) {
+      console.log('URL 없음');
       alert('구글 스프레드시트 URL을 입력해주세요.');
       return;
     }
 
     if (!startDate || !endDate) {
+      console.log('날짜 없음');
       alert('모집 기간을 설정해주세요.');
       return;
     }
 
     if (!mappings || !isConnected) {
+      console.log('매핑 정보 없음');
       alert('스프레드시트 연동을 완료해주세요.');
       return;
     }
 
+    console.log('유효성 검사 통과, API 호출 시작');
     setIsSubmitting(true);
 
     try {
@@ -150,26 +273,57 @@ export default function AddProjectForm() {
       const adminIds = [userId];
 
       // API 호출
-      await createProject(userId, {
+      const result = await createProject(userId, {
         title,
         sheetUrl: url,
         startAt: formatDate(startDate),
         endAt: formatDate(endDate),
-        admins: adminIds,
-        requireMappings: mappings,
+        adminIds: adminIds,
+        requiredMappings: mappings,
       });
 
-      alert('프로젝트가 성공적으로 생성되었습니다!');
+      console.log('프로젝트 생성 성공:', result);
+      
+      // sessionStorage 정리
+      sessionStorage.removeItem('sheetUrl');
+      sessionStorage.removeItem('projectMappings');
+      sessionStorage.removeItem('addProjectFormData');
+      sessionStorage.removeItem('sheetHeaders');
+      
+      // 홈으로 바로 이동
       router.push('/home');
-    } catch (error) {
+    } catch (error: any) {
       console.error('프로젝트 생성 실패:', error);
-      alert('프로젝트 생성에 실패했습니다. 다시 시도해주세요.');
+      
+      // 더 구체적인 에러 메시지
+      let errorMessage = '프로젝트 생성에 실패했습니다.';
+      
+      if (error.response?.status === 401) {
+        errorMessage = '로그인이 만료되었습니다. 다시 로그인해주세요.';
+        router.push('/auth/login');
+      } else if (error.response?.status === 400) {
+        errorMessage = '입력 정보를 확인해주세요. 구글 시트 URL이나 날짜 형식이 올바른지 확인해주세요.';
+      } else if (error.response?.status === 500) {
+        errorMessage = '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+      } else if (error.message) {
+        errorMessage = `오류: ${error.message}`;
+      }
+      
+      alert(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const isButtonDisabled = title.length === 0 || isTitleError || !mappings || isSubmitting;
+
+  // 디버깅용 로그
+  console.log('=== 버튼 상태 ===');
+  console.log('title:', title);
+  console.log('isTitleError:', isTitleError);
+  console.log('mappings:', mappings);
+  console.log('isSubmitting:', isSubmitting);
+  console.log('isButtonDisabled:', isButtonDisabled);
 
   return (
     <div className="flex justify-center min-h-screen bg-white">
@@ -224,18 +378,27 @@ export default function AddProjectForm() {
                       ? 'bg-green-500 !text-white border-green-500 hover:bg-green-600'
                       : 'bg-white !text-primary border !border-primary hover:bg-blue-50'
                   }`}
-                  onClick={() => {
-                    if (!url) {
-                      alert('구글 스프레드시트 URL을 먼저 입력해주세요.');
-                      return;
-                    }
-                    sessionStorage.setItem('sheetUrl', url);
-                    router.push('/home/addproject/connect');
-                  }}
+                  onClick={handleConnect}
+                  disabled={isConnecting}
                 >
-                  {isConnected ? '완료' : '연동'}
+                  {isConnecting ? '...' : isConnected ? '완료' : '연동'}
                 </Button>
             </div>
+            
+            {needsOAuth && (
+              <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-[12px] text-blue-800 mb-2">
+                  🔐 구글 시트 접근 권한이 필요합니다.
+                </p>
+                <Button
+                  variant="primary"
+                  className="w-full !h-[40px] text-[13px]"
+                  onClick={handleGoogleAuth}
+                >
+                  구글 계정으로 인증하기
+                </Button>
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col gap-2">
