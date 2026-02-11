@@ -163,14 +163,14 @@ export default function MypageSetupForm() {
     <div className="relative bg-white min-h-screen">
       <Header title="마이페이지" backTo="/home" hideNotification={true} />
 
-      <div className="absolute top-[14px] right-[16px] z-50">
+      <div className="absolute top-3.5 right-4 z-50">
         <button onClick={() => setShowLogoutModal(true)} className="text-body-md text-gray-500 cursor-pointer">
           로그아웃
         </button>
       </div>
 
       <div className="flex justify-center min-h-screen bg-white">
-        <div className="relative w-[375px] bg-white min-h-screen flex flex-col">
+        <div className="relative w-93.75 bg-white min-h-screen flex flex-col">
           <div className="px-6 py-8 pb-28 flex flex-col gap-3">
             <ProfileImageButton
               key={user.profileImageUrl || 'default'}
@@ -197,14 +197,47 @@ export default function MypageSetupForm() {
           </div>
 
           <div className="fixed bottom-0 left-0 right-0 bg-white px-6 py-4 max-w-93.75 mx-auto">
-            <div className="flex justify-center items-center gap-[5px] mb-5 text-body-sm-rg text-gray-500">
+            <div className="flex justify-center items-center gap-1.25 mb-5 text-body-sm-rg text-gray-500">
               <span className="text-gray-500">캠퍼스폼</span>
               <span className="text-gray-700">|</span>
-              <span className="text-gray-700">이용약관</span>
+              <span
+                className="text-gray-700 cursor-pointer"
+                onClick={() =>
+                  window.open(
+                    'https://spiky-cheek-6cb.notion.site/2f498732e20180f38b55ec4cf97b123c?source=copy_link',
+                    '_blank',
+                    'noopener,noreferrer'
+                  )
+                }
+              >
+                이용약관
+              </span>
               <span className="text-gray-700">|</span>
-              <span className="text-gray-700">개인정보 처리방침</span>
+              <span
+                className="text-gray-700 cursor-pointer"
+                onClick={() =>
+                  window.open(
+                    'https://spiky-cheek-6cb.notion.site/2f498732e20180c88f2ec5d914a66119?source=copy_link',
+                    '_blank',
+                    'noopener,noreferrer'
+                  )
+                }
+              >
+                개인정보 처리방침
+              </span>
               <span className="text-gray-700">|</span>
-              <span className="text-gray-700">문의하기</span>
+              <span
+                className="text-gray-700 cursor-pointer"
+                onClick={() =>
+                  window.open(
+                    'https://spiky-cheek-6cb.notion.site/2d698732e20180f7a445cd866f5023dc?source=copy_link',
+                    '_blank',
+                    'noopener,noreferrer'
+                  )
+                }
+              >
+                문의하기
+              </span>
             </div>
 
             <Button variant="primary" size="lg" onClick={handleSave}>
