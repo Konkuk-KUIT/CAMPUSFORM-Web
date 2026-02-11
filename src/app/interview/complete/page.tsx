@@ -6,6 +6,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 export default function InterviewCompletePage() {
+  // TODO: 실제 프로젝트 ID는 URL params나 전역 상태에서 가져와야 함
+  const projectId = 1; // 임시값
+
   return (
     <>
       <div className="min-h-screen flex flex-col">
@@ -31,7 +34,7 @@ export default function InterviewCompletePage() {
         </div>
 
         {/* 버튼 영역 */}
-        <InterviewCompleteButtons />
+        <InterviewCompleteButtons projectId={projectId} />
       </div>
       <Navbar />
     </>
