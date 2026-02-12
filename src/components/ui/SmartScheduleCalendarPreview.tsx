@@ -91,6 +91,7 @@ export default function SmartScheduleCalendarPreview({
   showInterviewerView?: boolean;
   onShowInterviewerViewChange?: (value: boolean) => void;
 }) {
+  const [cellActive, setCellActive] = useState<{ [key: string]: { top: boolean; bottom: boolean } }>({});
   const [currentStartDate, setCurrentStartDate] = useState(new Date());
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date()); // 캘린더 모달 내부에서만 사용
@@ -217,13 +218,22 @@ export default function SmartScheduleCalendarPreview({
         {/* Header with month and calendar icon */}
         <div className="flex items-center justify-center relative mb-[15px]">
           <span className="text-[15px] font-medium leading-[20px] text-gray-950">{currentMonthYear}</span>
-          <button
-            onClick={() => setShowCalendarModal(!showCalendarModal)}
-            className="absolute right-0"
-            aria-label="날짜 선택"
-          >
-            <Image src="/icons/calendar-black.svg" alt="calendar" width={14.3} height={14.3} />
-          </button>
+          <div className="absolute right-0 flex items-center gap-2">
+            <button
+              onClick={() => setShowCalendarModal(!showCalendarModal)}
+              className="cursor-pointer"
+              aria-label="날짜 선택"
+            >
+              <Image src="/icons/calendar-black.svg" alt="calendar" width={14.3} height={14.3} />
+            </button>
+            <button
+              className="ml-2 cursor-pointer"
+              onClick={() => window.location.href = '/home/notification'}
+              aria-label="알림"
+            >
+              <Image src="/icons/notification.svg" alt="알림" width={22} height={22} />
+            </button>
+          </div>
         </div>
 
         {/* Navigation arrows and day headers */}
@@ -291,9 +301,14 @@ export default function SmartScheduleCalendarPreview({
                   let topColor: string;
                   let bottomColor: string;
 
+                  // 셀 활성/비활성 상태 적용 (interviewerName 있을 때만)
+                  const cellKey = `${dayIdx}-${timeIdx}`;
+                  const isTopActive = interviewerName ? (cellActive[cellKey]?.top ?? (topCount >= 1)) : undefined;
+                  const isBottomActive = interviewerName ? (cellActive[cellKey]?.bottom ?? (bottomCount >= 1)) : undefined;
+
                   if (interviewerName) {
-                    topColor = topCount >= 1 ? BLUE2 : GRAY1;
-                    bottomColor = bottomCount >= 1 ? BLUE2 : GRAY1;
+                    topColor = isTopActive ? BLUE2 : GRAY1;
+                    bottomColor = isBottomActive ? BLUE2 : GRAY1;
                   } else {
                     topColor = BLUE_COLORS[Math.min(topCount, 10)];
                     bottomColor = BLUE_COLORS[Math.min(bottomCount, 10)];
@@ -323,7 +338,18 @@ export default function SmartScheduleCalendarPreview({
                       {/* Top half - solid border */}
                       <div
                         className="flex-1 border-t border-white border-solid cursor-pointer hover:opacity-80"
-                        style={{ backgroundColor: topColor }}
+                        style={{ backgroundColor: topColor, cursor: 'pointer' }}
+                        onClick={() => {
+                          if (interviewerName) {
+                            setCellActive(prev => ({
+                              ...prev,
+                              [cellKey]: {
+                                top: !(prev[cellKey]?.top ?? (topCount >= 1)),
+                                bottom: prev[cellKey]?.bottom ?? (bottomCount >= 1),
+                              },
+                            }));
+                          }
+                        }}
                         onMouseEnter={() =>
                           !interviewerName && setHoveredCell({ day: dayIdx, time: timeIdx, half: 'top' })
                         }
@@ -332,9 +358,17 @@ export default function SmartScheduleCalendarPreview({
                       {/* Bottom half - dashed border */}
                       <div
                         className="flex-1 border-t border-white cursor-pointer hover:opacity-80"
-                        style={{
-                          backgroundColor: bottomColor,
-                          borderStyle: 'dashed',
+                        style={{ backgroundColor: bottomColor, borderStyle: 'dashed', cursor: 'pointer' }}
+                        onClick={() => {
+                          if (interviewerName) {
+                            setCellActive(prev => ({
+                              ...prev,
+                              [cellKey]: {
+                                top: prev[cellKey]?.top ?? (topCount >= 1),
+                                bottom: !(prev[cellKey]?.bottom ?? (bottomCount >= 1)),
+                              },
+                            }));
+                          }
                         }}
                         onMouseEnter={() =>
                           !interviewerName && setHoveredCell({ day: dayIdx, time: timeIdx, half: 'bottom' })
