@@ -140,7 +140,7 @@ export default function AddProjectForm() {
                   onChange={handleUrlChange}
                 />
               </div>
-              <Link href="/home/addproject/connect">
+              <Link href={`/home/addproject/connect?sheetUrl=${encodeURIComponent(url)}`}>
                 <Button
                   variant="primary"
                   className="!w-[50px] !h-[50px] !rounded-[10px] shrink-0 text-[13px] font-medium bg-white !text-primary border !border-primary hover:bg-blue-50"
