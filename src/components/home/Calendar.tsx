@@ -275,21 +275,21 @@ export default function Calendar({
             },
           })}
           renderCustomHeader={({ date, decreaseMonth, increaseMonth }) => (
-            <div className="flex items-center justify-between mb-[8px]">
+            <div className="flex items-center justify-center gap-15 mb-[8px]">
               <button
                 onClick={decreaseMonth}
-                className="w-[24px] h-[24px] flex items-center justify-center hover:bg-gray-100 rounded transition"
+                className="w-[33px] h-[33px] flex items-center justify-center"
               >
-                <span className="text-[16px]">{"<"}</span>
+                <Image src="/icons/back-gray.svg" alt="이전 월" width={33} height={33} />
               </button>
-              <div className="text-center text-[14px] font-medium text-gray-950 flex-1">
+              <div className="text-center text-[14px] font-medium text-gray-950">
                 {date.getFullYear()}년 {(date.getMonth() + 1).toString().padStart(2, '0')}월
               </div>
               <button
                 onClick={increaseMonth}
-                className="w-[24px] h-[24px] flex items-center justify-center hover:bg-gray-100 rounded transition"
+                className="w-[33px] h-[33px] flex items-center justify-center"
               >
-                <span className="text-[16px]">{">"}</span>
+                <Image src="/icons/back-gray.svg" alt="다음 월" width={33} height={33} className="rotate-180" />
               </button>
             </div>
           )}

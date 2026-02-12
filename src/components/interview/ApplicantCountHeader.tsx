@@ -13,11 +13,25 @@ interface ApplicantCountHeaderProps {
 export default function ApplicantCountHeader({ type }: ApplicantCountHeaderProps) {
   const [isApplicantListOpen, setIsApplicantListOpen] = useState(false);
 
-  // 합격자/불합격자 데이터 가져오기
   const applicants = type === '합격자' ? getPassedInterviewApplicants() : getFailedInterviewApplicants();
   const count = applicants.length;
 
   const title = type === '합격자' ? '면접 합격자 명단' : '면접 불합격자 명단';
+
+  const handleCopyList = () => {
+    const text = applicants
+      .map(a => `${a.name} (${a.university} / ${a.major} / ${a.position})`)
+      .join('\n');
+    navigator.clipboard.writeText(text);
+  };
+
+  const handleCopyPhones = () => {
+    const text = applicants
+      .map(a => a.phoneNumber)
+      .filter(Boolean)
+      .join('\n');
+    navigator.clipboard.writeText(text);
+  };
 
   return (
     <>
@@ -42,11 +56,21 @@ export default function ApplicantCountHeader({ type }: ApplicantCountHeaderProps
 
         {/* 버튼 */}
         <div className="flex gap-2 justify-center items-center pt-3">
-          <Button variant="outline" size="md" className="inline-flex items-center justify-center gap-1">
+          <Button
+            variant="outline"
+            size="md"
+            className="inline-flex items-center justify-center gap-1"
+            onClick={handleCopyList}
+          >
             <span>명단 복사하기</span>
             <Image src="/icons/copy-blue.svg" alt="" width={15} height={15} />
           </Button>
-          <Button variant="outline" size="md" className="inline-flex items-center justify-center gap-1">
+          <Button
+            variant="outline"
+            size="md"
+            className="inline-flex items-center justify-center gap-1"
+            onClick={handleCopyPhones}
+          >
             <span>전화번호 복사하기</span>
             <Image src="/icons/tag-blue.svg" alt="" width={15} height={15} />
           </Button>

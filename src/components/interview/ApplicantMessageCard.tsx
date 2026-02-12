@@ -99,7 +99,7 @@ export default function ApplicantMessageCard({ type, template, isVariableEnabled
         {/* 명단/전화번호 복사 안내문구 */}
         <div className="flex items-center gap-2.5 mb-1">
           <button className="flex items-center gap-1 text-gray-400 text-[12px] font-medium leading-[22px]">
-            <Image src="/icons/copy-gray.svg" alt="명단 복사하기" width={15} height={15} />
+            <Image src="/icons/copy-gray.svg" alt="문자 복사하기" width={15} height={15} />
             <span>문자 복사하기</span>
           </button>
           <button className="flex items-center gap-1 text-gray-400 text-[12px] font-medium leading-[22px]">
