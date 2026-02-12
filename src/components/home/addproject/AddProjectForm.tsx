@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/ui/Header';
@@ -20,6 +20,7 @@ interface Admin {
   id: number;
   name: string;
   email: string;
+  profileImageUrl?: string;
   isLeader: boolean;
 }
 
@@ -37,9 +38,26 @@ export default function AddProjectForm() {
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [adminInput, setAdminInput] = useState('');
   const [isAdminError, setIsAdminError] = useState(false);
-  const [adminList, setAdminList] = useState<Admin[]>([
-    { id: 1, name: '나(대표)', email: 'myemail@gmail.com', isLeader: true },
-  ]);
+  const [adminList, setAdminList] = useState<Admin[]>([]);
+
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      const auth = await authService.getCurrentUser();
+      console.log('auth.user:', auth.user);
+      if (auth.isAuthenticated && auth.user) {
+        setAdminList([
+          {
+            id: auth.user.userId,
+            name: auth.user.nickname ?? '나(대표)',
+            email: auth.user.email ?? '',
+            profileImageUrl: auth.user.profileImageUrl ?? undefined,
+            isLeader: true,
+          },
+        ]);
+      }
+    };
+    fetchCurrentUser();
+  }, []);
 
   const handleConnectClick = async () => {
     if (!url.trim()) return;
@@ -92,6 +110,7 @@ export default function AddProjectForm() {
         id: user.userId,
         name: user.nickname,
         email: user.email,
+        profileImageUrl: user.profileImageUrl,
         isLeader: false,
       };
       setAdminList([...adminList, newAdmin]);
@@ -191,7 +210,7 @@ export default function AddProjectForm() {
               </div>
               <Button
                 variant="primary"
-                className="!w-[50px] !h-[50px] !rounded-[10px] shrink-0 text-[13px] font-medium bg-white !text-primary border !border-primary hover:bg-blue-50"
+                className="w-12.5! h-12.5! rounded-10! shrink-0 text-[13px] font-medium bg-white text-primary! border border-primary! hover:bg-blue-50"
                 onClick={handleConnectClick}
                 disabled={!url.trim()}
               >
@@ -228,7 +247,7 @@ export default function AddProjectForm() {
               </div>
               <Button
                 variant="primary"
-                className="!w-[50px] !h-[50px] !rounded-[10px] shrink-0 text-[13px] font-medium"
+                className="w-12.5! h-12.5! rounded-10! shrink-0 text-13 font-medium"
                 onClick={handleAddAdmin}
               >
                 추가
@@ -241,6 +260,7 @@ export default function AddProjectForm() {
                   key={admin.email}
                   nickname={admin.name}
                   email={admin.email}
+                  profileImageUrl={admin.profileImageUrl}
                   isLeader={admin.isLeader}
                   onDelete={() => handleDeleteAdmin(admin.id)}
                 />
