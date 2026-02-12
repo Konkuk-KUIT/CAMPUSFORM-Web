@@ -1,29 +1,25 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Header from '@/components/ui/Header';
 import Button from '@/components/ui/Btn';
 import SheetDropdown from '@/components/home/addproject/SheetDropdown';
+import { getSheetHeaders } from '@/services/googleSheetService';
+import { toast, ToastContainer } from '@/components/Toast';
+
+interface SheetHeader {
+  name: string;
+  index: number;
+}
 
 export default function ConnectForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const sheetUrl = searchParams.get('sheetUrl') ?? '';
 
-  const handleEditPosition = () => {
-    router.push('/home/addproject/connect/edit-position');
-  };
-
-  const sheetHeaders = [
-    '이름을 작성해주세요.',
-    '학교를 작성해주세요.',
-    '학과를 작성해주세요.',
-    '성별을 선택해주세요.',
-    '연락처를 작성해주세요.',
-    '이메일 주소',
-    '지원 포지션을 선택해주세요.',
-    '나이를 작성해주세요.',
-    '지원 동기를 작성해주세요.',
-  ];
+  const [sheetHeaders, setSheetHeaders] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [mappings, setMappings] = useState({
     name: '',
@@ -35,12 +31,32 @@ export default function ConnectForm() {
     position: '',
   });
 
+  useEffect(() => {
+    if (!sheetUrl) {
+      Promise.resolve().then(() => {
+        toast.error('시트 URL이 없습니다.');
+        setIsLoading(false);
+      });
+      return;
+    }
+
+    getSheetHeaders(sheetUrl)
+      .then((data: SheetHeader[]) => {
+        setSheetHeaders(data.map(h => h.name));
+      })
+      .catch(() => {
+        toast.error('시트 헤더를 불러오지 못했습니다.');
+      })
+      .finally(() => setIsLoading(false));
+  }, [sheetUrl]);
+
   const handleMappingChange = (field: keyof typeof mappings, value: string) => {
     setMappings(prev => ({ ...prev, [field]: value }));
   };
 
   const handleConnect = () => {
     console.log('연동 데이터:', mappings);
+    // TODO: 매핑 데이터 저장 API 호출
     router.back();
   };
 
@@ -49,9 +65,9 @@ export default function ConnectForm() {
       <div className="flex justify-between items-center pr-2">
         <label className="text-[14px] font-bold text-gray-950">{label}</label>
         {showEdit && (
-          <button 
-            onClick={handleEditPosition}
-            className="text-body-sm-rg text-[var(--color-primary)] underline"
+          <button
+            onClick={() => router.push('/home/addproject/connect/edit-position')}
+            className="text-body-sm-rg text-primary underline"
           >
             편집하기
           </button>
@@ -68,6 +84,7 @@ export default function ConnectForm() {
 
   return (
     <div className="flex justify-center min-h-screen bg-white">
+      <ToastContainer />
       <div className="relative w-[375px] bg-white min-h-screen flex flex-col">
         <Header title="스프레드 시트 연동" backTo="/home/addproject" />
 
@@ -78,24 +95,29 @@ export default function ConnectForm() {
             연결된 정보는 이후 서류·면접 관리에 활용됩니다.
           </p>
 
-          <div className="flex flex-col gap-6">
-            {renderSection('이름', 'name', '이름을 작성해주세요.')}
-            {renderSection('학교', 'school', '학교를 작성해주세요.')}
-            {renderSection('학과', 'major', '학과를 작성해주세요.')}
-            {renderSection('성별', 'gender', '성별을 선택해주세요.')}
-            {renderSection('전화번호', 'phone', '연락처를 작성해주세요.')}
-            {renderSection('이메일', 'email', '이메일 주소')}
-            {renderSection('지원 포지션', 'position', '지원 포지션을 선택해주세요.', true)}
-          </div>
+          {isLoading && <p className="text-center text-gray-400 text-sm mt-10">헤더 불러오는 중...</p>}
+
+          {!isLoading && (
+            <div className="flex flex-col gap-6">
+              {renderSection('이름', 'name', '이름을 작성해주세요.')}
+              {renderSection('학교', 'school', '학교를 작성해주세요.')}
+              {renderSection('학과', 'major', '학과를 작성해주세요.')}
+              {renderSection('성별', 'gender', '성별을 선택해주세요.')}
+              {renderSection('전화번호', 'phone', '연락처를 작성해주세요.')}
+              {renderSection('이메일', 'email', '이메일 주소')}
+              {renderSection('지원 포지션', 'position', '지원 포지션을 선택해주세요.', true)}
+            </div>
+          )}
         </div>
 
         <div className="fixed bottom-0 left-0 right-0 bg-white px-5 py-4 max-w-93.75 mx-auto">
-          <Button variant="primary" size="lg" className="w-full" onClick={handleConnect}>
+          <Button variant="primary" size="lg" className="w-full" onClick={handleConnect} disabled={isLoading}>
             연동하기
           </Button>
-        </div>        
-        {/* Spacer for fixed button */}
-        <div className="h-24" />      </div>
+        </div>
+
+        <div className="h-24" />
+      </div>
     </div>
   );
 }
