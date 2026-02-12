@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Header from '@/components/ui/Header';
 import Textbox from '@/components/ui/Textbox';
 import TextboxGoogle from '@/components/home/TextboxGoogle';
@@ -10,6 +10,8 @@ import Button from '@/components/ui/Btn';
 import ProfileCross from '@/components/ui/ProfileCross';
 import DateRangePickerModal from '@/components/home/addproject/DateRangePickerModal';
 import InfoModal from '@/components/ui/InfoModal';
+import { getGoogleAuthorizeUrl } from '@/services/googleSheetService';
+import { toast, ToastContainer } from '@/components/Toast';
 
 interface Admin {
   id: number;
@@ -19,6 +21,8 @@ interface Admin {
 }
 
 export default function AddProjectForm() {
+  const router = useRouter();
+
   const [showWarningModal, setShowWarningModal] = useState(true);
   const [isDateModalOpen, setIsDateModalOpen] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
@@ -32,6 +36,19 @@ export default function AddProjectForm() {
   const [adminList, setAdminList] = useState<Admin[]>([
     { id: 1, name: '나(대표)', email: 'myemail@gmail.com', isLeader: true },
   ]);
+
+  const handleConnectClick = async () => {
+    if (!url.trim()) return;
+
+    try {
+      const authorizeUrl = await getGoogleAuthorizeUrl();
+      sessionStorage.setItem('pendingSheetUrl', url);
+      window.location.href = authorizeUrl;
+    } catch (e) {
+      console.error('OAuth URL 오류:', e);
+      toast.error('Google 인증 URL을 불러오지 못했습니다.');
+    }
+  };
 
   const handleTitleChange = (newValue: string) => {
     setTitle(newValue);
@@ -96,6 +113,7 @@ export default function AddProjectForm() {
 
   return (
     <div className="flex justify-center min-h-screen bg-white">
+      <ToastContainer />
       <style jsx global>{`
         .react-datepicker-wrapper {
           width: 100%;
@@ -112,12 +130,12 @@ export default function AddProjectForm() {
         }
       `}</style>
 
-      <div className="relative w-[375px] bg-white min-h-screen flex flex-col">
+      <div className="relative w-93.75 bg-white min-h-screen flex flex-col">
         <Header title="새 프로젝트 추가" backTo="/home" />
 
         <div className="flex-1 px-5 py-6 flex flex-col gap-6 overflow-y-auto scrollbar-hide pb-10">
           <div className="flex flex-col gap-2">
-            <label className="text-[14px] font-bold text-gray-950">모집 공고명</label>
+            <label className="text-14 font-bold text-gray-950">모집 공고명</label>
             <Textbox
               placeholder="공고명을 입력해주세요"
               value={title}
@@ -128,7 +146,7 @@ export default function AddProjectForm() {
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-[14px] font-bold text-gray-950">구글폼 스프레드 시트 URL</label>
+            <label className="text-14 font-bold text-gray-950">구글폼 스프레드 시트 URL</label>
             <p className="text-[11px] text-gray-500 leading-tight">
               스프레드시트의 항목을 서비스에서 사용할 수 있도록 변환합니다.
             </p>
@@ -140,25 +158,25 @@ export default function AddProjectForm() {
                   onChange={handleUrlChange}
                 />
               </div>
-              <Link href="/home/addproject/connect">
-                <Button
-                  variant="primary"
-                  className="!w-[50px] !h-[50px] !rounded-[10px] shrink-0 text-[13px] font-medium bg-white !text-primary border !border-primary hover:bg-blue-50"
-                >
-                  연동
-                </Button>
-              </Link>
+              <Button
+                variant="primary"
+                className="!w-[50px] !h-[50px] !rounded-[10px] shrink-0 text-[13px] font-medium bg-white !text-primary border !border-primary hover:bg-blue-50"
+                onClick={handleConnectClick}
+                disabled={!url.trim()}
+              >
+                연동
+              </Button>
             </div>
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-[14px] font-bold text-gray-950">모집 기간 설정</label>
+            <label className="text-14 font-bold text-gray-950">모집 기간 설정</label>
             <button
               onClick={() => setIsDateModalOpen(true)}
-              className="w-full h-[48px] flex items-center justify-between px-4 text-left"
+              className="w-full h-12 flex items-center justify-between px-4 text-left"
               type="button"
             >
-              <span className={`text-[14px] ${startDate ? 'text-gray-950' : 'text-gray-400'}`}>
+              <span className={`text-14 ${startDate ? 'text-gray-950' : 'text-gray-400'}`}>
                 {startDate && endDate ? `${formatDate(startDate)} - ${formatDate(endDate)}` : 'yyyy-mm-dd - yyyy-mm-dd'}
               </span>
               <Image src="/icons/calendar.svg" alt="calendar" width={18} height={18} />
@@ -166,7 +184,7 @@ export default function AddProjectForm() {
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-[14px] font-bold text-gray-950">관리자 추가하기</label>
+            <label className="text-14 font-bold text-gray-950">관리자 추가하기</label>
             <div className="flex gap-2 items-start relative">
               <div className="flex-1">
                 <TextboxGoogle
@@ -221,13 +239,12 @@ export default function AddProjectForm() {
             생성하기
           </Button>
         </div>
-        
-        {/* Spacer for fixed button */}
+
         <div className="h-24" />
 
         {showWarningModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-            <div className="relative w-[300px] bg-white rounded-[20px] px-6 py-8 flex flex-col items-center shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="relative w-75 bg-white rounded-[20px] px-6 py-8 flex flex-col items-center shadow-2xl animate-in fade-in zoom-in-95 duration-200">
               <button
                 onClick={() => setShowWarningModal(false)}
                 className="absolute top-4 right-4 w-6 h-6 flex items-center justify-center opacity-70 hover:opacity-100 transition-opacity"
@@ -243,7 +260,7 @@ export default function AddProjectForm() {
                 <br />
                 서로 다른 그룹으로 분류될 수 있어요.
                 <br />
-                <span className="text-gray-500 text-[12px] mt-1 block">(예: 디자인팀 / Design팀)</span>
+                <span className="text-gray-500 text-12 mt-1 block">(예: 디자인팀 / Design팀)</span>
               </p>
               <p className="text-[13px] text-gray-950 text-center leading-snug">
                 원활한 분류를 위해 구글 시트에서
