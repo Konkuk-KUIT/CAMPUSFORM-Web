@@ -32,7 +32,7 @@ export default function ConnectForm() {
       const projectId = searchParams.get('projectId') || '';
       const code = searchParams.get('code') || '';
     // 환경변수 기준으로 redirect_uri 사용 (구글 콘솔 등록값과 반드시 일치)
-    const redirectUri = process.env.NEXT_PUBLIC_REDIRECT_URI || `${window.location.origin}/oauth/google/callback`;
+    const redirectUri = process.env.NEXT_PUBLIC_REDIRECT_URI_2 || `${window.location.origin}/oauth/google/callback`;
 
     // 콜백에서 code가 있으면 토큰 교환 → sheet-headers 재호출
     if (code) {
