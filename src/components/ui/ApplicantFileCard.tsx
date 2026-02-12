@@ -6,14 +6,17 @@ import Image from 'next/image';
 import StatusDropdown from '@/components/ui/StatusDropdown';
 
 interface ApplicantFileCardProps {
-  id: string;
+  id: number;
   name: string;
   info: string;
-  initialStatus: '보류' | '합격' | '불합격';
+  initialStatus: string;
   commentCount?: number;
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
   onCommentClick?: () => void;
+  appointmentDate?: string;
+  appointmentTime?: string;
+  onAppointmentClick?: () => void;
 }
 
 export default function ApplicantFileCard({
@@ -25,14 +28,22 @@ export default function ApplicantFileCard({
   isFavorite = false,
   onToggleFavorite,
   onCommentClick,
+  appointmentDate,
+  appointmentTime,
+  onAppointmentClick,
 }: ApplicantFileCardProps) {
-  const [status, setStatus] = useState(initialStatus);
+  const [status, setStatus] = useState(initialStatus as '보류' | '합격' | '불합격');
 
   return (
     <div className="relative w-85.75 h-18.75 bg-white border-b border-gray-100 flex items-center px-5 first:border-t">
-      <Link href={`/document/${id}`} className="flex flex-col flex-1">
+      <Link href={`/interview/${id}`} className="flex flex-col flex-1">
         <h3 className="text-subtitle-sm-md text-gray-950">{name}</h3>
         <p className="mt-1 text-body-md text-gray-400">{info}</p>
+        {appointmentDate && appointmentTime && (
+          <p className="mt-1 text-body-xs-rg text-gray-400">
+            {appointmentDate} {appointmentTime}
+          </p>
+        )}
       </Link>
 
       <div className="flex flex-col items-end gap-2">
@@ -46,11 +57,7 @@ export default function ApplicantFileCard({
             <span className="text-body-xs-rg text-gray-300">{commentCount}</span>
           </div>
           <button className="w-4.5 h-4.5 relative" onClick={onToggleFavorite}>
-            <Image 
-              src={isFavorite ? '/icons/star.svg' : '/icons/star-off.svg'} 
-              alt="즐겨찾기" 
-              fill 
-            />
+            <Image src={isFavorite ? '/icons/star.svg' : '/icons/star-off.svg'} alt="즐겨찾기" fill />
           </button>
         </div>
       </div>

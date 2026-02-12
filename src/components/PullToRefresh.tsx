@@ -15,11 +15,11 @@ export default function PullToRefresh({ onRefresh, children }: PullToRefreshProp
   const startY = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const PULL_THRESHOLD = 80; // 새로고침 트리거 거리
+  const PULL_THRESHOLD = 80;
 
   const handleTouchStart = (e: TouchEvent) => {
-    const scrollContainer = containerRef.current?.querySelector('.scroll-container');
-    if (scrollContainer && scrollContainer.scrollTop === 0) {
+    const container = containerRef.current;
+    if (container && container.scrollTop === 0) {
       startY.current = e.touches[0].clientY;
     }
   };
@@ -27,15 +27,15 @@ export default function PullToRefresh({ onRefresh, children }: PullToRefreshProp
   const handleTouchMove = (e: TouchEvent) => {
     if (refreshing) return;
 
-    const scrollContainer = containerRef.current?.querySelector('.scroll-container');
-    if (!scrollContainer || scrollContainer.scrollTop > 0) return;
+    const container = containerRef.current;
+    if (!container || container.scrollTop > 0) return;
 
     const currentY = e.touches[0].clientY;
     const distance = currentY - startY.current;
 
     if (distance > 0) {
       setPulling(true);
-      setPullDistance(Math.min(distance * 0.5, PULL_THRESHOLD * 1.2)); // 당기는 저항감
+      setPullDistance(Math.min(distance * 0.5, PULL_THRESHOLD * 1.5));
       e.preventDefault();
     }
   };
@@ -43,6 +43,7 @@ export default function PullToRefresh({ onRefresh, children }: PullToRefreshProp
   const handleTouchEnd = async () => {
     if (pullDistance >= PULL_THRESHOLD && !refreshing) {
       setRefreshing(true);
+      setPullDistance(PULL_THRESHOLD);
       try {
         await onRefresh();
       } catch (error) {
@@ -70,23 +71,24 @@ export default function PullToRefresh({ onRefresh, children }: PullToRefreshProp
   }, [pullDistance, refreshing]);
 
   return (
-    <div ref={containerRef} className="relative h-full">
+    <div className="relative h-full flex flex-col">
       {/* 당김 인디케이터 */}
       <div
-        className="absolute top-0 left-0 right-0 flex items-center justify-center transition-all z-10"
+        className="absolute top-0 left-0 right-0 flex items-center justify-center transition-all z-10 pointer-events-none"
         style={{
           height: `${pullDistance}px`,
           opacity: Math.min(pullDistance / PULL_THRESHOLD, 1),
         }}
       >
-        <div className={`text-primary text-2xl ${refreshing ? 'animate-spin' : ''}`}>
-          {refreshing ? '↻' : '↓'}
+        <div className={refreshing ? 'animate-spin' : ''}>
+          <Image src="/icons/loading.svg" alt="로딩" width={24} height={24} />
         </div>
       </div>
 
-      {/* 실제 콘텐츠 */}
+      {/* 스크롤 컨테이너 */}
       <div
-        className="transition-transform"
+        ref={containerRef}
+        className="flex-1 overflow-y-auto transition-transform"
         style={{
           transform: `translateY(${pullDistance}px)`,
         }}

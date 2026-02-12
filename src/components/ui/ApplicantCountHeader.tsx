@@ -14,7 +14,7 @@ export default function ApplicantCountHeader({ type }: ApplicantCountHeaderProps
   const [isApplicantListOpen, setIsApplicantListOpen] = useState(false);
 
   // type에 따라 합격자 또는 불합격자 필터링
-  const filteredApplicants = mockApplicants.filter((applicant) =>
+  const filteredApplicants = mockApplicants.filter(applicant =>
     type === '합격자' ? applicant.status === '합격' : applicant.status === '불합격'
   );
 
@@ -56,8 +56,8 @@ export default function ApplicantCountHeader({ type }: ApplicantCountHeaderProps
 
         {/* 합격자/불합격자 리스트 */}
         <div className="flex flex-col font-normal text-[13px] leading-6.5 py-3">
-          {filteredApplicants.map((applicant) => (
-            <p key={applicant.id}>
+          {filteredApplicants.map(applicant => (
+            <p key={applicant.applicantId}>
               {applicant.name} ({applicant.university} / {applicant.major} / {applicant.position})
             </p>
           ))}
