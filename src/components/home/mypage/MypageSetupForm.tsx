@@ -10,6 +10,7 @@ import ConfirmModal from '@/components/home/mypage/ConfirmModal';
 import { authService } from '@/services/authService';
 import type { User } from '@/types/auth';
 import Loading from '@/components/ui/Loading';
+import { toast } from '@/components/Toast';
 
 export default function MypageSetupForm() {
   const router = useRouter();
@@ -114,7 +115,7 @@ export default function MypageSetupForm() {
         await authService.updateNickname(nickname);
       }
 
-      alert('변경사항이 저장되었습니다.');
+      toast.success('변경사항이 저장되었습니다.');
 
       // 4. 최신 사용자 정보 다시 불러오기
       if (user?.email) {
@@ -135,7 +136,7 @@ export default function MypageSetupForm() {
       setShouldDeleteImage(false);
     } catch (error) {
       console.error('Failed to save profile:', error);
-      alert('저장에 실패했습니다.');
+      toast.error('저장에 실패했습니다.');
     }
   };
 
