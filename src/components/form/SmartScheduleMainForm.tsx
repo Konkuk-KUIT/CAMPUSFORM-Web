@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { useEffect } from 'react';
+import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Btn from '@/components/ui/Btn';
 import AllAccordion from '@/components/ui/AllAccordion';
@@ -10,6 +12,11 @@ import SmartScheduleButton from '@/components/ui/SmartScheduleButton';
 import SmartScheduleCalendarPreview from '@/components/ui/SmartScheduleCalendarPreview';
 
 export default function SmartScheduleMainForm() {
+    const [mounted, setMounted] = useState(false);
+    // useEffect to set mounted true after client hydration
+    useEffect(() => {
+      setMounted(true);
+    }, []);
   const router = useRouter();
   const [selectedInterviewer, setSelectedInterviewer] = useState<number | null>(null);
   const [requiredInterviewers, setRequiredInterviewers] = useState<{ [key: number]: boolean }>({ 0: true });
@@ -18,7 +25,10 @@ export default function SmartScheduleMainForm() {
   const [showInterviewerView, setShowInterviewerView] = useState(false);
 
   // 면접 정보 설정 완료 여부 확인
-  const isConfigured = typeof window !== 'undefined' ? localStorage.getItem('interviewInfoConfigured') : null;
+  let isConfigured = null;
+  if (typeof window !== 'undefined') {
+    isConfigured = localStorage.getItem('interviewInfoConfigured');
+  }
   const showOverlay = !isConfigured;
 
   // TODO: 실제 API에서 스마트 시간표 생성 여부와 대표자 여부를 가져와야 함
@@ -40,9 +50,9 @@ export default function SmartScheduleMainForm() {
       <div className="relative w-[375px] bg-white min-h-screen flex flex-col overflow-x-hidden">
         {/* Top app bar with logo and alarm */}
         <header className="flex items-center justify-between h-12 px-4 bg-white">
-          <div className="w-6 h-6">
+          <Link href="/home" className="w-6 h-6">
             <Image src="/icons/logo.svg" alt="로고" width={22} height={22} className="w-[22px] h-[22px]" />
-          </div>
+          </Link>
           <span className="text-title">스마트 시간표</span>
           <button className="w-6 h-6">
             <Image src="/icons/notification.svg" alt="알림" width={24} height={24} />
@@ -211,7 +221,7 @@ export default function SmartScheduleMainForm() {
           <div className="h-32" />
 
           {/* Overlay message - 면접 정보 미설정 */}
-          {showOverlay && (
+          {mounted && showOverlay && (
             <div className="absolute left-0 right-0 top-[115px] bottom-20 flex items-center justify-center z-50 bg-white/85">
               <div className="text-center">
                 <p className="text-subtitle-md text-gray-950 font-medium">면접 정보 설정 후 이용 가능합니다.</p>
