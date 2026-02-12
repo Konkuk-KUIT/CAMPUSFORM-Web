@@ -54,7 +54,7 @@ export default function SmartScheduleMainForm() {
             <Image src="/icons/logo.svg" alt="로고" width={22} height={22} className="w-[22px] h-[22px]" />
           </Link>
           <span className="text-title">스마트 시간표</span>
-          <button className="w-6 h-6">
+          <button className="w-6 h-6 cursor-pointer" onClick={() => router.push('/home/notification')}>
             <Image src="/icons/notification.svg" alt="알림" width={24} height={24} />
           </button>
         </header>
