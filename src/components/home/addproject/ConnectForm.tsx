@@ -16,7 +16,7 @@ export default function ConnectForm() {
     router.push('/home/addproject/connect/edit-position');
   };
 
-  // 실제로는 AddProjectForm에서 sheetUrl, projectId를 받아와야 함. 예시로 projectId=1, sheetUrl 하드코딩
+    // AddProjectForm에서 sheetUrl, projectId를 받아와 실제값으로 연동
   const [sheetHeaders, setSheetHeaders] = useState<string[]>([]);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   // ...existing code...
@@ -27,8 +27,10 @@ export default function ConnectForm() {
   const searchParams = useSearchParams();
   const [needGoogleSync, setNeedGoogleSync] = useState(false);
   useEffect(() => {
-    const sheetUrl = searchParams.get('sheetUrl') || '';
-    const code = searchParams.get('code');
+      // 실제값: AddProjectForm에서 전달된 sheetUrl, projectId, code를 searchParams로 받아옴
+      const sheetUrl = searchParams.get('sheetUrl') || '';
+      const projectId = searchParams.get('projectId') || '';
+      const code = searchParams.get('code') || '';
     // 환경변수 기준으로 redirect_uri 사용 (구글 콘솔 등록값과 반드시 일치)
     const redirectUri = process.env.NEXT_PUBLIC_REDIRECT_URI || `${window.location.origin}/oauth/google/callback`;
 
@@ -38,7 +40,8 @@ export default function ConnectForm() {
         try {
           await exchangeGoogleOAuthCode(code, redirectUri);
           if (sheetUrl) {
-            const data = await fetchGoogleSheetHeaders(sheetUrl);
+              // projectId가 필요하면 API에 함께 전달
+              const data = await fetchGoogleSheetHeaders(sheetUrl);
             setSheetHeaders(Array.isArray(data) ? data : []);
             setErrorMsg(null);
             setNeedGoogleSync(false);
