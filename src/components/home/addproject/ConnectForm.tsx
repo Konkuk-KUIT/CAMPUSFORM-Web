@@ -85,7 +85,7 @@ export default function ConnectForm({ sheetUrl }: { sheetUrl: string }) {
     <div className="flex justify-center min-h-screen bg-white">
       <ToastContainer />
       <div className="relative w-[375px] bg-white min-h-screen flex flex-col">
-        <Header title="스프레드 시트 연동" backTo="/home/addproject" />
+        <Header title="스프레드 시트 연동" backTo="/home/addproject" hideNotification={true} />
 
         <div className="flex-1 px-5 py-6 flex flex-col gap-6 overflow-y-auto scrollbar-hide pb-24">
           <p className="text-[12px] text-gray-500 leading-[18px]">
