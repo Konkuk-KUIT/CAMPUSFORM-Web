@@ -1,22 +1,36 @@
-// 지원자 타입 정의
+export type Stage = 'DOCUMENT' | 'INTERVIEW';
+
 export interface Applicant {
-  id: string;
+  applicantId: number;
   name: string;
-  gender: '남' | '여';
-  university: string;
+  gender: string;
+  school: string;
   major: string;
   position: string;
-  phone: string;
+  phoneNumber: string;
   email: string;
-  status: '보류' | '합격' | '불합격';
-  commentCount: number;
+  status: string;
+  answers: Answer[];
+  favorite: boolean;
+  currentStatus?: string;
+  updatedAt?: string;
 }
 
-// 지원자 상세 타입 (추후 확장용)
-export interface ApplicantDetail extends Applicant {
-  appliedDate?: string;
-  introduction?: string;
-  skills?: string[];
-  experience?: string[];
-  portfolio?: string;
+export interface Answer {
+  question: string;
+  answer: string;
+}
+
+export interface ApplicantsResponse {
+  status: {
+    totalCount: number;
+    pendingCount: number;
+    passCount: number;
+    failCount: number;
+  };
+  applicants: Applicant[];
+}
+
+export interface UpdateStatusRequest {
+  status: string;
 }
