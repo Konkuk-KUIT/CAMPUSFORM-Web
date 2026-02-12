@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import PullToRefresh from '@/components/PullToRefresh';
 import ApplicantCardBasic from '@/components/interview/ApplicantCardBasic';
 import AppointmentModal from '@/components/interview/AppointmentModal';
 import CommentSection from '@/components/sections/CommentSection';
+import QuestionSection from '@/components/document/QuestionSection';
 import { mockInterviewApplicants } from '@/data/interviews';
 
 interface InterviewDetailClientProps {
@@ -11,7 +13,9 @@ interface InterviewDetailClientProps {
 }
 
 export default function InterviewDetailClient({ applicantId }: InterviewDetailClientProps) {
-  const applicant = mockInterviewApplicants.find(a => a.id === applicantId);
+  const [applicant, setApplicant] = useState(
+    mockInterviewApplicants.find(a => a.id === applicantId)
+  );
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCommentOpen, setCommentOpen] = useState(false);
@@ -19,9 +23,18 @@ export default function InterviewDetailClient({ applicantId }: InterviewDetailCl
   const [appointmentDate, setAppointmentDate] = useState(applicant?.appointmentDate || '');
   const [appointmentTime, setAppointmentTime] = useState(applicant?.appointmentTime || '');
 
-  // TODO: 실제 값으로 교체 필요
   const projectId = 1;
   const currentUserId = 1;
+
+  const handleRefresh = async () => {
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    const refreshedApplicant = mockInterviewApplicants.find(a => a.id === applicantId);
+    setApplicant(refreshedApplicant);
+    if (refreshedApplicant) {
+      setAppointmentDate(refreshedApplicant.appointmentDate || '');
+      setAppointmentTime(refreshedApplicant.appointmentTime || '');
+    }
+  };
 
   const handleAppointmentClick = () => {
     setIsModalOpen(true);
@@ -46,35 +59,57 @@ export default function InterviewDetailClient({ applicantId }: InterviewDetailCl
   }
 
   return (
-    <>
-      <div className="p-4">
-        <ApplicantCardBasic
-          name={applicant.name}
-          gender={applicant.gender}
-          status={applicant.interviewStatus}
-          university={`${applicant.university}/${applicant.major}/${applicant.position}`}
-          phone={applicant.phone}
-          email={applicant.email}
-          commentCount={applicant.commentCount}
-          isFavorite={isFavorite}
-          onToggleFavorite={handleToggleFavorite}
-          onCommentClick={() => setCommentOpen(true)}
-          appointmentDate={appointmentDate}
-          appointmentTime={appointmentTime}
-          onAppointmentClick={handleAppointmentClick}
-        />
+    <div className="h-full flex flex-col">
+      <PullToRefresh onRefresh={handleRefresh}>
+        <div className="pb-20">
+          {/* 지원자 기본 정보 카드 */}
+          <div className="p-4">
+            <ApplicantCardBasic
+              name={applicant.name}
+              gender={applicant.gender}
+              status={applicant.interviewStatus}
+              university={`${applicant.university}/${applicant.major}/${applicant.position}`}
+              phone={applicant.phone}
+              email={applicant.email}
+              commentCount={applicant.commentCount}
+              isFavorite={isFavorite}
+              onToggleFavorite={handleToggleFavorite}
+              onCommentClick={() => setCommentOpen(true)}
+              appointmentDate={appointmentDate}
+              appointmentTime={appointmentTime}
+              onAppointmentClick={handleAppointmentClick}
+            />
+          </div>
 
-        {/* CommentSection 컴포넌트 사용 */}
-        <CommentSection
-          isOpen={isCommentOpen}
-          onClose={() => setCommentOpen(false)}
-          projectId={projectId}
-          applicantId={applicantId}
-          stage="INTERVIEW"
-          currentUserId={currentUserId}
-        />
-      </div>
+          {/* 질문 섹션들 */}
+          <div className="p-4 mx-4 bg-white rounded-10">
+            <QuestionSection
+              title="지원동기"
+              content="요리에 대한 관심을 꾸준히 가져왔고, 기본기를 제대로 배우고 싶어 지원했습니다. 혼자 할 때보다 함께 조리하며 배우는 과정이 더 큰 동기부여가 된다고 생각합니다. 다양한 레시피를 시도해 보고 서로의 노하우를 나누며 실력을 키우고 싶습니다. 동아리 활동을 통해 배운 내용을 일상에서도 활용할 수 있을 것이라 기대합니다."
+            />
 
+            <QuestionSection
+              title="이 동아리에 참여하고 싶은 이유를 서술해주세요."
+              content="요리에 대한 관심을 꾸준히 가져왔고, 기본기를 제대로 배우고 싶어 지원했습니다. 혼자 할 때보다 함께 조리하며 배우는 과정이 더 큰 동기부여가 된다고 생각합니다. 다양한 레시피를 시도해 보고 서로의 노하우를 나누며 실력을 키우고 싶습니다. 동아리 활동을 통해 배운 내용을 일상에서도 활용할 수 있을 것이라 기대합니다."
+              maxLength={700}
+            />
+
+            <QuestionSection title="질문내용" content="질문답변" />
+          </div>
+        </div>
+      </PullToRefresh>
+
+      {/* CommentSection */}
+      <CommentSection
+        isOpen={isCommentOpen}
+        onClose={() => setCommentOpen(false)}
+        projectId={projectId}
+        applicantId={applicantId}
+        stage="INTERVIEW"
+        currentUserId={currentUserId}
+      />
+
+      {/* AppointmentModal */}
       <AppointmentModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -82,6 +117,6 @@ export default function InterviewDetailClient({ applicantId }: InterviewDetailCl
         initialDate={appointmentDate}
         initialTime={appointmentTime}
       />
-    </>
+    </div>
   );
 }
