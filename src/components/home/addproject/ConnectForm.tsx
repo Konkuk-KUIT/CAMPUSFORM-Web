@@ -1,22 +1,21 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Header from '@/components/ui/Header';
 import Button from '@/components/ui/Btn';
 import SheetDropdown from '@/components/home/addproject/SheetDropdown';
 import { getSheetHeaders } from '@/services/googleSheetService';
 import { toast, ToastContainer } from '@/components/Toast';
+import Loading from '@/components/ui/Loading';
 
 interface SheetHeader {
   name: string;
   index: number;
 }
 
-export default function ConnectForm() {
+export default function ConnectForm({ sheetUrl }: { sheetUrl: string }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const sheetUrl = searchParams.get('sheetUrl') ?? '';
 
   const [sheetHeaders, setSheetHeaders] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -95,7 +94,11 @@ export default function ConnectForm() {
             연결된 정보는 이후 서류·면접 관리에 활용됩니다.
           </p>
 
-          {isLoading && <p className="text-center text-gray-400 text-sm mt-10">헤더 불러오는 중...</p>}
+          {isLoading && (
+            <div className="flex-1 flex items-center justify-center">
+              <Loading fullScreen={false} />
+            </div>
+          )}
 
           {!isLoading && (
             <div className="flex flex-col gap-6">
