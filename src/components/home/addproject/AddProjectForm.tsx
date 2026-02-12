@@ -12,6 +12,9 @@ import DateRangePickerModal from '@/components/home/addproject/DateRangePickerMo
 import InfoModal from '@/components/ui/InfoModal';
 import { getGoogleAuthorizeUrl } from '@/services/googleSheetService';
 import { toast, ToastContainer } from '@/components/Toast';
+import { useNewProjectStore } from '@/store/newProjectStore';
+import { projectService } from '@/services/projectService';
+import { authService } from '@/services/authService';
 
 interface Admin {
   id: number;
@@ -22,13 +25,14 @@ interface Admin {
 
 export default function AddProjectForm() {
   const router = useRouter();
+  const { setProjectForm, projectForm, reset } = useNewProjectStore();
 
   const [showWarningModal, setShowWarningModal] = useState(true);
   const [isDateModalOpen, setIsDateModalOpen] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [title, setTitle] = useState('');
   const [isTitleError, setIsTitleError] = useState(false);
-  const [url, setUrl] = useState('');
+  const [url, setUrl] = useState(projectForm.sheetUrl ?? '');
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [adminInput, setAdminInput] = useState('');
@@ -39,7 +43,6 @@ export default function AddProjectForm() {
 
   const handleConnectClick = async () => {
     if (!url.trim()) return;
-
     try {
       const authorizeUrl = await getGoogleAuthorizeUrl();
       sessionStorage.setItem('pendingSheetUrl', url);
@@ -62,6 +65,7 @@ export default function AddProjectForm() {
 
   const handleUrlChange = (newValue: string) => {
     setUrl(newValue);
+    setProjectForm({ sheetUrl: newValue });
   };
 
   const handleAdminInputChange = (newValue: string) => {
@@ -69,7 +73,7 @@ export default function AddProjectForm() {
     if (newValue === '') setIsAdminError(false);
   };
 
-  const handleAddAdmin = () => {
+  const handleAddAdmin = async () => {
     if (!adminInput.trim()) return;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(adminInput)) {
@@ -78,18 +82,24 @@ export default function AddProjectForm() {
     }
     setIsAdminError(false);
 
-    if (adminInput === 'unregistered@test.com') {
-      setShowInfoModal(true);
-      return;
+    try {
+      const user = await authService.getUserDetailByEmail(adminInput);
+      if (!user.exists) {
+        setShowInfoModal(true);
+        return;
+      }
+      const newAdmin: Admin = {
+        id: user.userId,
+        name: user.nickname,
+        email: user.email,
+        isLeader: false,
+      };
+      setAdminList([...adminList, newAdmin]);
+      setAdminInput('');
+    } catch (e) {
+      console.error('관리자 조회 오류:', e);
+      toast.error('사용자 정보를 불러오지 못했습니다.');
     }
-    const newAdmin: Admin = {
-      id: Date.now(),
-      name: '새 관리자',
-      email: adminInput,
-      isLeader: false,
-    };
-    setAdminList([...adminList, newAdmin]);
-    setAdminInput('');
   };
 
   const handleDeleteAdmin = (id: number) => {
@@ -109,7 +119,28 @@ export default function AddProjectForm() {
       .padStart(2, '0')}`;
   };
 
-  const isButtonDisabled = title.length === 0 || isTitleError;
+  const handleSubmit = async () => {
+    try {
+      const updatedForm = {
+        ...projectForm,
+        title,
+        startAt: formatDate(startDate),
+        endAt: formatDate(endDate),
+        adminIds: adminList.filter(a => !a.isLeader).map(a => a.id),
+      };
+
+      setProjectForm(updatedForm);
+      await projectService.createProject(updatedForm as Parameters<typeof projectService.createProject>[0]);
+
+      reset();
+      router.push('/home');
+    } catch (e) {
+      console.error('프로젝트 생성 오류:', e);
+      toast.error('프로젝트 생성에 실패했습니다.');
+    }
+  };
+
+  const isButtonDisabled = title.length === 0 || isTitleError || !startDate || !endDate;
 
   return (
     <div className="flex justify-center min-h-screen bg-white">
@@ -207,7 +238,7 @@ export default function AddProjectForm() {
             <div className="flex flex-col mt-2">
               {adminList.map(admin => (
                 <ProfileCross
-                  key={admin.id}
+                  key={admin.email}
                   nickname={admin.name}
                   email={admin.email}
                   isLeader={admin.isLeader}
@@ -235,7 +266,7 @@ export default function AddProjectForm() {
         )}
 
         <div className="fixed bottom-0 left-0 right-0 bg-white px-5 py-4 max-w-93.75 mx-auto">
-          <Button variant="primary" size="lg" disabled={isButtonDisabled} className="w-full">
+          <Button variant="primary" size="lg" disabled={isButtonDisabled} className="w-full" onClick={handleSubmit}>
             생성하기
           </Button>
         </div>

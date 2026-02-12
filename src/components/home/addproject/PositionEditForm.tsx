@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Header from '@/components/ui/Header';
 import Button from '@/components/ui/Btn';
 import SheetDropdown from '@/components/home/addproject/SheetDropdown';
+import { useNewProjectStore } from '@/store/newProjectStore';
 
 interface PositionMapping {
   original: string;
@@ -13,30 +14,11 @@ interface PositionMapping {
 
 export default function PositionEditForm() {
   const router = useRouter();
+  const { setProjectForm, projectForm } = useNewProjectStore();
 
-  const collectedPositions = [
-    '요리사',
-    '일반부원',
-    '일반 부원',
-    '조리사',
-    '조리부원',
-    '파티쉐',
-    '파티새',
-    '파티 1 세',
-  ];
-
-  const positionOptions = [
-    '요리사',
-    '일반부원',
-    '일반 부원',
-    '조리사',
-    '조리부원',
-  ];
-
-  const [positions, setPositions] = useState<PositionMapping[]>([
-    { original: '', changed: '' },
-  ]);
-
+  // 빈 배열, 수정 후 getMappingColumnValues로 교체 예정
+  const [collectedPositions, setCollectedPositions] = useState<string[]>([]);
+  const [positions, setPositions] = useState<PositionMapping[]>([{ original: '', changed: '' }]);
   const [selectedPositions, setSelectedPositions] = useState<string[]>([]);
 
   const handleAddPosition = () => {
@@ -44,8 +26,7 @@ export default function PositionEditForm() {
   };
 
   const handleRemovePosition = (index: number) => {
-    const newPositions = positions.filter((_, i) => i !== index);
-    setPositions(newPositions);
+    setPositions(positions.filter((_, i) => i !== index));
   };
 
   const handlePositionChange = (index: number, field: 'original' | 'changed', value: string) => {
@@ -55,41 +36,39 @@ export default function PositionEditForm() {
   };
 
   const togglePosition = (position: string) => {
-    setSelectedPositions(prev =>
-      prev.includes(position)
-        ? prev.filter(p => p !== position)
-        : [...prev, position]
-    );
+    setSelectedPositions(prev => (prev.includes(position) ? prev.filter(p => p !== position) : [...prev, position]));
   };
 
   const handleSubmit = () => {
-    console.log('포지션 매핑:', positions);
+    const valueMappings = positions
+      .filter(p => p.original && p.changed)
+      .map(p => ({ fromValue: p.original, toValue: p.changed }));
+
+    setProjectForm({ valueMappings });
     router.back();
   };
 
   return (
     <div className="flex justify-center min-h-screen bg-white">
-      <div className="relative w-[375px] bg-white min-h-screen flex flex-col">
+      <div className="relative w-93.75 bg-white min-h-screen flex flex-col">
         <Header title="포지션 편집" backTo="/home/addproject/connect" hideNotification={true} />
 
         <div className="flex-1 px-4 pt-6 pb-32 flex flex-col gap-6 overflow-y-auto scrollbar-hide">
-          <p className="text-[13px] font-normal leading-[18px] tracking-[0.13px] text-[var(--color-gray-500)]">
+          <p className="text-[13px] font-normal leading-4.5 tracking-[0.13px] text-gray-500">
             중복되거나 다른 표기의 포지션이 있으십니까?
             <br />
             하나의 포지션 표기로 통합해 주세요.
           </p>
 
           <div className="flex flex-col gap-3">
-            <h3 className="text-[15px] font-medium leading-[21px] text-black">수집된 포지션</h3>
+            <h3 className="text-[15px] font-medium leading-5.25 text-black">수집된 포지션</h3>
             <div className="flex flex-wrap gap-2.5">
               {collectedPositions.map((position, index) => (
                 <button
                   key={index}
                   onClick={() => togglePosition(position)}
-                  className={`h-[27px] px-[10px] py-[3px] rounded-[13px] text-[13px] font-medium leading-[1.5] tracking-[-0.286px] ${
-                    selectedPositions.includes(position)
-                      ? 'bg-[var(--color-primary)] text-white'
-                      : 'bg-[var(--color-blue-50)] text-[#5d5d5d]'
+                  className={`h-6.75 px-2.5 py-0.75 rounded-[13px] text-[13px] font-medium leading-[1.5] tracking-[-0.286px] ${
+                    selectedPositions.includes(position) ? 'bg-primary text-white' : 'bg-blue-50 text-[#5d5d5d]'
                   }`}
                 >
                   {position}
@@ -100,13 +79,19 @@ export default function PositionEditForm() {
 
           <div className="flex flex-col gap-3">
             <div className="flex justify-between items-center">
-              <h3 className="text-[15px] font-medium leading-[21px] text-black">포지션 변경</h3>
+              <h3 className="text-[15px] font-medium leading-5.25 text-black">포지션 변경</h3>
               <button
                 onClick={handleAddPosition}
-                className="flex items-center gap-1 text-[13px] font-normal leading-[18px] tracking-[0.13px] text-[var(--color-primary)] underline decoration-solid"
+                className="flex items-center gap-1 text-[13px] font-normal leading-4.5 tracking-[0.13px] text-[var(--color-primary)] underline decoration-solid"
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 5v14m-7-7h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path
+                    d="M12 5v14m-7-7h14"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
                 추가하기
               </button>
@@ -117,11 +102,9 @@ export default function PositionEditForm() {
                 <div key={index} className="relative">
                   <div className="flex gap-2">
                     <div className="flex-1">
-                      <label className="text-[12px] font-medium leading-[17px] text-[#888] mb-1.5 block">
-                        변경 전
-                      </label>
+                      <label className="text-12 font-medium leading-4.25 text-[#888] mb-1.5 block">변경 전</label>
                       <SheetDropdown
-                        options={positionOptions}
+                        options={collectedPositions}
                         value={position.original}
                         onChange={val => handlePositionChange(index, 'original', val)}
                         placeholder="---"
@@ -129,7 +112,7 @@ export default function PositionEditForm() {
                       />
                     </div>
 
-                    <div className="flex items-center pt-[23px]">
+                    <div className="flex items-center pt-5.75">
                       <svg width="10" height="8" viewBox="0 0 10 8" fill="none" className="text-[#888]">
                         <path
                           d="M1 4h8m0 0L6.5 1.5M9 4L6.5 6.5"
@@ -142,11 +125,9 @@ export default function PositionEditForm() {
                     </div>
 
                     <div className="flex-1">
-                      <label className="text-[12px] font-medium leading-[17px] text-[#888] mb-1.5 block">
-                        변경 후
-                      </label>
+                      <label className="text-12 font-medium leading-4.25 text-[#888] mb-1.5 block">변경 후</label>
                       <SheetDropdown
-                        options={positionOptions}
+                        options={collectedPositions}
                         value={position.changed}
                         onChange={val => handlePositionChange(index, 'changed', val)}
                         placeholder="---"
@@ -157,7 +138,7 @@ export default function PositionEditForm() {
                     {positions.length > 1 && (
                       <button
                         onClick={() => handleRemovePosition(index)}
-                        className="flex items-center pt-[23px] text-[#d9d9d9]"
+                        className="flex items-center pt-5.75 text-[#d9d9d9]"
                       >
                         <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
                           <circle cx="9" cy="9" r="7" stroke="currentColor" strokeWidth="1.5" />
@@ -172,7 +153,7 @@ export default function PositionEditForm() {
           </div>
         </div>
 
-        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-[375px] bg-white px-4 py-4">
+        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-93.75 bg-white px-4 py-4">
           <Button variant="primary" size="lg" className="w-full" onClick={handleSubmit}>
             적용하기
           </Button>
