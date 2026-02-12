@@ -18,7 +18,7 @@ export default function Header({ title, backTo, hideNotification = false, rightE
     <header className="flex items-center justify-between h-12 px-4 bg-white">
       {backTo ? (
         <button
-          className="w-6 h-6 flex items-center justify-center"
+          className="w-6 h-6 flex items-center justify-center cursor-pointer"
           onClick={() => {
             if (title === '알림 설정') {
               router.push('/home/notification');
