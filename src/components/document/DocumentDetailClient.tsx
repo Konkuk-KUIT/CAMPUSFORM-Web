@@ -8,11 +8,11 @@ import QuestionSection from '@/components/document/QuestionSection';
 import { mockApplicants } from '@/data/applicants';
 
 interface DocumentDetailClientProps {
-  applicantId: string;
+  applicantId: number;
 }
 
 export default function DocumentDetailClient({ applicantId }: DocumentDetailClientProps) {
-  const [applicant, setApplicant] = useState(mockApplicants.find(a => a.id === applicantId));
+  const [applicant, setApplicant] = useState(mockApplicants.find(a => a.applicantId === applicantId));
   const [isCommentOpen, setCommentOpen] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
 
@@ -21,7 +21,7 @@ export default function DocumentDetailClient({ applicantId }: DocumentDetailClie
 
   const handleRefresh = async () => {
     await new Promise(resolve => setTimeout(resolve, 1000));
-    const refreshedApplicant = mockApplicants.find(a => a.id === applicantId);
+    const refreshedApplicant = mockApplicants.find(a => a.applicantId === applicantId);
     setApplicant(refreshedApplicant);
   };
 
@@ -48,7 +48,7 @@ export default function DocumentDetailClient({ applicantId }: DocumentDetailClie
               gender={applicant.gender}
               status={applicant.status}
               university={`${applicant.university}/${applicant.major}/${applicant.position}`}
-              phone={applicant.phone}
+              phoneNumber={applicant.phoneNumber}
               email={applicant.email}
               commentCount={applicant.commentCount}
               isFavorite={isFavorite}

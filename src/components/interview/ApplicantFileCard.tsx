@@ -7,7 +7,7 @@ import StatusDropdown from '@/components/ui/StatusDropdown';
 import AppointmentInfoButton from '@/components/ui/AppointmentInfoButton';
 
 interface ApplicantFileCardProps {
-  id: string;
+  id: number;
   name: string;
   info: string;
   initialStatus: '보류' | '합격' | '불합격';
@@ -65,11 +65,7 @@ export default function ApplicantFileCard({
             <span className="text-body-xs-rg text-gray-300">{commentCount}</span>
           </div>
           <button className="w-4.5 h-4.5 relative" onClick={onToggleFavorite}>
-            <Image
-              src={isFavorite ? '/icons/star.svg' : '/icons/star-off.svg'}
-              alt="즐겨찾기"
-              fill
-            />
+            <Image src={isFavorite ? '/icons/star.svg' : '/icons/star-off.svg'} alt="즐겨찾기" fill />
           </button>
         </div>
       </div>

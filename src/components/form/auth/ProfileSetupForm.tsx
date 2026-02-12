@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ProfileImageButton from '@/components/auth/ProfileImageButton';
+import TermsCheckbox from '@/components/auth/TermsCheckbox';
 import Button from '@/components/ui/Btn';
 import Textbox from '@/components/ui/Textbox';
 import { authService } from '@/services/authService';
@@ -17,6 +18,10 @@ export default function ProfileSetupForm() {
   const [nicknameError, setNicknameError] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [shouldDeleteImage, setShouldDeleteImage] = useState(false);
+
+  // 약관 동의 상태
+  const [termsAgreed, setTermsAgreed] = useState(false);
+  const [privacyAgreed, setPrivacyAgreed] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -85,6 +90,12 @@ export default function ProfileSetupForm() {
   };
 
   const handleSignup = async () => {
+    // 약관 동의 검증
+    if (!termsAgreed || !privacyAgreed) {
+      alert('필수 약관에 모두 동의해주세요.');
+      return;
+    }
+
     if (!validateNickname()) {
       return;
     }
@@ -131,7 +142,7 @@ export default function ProfileSetupForm() {
 
   return (
     <div className="flex justify-center min-h-screen bg-white">
-      <div className="relative w-[375px] bg-white min-h-screen flex flex-col">
+      <div className="relative w-93.75 bg-white min-h-screen flex flex-col">
         <div className="px-6 py-8 pb-28 flex flex-col gap-3">
           <ProfileImageButton
             profileImageUrl={user.profileImageUrl || user.image}
@@ -156,8 +167,28 @@ export default function ProfileSetupForm() {
           </div>
         </div>
 
+        {/* 약관 동의 + 버튼을 하단 고정 영역으로 이동 */}
         <div className="fixed bottom-0 left-0 right-0 bg-white px-6 py-4 max-w-93.75 mx-auto">
-          <Button variant="primary" size="lg" onClick={handleSignup}>
+          <div className="flex flex-col gap-3 mb-4">
+            <TermsCheckbox
+              label=""
+              linkText="이용약관"
+              linkUrl="https://www.notion.so/your-terms-of-service-link"
+              isRequired={true}
+              checked={termsAgreed}
+              onChange={setTermsAgreed}
+            />
+            <TermsCheckbox
+              label=""
+              linkText="개인정보 처리방침"
+              linkUrl="https://www.notion.so/your-privacy-policy-link"
+              isRequired={true}
+              checked={privacyAgreed}
+              onChange={setPrivacyAgreed}
+            />
+          </div>
+
+          <Button variant="primary" size="lg" onClick={handleSignup} disabled={!termsAgreed || !privacyAgreed}>
             가입 완료
           </Button>
         </div>

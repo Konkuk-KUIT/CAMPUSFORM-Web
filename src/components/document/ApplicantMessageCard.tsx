@@ -17,7 +17,7 @@ export default function ApplicantMessageCard({ type }: ApplicantMessageCardProps
   const [selectedApplicant, setSelectedApplicant] = useState<Applicant | null>(null);
 
   // type에 따라 합격자 또는 불합격자 필터링
-  const filteredApplicants = mockApplicants.filter((applicant) => 
+  const filteredApplicants = mockApplicants.filter(applicant =>
     type === '합격자' ? applicant.status === '합격' : applicant.status === '불합격'
   );
 
@@ -29,12 +29,9 @@ export default function ApplicantMessageCard({ type }: ApplicantMessageCardProps
 
   // type에 따른 제목과 메시지
   const title = type === '합격자' ? '합격자 개인별 메세지' : '불합격자 개인별 메세지';
-  const resultMessage = type === '합격자' 
-    ? '서류 전형에 통과하셨습니다!' 
-    : '서류 전형에 선발되지 않았습니다.';
-  const additionalMessage = type === '합격자'
-    ? '다음 단계 면접 일정 조율을 위해...'
-    : '지원해 주신 시간과 관심에 다시 한 번 감사드립니다.';
+  const resultMessage = type === '합격자' ? '서류 전형에 통과하셨습니다!' : '서류 전형에 선발되지 않았습니다.';
+  const additionalMessage =
+    type === '합격자' ? '다음 단계 면접 일정 조율을 위해...' : '지원해 주신 시간과 관심에 다시 한 번 감사드립니다.';
 
   return (
     <>
@@ -50,12 +47,12 @@ export default function ApplicantMessageCard({ type }: ApplicantMessageCardProps
             <Image src="/icons/hashtag-gray.svg" alt="전화번호 복사하기" width={15} height={15} />
             <span>전화번호 복사하기</span>
           </button>
-        </div>        
-        
+        </div>
+
         <div className="-mx-4">
-          {filteredApplicants.map((applicant) => (
+          {filteredApplicants.map(applicant => (
             <ApplicantSummaryCard
-              key={applicant.id}
+              key={applicant.applicantId}
               name={applicant.name}
               university={applicant.university}
               major={applicant.major}
@@ -93,8 +90,7 @@ export default function ApplicantMessageCard({ type }: ApplicantMessageCardProps
               <div>
                 <p className="mb-1">요리퐁 6기에 지원해 주셔서 감사합니다.</p>
                 <p>
-                  내부 심사 결과 <span className="text-primary">{selectedApplicant.name}</span> 님은{' '}
-                  {resultMessage}
+                  내부 심사 결과 <span className="text-primary">{selectedApplicant.name}</span> 님은 {resultMessage}
                 </p>
               </div>
 

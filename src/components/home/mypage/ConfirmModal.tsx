@@ -13,7 +13,7 @@ export default function ConfirmModal({ isOpen, onConfirm, onCancel }: ConfirmMod
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
       <div className="absolute inset-0 bg-black/40" onClick={onCancel} />
 
-      <div className="relative bg-white rounded-10 p-8 pt-12 w-full max-w-[330px]">
+      <div className="relative bg-white rounded-10 p-6 pt-10 w-full max-w-82.5">
         <p className="text-subtitle-md mb-5">로그아웃 하시겠습니까?</p>
 
         <div className="flex gap-5 justify-end">

@@ -16,9 +16,9 @@ export default function InterviewContent() {
   const [sortBy, setSortBy] = useState('name-asc');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isCommentOpen, setCommentOpen] = useState(false);
-  const [selectedApplicantId, setSelectedApplicantId] = useState<string>('');
+  const [selectedApplicantId, setSelectedApplicantId] = useState<number>(0);
   const [selectedPosition, setSelectedPosition] = useState<string>('전체');
-  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [favorites, setFavorites] = useState<Set<number>>(new Set());
   const [applicants, setApplicants] = useState(mockInterviewApplicants);
 
   const projectId = 1;
@@ -73,12 +73,12 @@ export default function InterviewContent() {
     [applicants]
   );
 
-  const handleCommentClick = (applicantId: string) => {
+  const handleCommentClick = (applicantId: number) => {
     setSelectedApplicantId(applicantId);
     setCommentOpen(true);
   };
 
-  const handleToggleFavorite = (applicantId: string) => {
+  const handleToggleFavorite = (applicantId: number) => {
     setFavorites(prev => {
       const newFavorites = new Set(prev);
       if (newFavorites.has(applicantId)) {
@@ -90,9 +90,8 @@ export default function InterviewContent() {
     });
   };
 
-  const handleAppointmentClick = (applicantId: string) => {
+  const handleAppointmentClick = (applicantId: number) => {
     console.log(`면접 일정 클릭: ${applicantId}`);
-    // 면접 일정 설정/수정 로직 추가
   };
 
   if (applicants.length === 0) {
@@ -109,7 +108,6 @@ export default function InterviewContent() {
 
   return (
     <div className="h-full flex flex-col">
-      {/* 고정 영역 */}
       <div className="flex-shrink-0">
         <TopTab counts={counts} onTabChange={setSelectedTab} />
         <SearchBar
@@ -122,7 +120,6 @@ export default function InterviewContent() {
         />
       </div>
 
-      {/* 스크롤 가능 영역 */}
       <PullToRefresh onRefresh={handleRefresh}>
         <div className="px-4 py-1 pb-20">
           {filteredApplicants.length === 0 ? (
@@ -130,25 +127,24 @@ export default function InterviewContent() {
           ) : (
             filteredApplicants.map(applicant => (
               <ApplicantFileCard
-                key={applicant.id}
-                id={applicant.id}
+                key={applicant.applicantId}
+                id={applicant.applicantId}
                 name={applicant.name}
                 info={`${applicant.university} / ${applicant.major} / ${applicant.position}`}
                 initialStatus={applicant.interviewStatus}
                 commentCount={applicant.commentCount}
-                isFavorite={favorites.has(applicant.id)}
-                onToggleFavorite={() => handleToggleFavorite(applicant.id)}
-                onCommentClick={() => handleCommentClick(applicant.id)}
+                isFavorite={favorites.has(applicant.applicantId)}
+                onToggleFavorite={() => handleToggleFavorite(applicant.applicantId)}
+                onCommentClick={() => handleCommentClick(applicant.applicantId)}
                 appointmentDate={applicant.appointmentDate}
                 appointmentTime={applicant.appointmentTime}
-                onAppointmentClick={() => handleAppointmentClick(applicant.id)}
+                onAppointmentClick={() => handleAppointmentClick(applicant.applicantId)}
               />
             ))
           )}
         </div>
       </PullToRefresh>
 
-      {/* 바텀시트 - 포지션 필터 */}
       <BottomSheet isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)}>
         <h2 className="text-subtitle-md">지원 포지션</h2>
         <div className="mt-4 flex flex-wrap gap-2">
@@ -168,7 +164,6 @@ export default function InterviewContent() {
         </div>
       </BottomSheet>
 
-      {/* 댓글 섹션 */}
       <CommentSection
         isOpen={isCommentOpen}
         onClose={() => setCommentOpen(false)}

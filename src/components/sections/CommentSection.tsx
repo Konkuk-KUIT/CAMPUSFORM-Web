@@ -11,7 +11,7 @@ interface CommentSectionProps {
   isOpen: boolean;
   onClose: () => void;
   projectId: number;
-  applicantId: string;
+  applicantId: number;
   stage: CommentStage;
   currentUserId: number;
 }
