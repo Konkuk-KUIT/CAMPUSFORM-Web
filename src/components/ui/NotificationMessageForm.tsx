@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Button from '@/components/ui/Btn';
 import TextboxLarge from '@/components/ui/TextboxLarge';
 import Image from 'next/image';
@@ -8,13 +8,83 @@ import Modal from '@/components/ui/Modal';
 
 interface NotificationMessageFormProps {
   type?: '합격자' | '불합격자';
+  onTemplateApply?: (template: string, isVariableEnabled: boolean) => void;
 }
 
-export default function NotificationMessageForm({ type = '합격자' }: NotificationMessageFormProps) {
+export default function NotificationMessageForm({ type = '합격자', onTemplateApply }: NotificationMessageFormProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [template, setTemplate] = useState('');
+  const [isVariableEnabled, setIsVariableEnabled] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+  const editableRef = useRef<HTMLDivElement>(null);
 
   const title = type === '합격자' ? '합격자 문자 템플릿 입력' : '불합격자 문자 템플릿 입력';
   const modalTitle = type === '합격자' ? '합격자' : '불합격자';
+
+  const handleTemplateChange = (value: string) => {
+    setTemplate(value);
+    // 템플릿이 변경되면 변수 적용 상태를 리셋
+    setIsVariableEnabled(false);
+  };
+
+  const handleApplyVariables = () => {
+    setIsVariableEnabled(true);
+    // 변수 적용하기를 누르면 바로 상위로 전달
+    if (onTemplateApply) {
+      onTemplateApply(template, true);
+    }
+  };
+
+  const handleApplyTemplate = () => {
+    if (onTemplateApply) {
+      onTemplateApply(template, isVariableEnabled);
+    }
+  };
+
+  // contentEditable에서 텍스트 변경 처리
+  const handleEditableInput = () => {
+    if (editableRef.current) {
+      const text = editableRef.current.innerText;
+      setTemplate(text);
+    }
+  };
+
+  // 변수 부분을 하이라이트하는 함수
+  const renderHighlightedHTML = () => {
+    if (!template) return '';
+
+    let html = template
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/\n/g, '<br>');
+    
+    // @이름, @포지션을 파랑색 span으로 감싸기
+    html = html.replace(
+      /([@＠]이름|[@＠]포지션)/g,
+      '<span style="color: #3B82F6;">$1</span>'
+    );
+    
+    return html;
+  };
+
+  // 변수 적용 시 contentEditable 내용 업데이트
+  useEffect(() => {
+    if (isVariableEnabled && editableRef.current && template) {
+      editableRef.current.innerHTML = renderHighlightedHTML();
+    }
+  }, [isVariableEnabled, template]);
+
+  // contentEditable 스타일 (TextboxLarge와 동일)
+  const getEditableStyles = () => {
+    if (isFocused) {
+      return 'bg-white border-primary border-1.5';
+    }
+    if (template) {
+      return 'bg-white border-gray-100 border';
+    }
+    return 'bg-gray-100 border-gray-200 border-0.5';
+  };
 
   return (
     <div className="flex flex-col gap-2 mt-3">
@@ -58,13 +128,50 @@ export default function NotificationMessageForm({ type = '합격자' }: Notifica
       </Modal>
 
       {/* 합격자/불합격자 문자 템플릿 입력 */}
-      <TextboxLarge placeholder="문자 내용을 입력하세요. @이름과 @포지션 변수를 사용하면 개인별 문자 생성이 가능합니다." />
+      {!isVariableEnabled ? (
+        // 변수 적용 전: 일반 TextboxLarge
+        <TextboxLarge 
+          placeholder="문자 내용을 입력하세요. @이름과 @포지션 변수를 사용하면 개인별 문자 생성이 가능합니다."
+          value={template}
+          onChange={handleTemplateChange}
+        />
+      ) : (
+        // 변수 적용 후: contentEditable div (TextboxLarge 스타일 매칭)
+        <div className="relative">
+          <div
+            ref={editableRef}
+            contentEditable
+            onInput={handleEditableInput}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+            className={`w-85.75 h-41.25 p-4 rounded-10 outline-none resize-none transition-colors text-body-sm-rg text-gray-950 shadow-[2px_2px_20px_0px_rgba(0,0,0,0.03)] ${getEditableStyles()}`}
+            style={{
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+              overflowY: 'auto',
+            }}
+            suppressContentEditableWarning
+            dangerouslySetInnerHTML={{ __html: renderHighlightedHTML() }}
+          />
+          {template && (
+            <span className="absolute bottom-4 right-4 text-10 text-gray-200">자동저장됨</span>
+          )}
+        </div>
+      )}
 
       <div className="flex gap-3 justify-end">
-        <Button variant="neutral" size="sm">
+        <Button 
+          variant="neutral" 
+          size="sm"
+          onClick={handleApplyVariables}
+        >
           변수 적용하기
         </Button>
-        <Button variant="neutral" size="sm">
+        <Button 
+          variant="neutral" 
+          size="sm"
+          onClick={handleApplyTemplate}
+        >
           템플릿 복사하기
         </Button>
       </div>
