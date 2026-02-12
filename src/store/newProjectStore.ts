@@ -15,8 +15,10 @@ interface MappingFields {
 interface NewProjectStore {
   projectForm: Partial<CreateProjectRequest>;
   mappingFields: MappingFields;
+  createdProjectId: number | null;
   setProjectForm: (data: Partial<CreateProjectRequest>) => void;
   setMappingFields: (fields: Partial<MappingFields>) => void;
+  setCreatedProjectId: (id: number) => void;
   reset: () => void;
 }
 
@@ -33,10 +35,10 @@ const initialMappingFields: MappingFields = {
 export const useNewProjectStore = create<NewProjectStore>(set => ({
   projectForm: {},
   mappingFields: initialMappingFields,
+  createdProjectId: null,
 
   setProjectForm: data => set(state => ({ projectForm: { ...state.projectForm, ...data } })),
-
   setMappingFields: fields => set(state => ({ mappingFields: { ...state.mappingFields, ...fields } })),
-
+  setCreatedProjectId: id => set({ createdProjectId: id }),
   reset: () => set({ projectForm: {}, mappingFields: initialMappingFields }),
 }));

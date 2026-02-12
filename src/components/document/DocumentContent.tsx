@@ -8,6 +8,7 @@ import ApplicantFileCard from '@/components/ui/ApplicantFileCard';
 import BottomSheet from '@/components/ui/BottomSheet';
 import BtnRound from '@/components/ui/BtnRound';
 import CommentSection from '@/components/sections/CommentSection';
+import { useNewProjectStore } from '@/store/newProjectStore';
 import { mockApplicants } from '@/data/applicants';
 
 export default function DocumentContent() {
@@ -20,8 +21,9 @@ export default function DocumentContent() {
   const [favorites, setFavorites] = useState<Set<number>>(new Set());
   const [selectedApplicantId, setSelectedApplicantId] = useState<number>(0);
   const [applicants, setApplicants] = useState(mockApplicants);
+  const { createdProjectId } = useNewProjectStore();
 
-  const projectId = 1;
+  const projectId = createdProjectId ?? 1;
   const currentUserId = 1;
 
   const handleRefresh = async () => {

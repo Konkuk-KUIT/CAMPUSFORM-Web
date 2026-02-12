@@ -26,8 +26,7 @@ interface Admin {
 
 export default function AddProjectForm() {
   const router = useRouter();
-  const { setProjectForm, projectForm, reset } = useNewProjectStore();
-
+  const { setProjectForm, projectForm, reset, setCreatedProjectId } = useNewProjectStore();
   const [showWarningModal, setShowWarningModal] = useState(true);
   const [isDateModalOpen, setIsDateModalOpen] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
@@ -149,10 +148,13 @@ export default function AddProjectForm() {
       };
 
       setProjectForm(updatedForm);
-      await projectService.createProject(updatedForm as Parameters<typeof projectService.createProject>[0]);
+      const createdProject = await projectService.createProject(
+        updatedForm as Parameters<typeof projectService.createProject>[0]
+      );
 
+      setCreatedProjectId(createdProject.id);
       reset();
-      router.push('/home');
+      router.push('/document');
     } catch (e) {
       console.error('프로젝트 생성 오류:', e);
       toast.error('프로젝트 생성에 실패했습니다.');
