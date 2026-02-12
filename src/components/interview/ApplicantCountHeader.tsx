@@ -57,8 +57,8 @@ export default function ApplicantCountHeader({ type }: ApplicantCountHeaderProps
           {applicants.length === 0 ? (
             <p className="text-center text-gray-400 py-4">명단이 없습니다.</p>
           ) : (
-            applicants.map((applicant) => (
-              <p key={applicant.id}>
+            applicants.map(applicant => (
+              <p key={applicant.applicantId}>
                 {applicant.name} ({applicant.university} / {applicant.major} / {applicant.position})
               </p>
             ))

@@ -21,7 +21,7 @@ export default async function ApplicantDetailPage({ params }: { params: Promise<
 
       {/* 스크롤 가능한 콘텐츠 영역 */}
       <div className="flex-1 overflow-hidden">
-        <InterviewDetailClient applicantId={id} />
+        <InterviewDetailClient applicantId={Number(id)} />
       </div>
     </div>
   );

@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import PullToRefresh from '@/components/PullToRefresh';
 import TopTab from '@/components/ui/TopTab';
 import SearchBar from '@/components/form/SearchBar';
-import ApplicantFileCard from '@/components/ui/ApplicantFile';
+import ApplicantFileCard from '@/components/ui/ApplicantFileCard';
 import BottomSheet from '@/components/ui/BottomSheet';
 import BtnRound from '@/components/ui/BtnRound';
 import CommentSection from '@/components/sections/CommentSection';
@@ -16,9 +16,9 @@ export default function DocumentContent() {
   const [sortBy, setSortBy] = useState('name-asc');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isCommentOpen, setCommentOpen] = useState(false);
-  const [selectedApplicantId, setSelectedApplicantId] = useState<string>('');
   const [selectedPosition, setSelectedPosition] = useState<string>('전체');
-  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [favorites, setFavorites] = useState<Set<number>>(new Set());
+  const [selectedApplicantId, setSelectedApplicantId] = useState<number>(0);
   const [applicants, setApplicants] = useState(mockApplicants);
 
   const projectId = 1;
@@ -73,12 +73,12 @@ export default function DocumentContent() {
     [applicants]
   );
 
-  const handleCommentClick = (applicantId: string) => {
+  const handleCommentClick = (applicantId: number) => {
     setSelectedApplicantId(applicantId);
     setCommentOpen(true);
   };
 
-  const handleToggleFavorite = (applicantId: string) => {
+  const handleToggleFavorite = (applicantId: number) => {
     setFavorites(prev => {
       const newFavorites = new Set(prev);
       if (newFavorites.has(applicantId)) {
@@ -113,15 +113,15 @@ export default function DocumentContent() {
           ) : (
             filteredApplicants.map(applicant => (
               <ApplicantFileCard
-                key={applicant.id}
-                id={applicant.id}
+                key={applicant.applicantId}
+                id={applicant.applicantId}
                 name={applicant.name}
                 info={`${applicant.university} / ${applicant.major} / ${applicant.position}`}
                 initialStatus={applicant.status}
                 commentCount={applicant.commentCount}
-                isFavorite={favorites.has(applicant.id)}
-                onToggleFavorite={() => handleToggleFavorite(applicant.id)}
-                onCommentClick={() => handleCommentClick(applicant.id)}
+                isFavorite={favorites.has(applicant.applicantId)}
+                onToggleFavorite={() => handleToggleFavorite(applicant.applicantId)}
+                onCommentClick={() => handleCommentClick(applicant.applicantId)}
               />
             ))
           )}

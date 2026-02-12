@@ -28,9 +28,7 @@ export default function ApplicantMessageCard({ type, template, isVariableEnabled
 
   // 변수를 실제 값으로 치환하는 함수
   const replaceVariables = (text: string, applicant: InterviewApplicant) => {
-    return text
-      .replace(/[@＠]이름/g, applicant.name)
-      .replace(/[@＠]포지션/g, applicant.position);
+    return text.replace(/[@＠]이름/g, applicant.name).replace(/[@＠]포지션/g, applicant.position);
   };
 
   // 변수가 치환된 부분을 파랑색으로 표시하기 위한 함수
@@ -38,22 +36,18 @@ export default function ApplicantMessageCard({ type, template, isVariableEnabled
     const parts: React.ReactNode[] = [];
     let lastIndex = 0;
     let keyCounter = 0;
-    
+
     // @이름과 @포지션을 찾아서 치환 (전각문자 @도 포함)
     const regex = /[@＠]이름|[@＠]포지션/g;
     let match;
-    
+
     while ((match = regex.exec(text)) !== null) {
       // 일반 텍스트 부분
       if (match.index > lastIndex) {
         const normalText = text.substring(lastIndex, match.index);
-        parts.push(
-          <span key={`text-${keyCounter++}`}>
-            {normalText}
-          </span>
-        );
+        parts.push(<span key={`text-${keyCounter++}`}>{normalText}</span>);
       }
-      
+
       // 치환된 변수 부분 (파랑색으로 표시)
       const variable = match[0];
       const value = variable.includes('이름') ? applicant.name : applicant.position;
@@ -62,20 +56,16 @@ export default function ApplicantMessageCard({ type, template, isVariableEnabled
           {value}
         </span>
       );
-      
+
       lastIndex = regex.lastIndex;
     }
-    
+
     // 마지막 남은 텍스트
     if (lastIndex < text.length) {
       const remainingText = text.substring(lastIndex);
-      parts.push(
-        <span key={`text-${keyCounter++}`}>
-          {remainingText}
-        </span>
-      );
+      parts.push(<span key={`text-${keyCounter++}`}>{remainingText}</span>);
     }
-    
+
     return parts;
   };
 
@@ -91,16 +81,14 @@ export default function ApplicantMessageCard({ type, template, isVariableEnabled
 
   const handleCopyMessage = () => {
     if (selectedApplicant && template) {
-      const message = isVariableEnabled 
-        ? replaceVariables(template, selectedApplicant)
-        : template;
+      const message = isVariableEnabled ? replaceVariables(template, selectedApplicant) : template;
       navigator.clipboard.writeText(message);
     }
   };
 
   const handleCopyPhone = () => {
-    if (selectedApplicant?.phone) {
-      navigator.clipboard.writeText(selectedApplicant.phone);
+    if (selectedApplicant?.phoneNumber) {
+      navigator.clipboard.writeText(selectedApplicant.phoneNumber);
     }
   };
 
@@ -121,9 +109,9 @@ export default function ApplicantMessageCard({ type, template, isVariableEnabled
         </div>
 
         <div className="-mx-4">
-          {applicants.map((applicant) => (
+          {applicants.map(applicant => (
             <ApplicantSummaryCard
-              key={applicant.id}
+              key={applicant.applicantId}
               name={applicant.name}
               university={applicant.university}
               major={applicant.major}
@@ -144,18 +132,18 @@ export default function ApplicantMessageCard({ type, template, isVariableEnabled
             </h3>
             {/* 버튼 */}
             <div className="flex gap-2 justify-center items-center pt-3">
-              <Button 
-                variant="outline" 
-                size="md" 
+              <Button
+                variant="outline"
+                size="md"
                 className="inline-flex items-center justify-center gap-1"
                 onClick={handleCopyMessage}
               >
                 <span>문자 복사하기</span>
                 <Image src="/icons/copy-blue.svg" alt="" width={15} height={15} />
               </Button>
-              <Button 
-                variant="outline" 
-                size="md" 
+              <Button
+                variant="outline"
+                size="md"
                 className="inline-flex items-center justify-center gap-1"
                 onClick={handleCopyPhone}
               >
@@ -169,10 +157,7 @@ export default function ApplicantMessageCard({ type, template, isVariableEnabled
               {template ? (
                 // 커스텀 템플릿이 있을 경우
                 <div className="whitespace-pre-wrap">
-                  {isVariableEnabled 
-                    ? renderTemplateWithHighlight(template, selectedApplicant)
-                    : template
-                  }
+                  {isVariableEnabled ? renderTemplateWithHighlight(template, selectedApplicant) : template}
                 </div>
               ) : (
                 // 기본 템플릿

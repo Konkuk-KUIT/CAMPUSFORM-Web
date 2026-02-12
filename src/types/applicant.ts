@@ -4,7 +4,7 @@ export interface Applicant {
   applicantId: number;
   name: string;
   gender: string;
-  school: string;
+  university: string;
   major: string;
   position: string;
   phoneNumber: string;
@@ -12,6 +12,7 @@ export interface Applicant {
   status: string;
   answers: Answer[];
   favorite: boolean;
+  commentCount: number;
   currentStatus?: string;
   updatedAt?: string;
 }
