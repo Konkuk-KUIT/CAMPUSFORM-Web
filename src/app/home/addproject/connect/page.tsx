@@ -1,1 +1,8 @@
-export { default } from '@/components/home/addproject/ConnectForm';
+
+
+'use client';
+import ConnectFormClientWrapper from '@/components/home/addproject/ConnectFormClientWrapper';
+
+export default function ConnectPage() {
+  return <ConnectFormClientWrapper />;
+}
