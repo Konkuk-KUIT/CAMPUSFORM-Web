@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Header from '@/components/ui/Header';
+import HeaderNotification from './HeaderNotification';
 import Link from 'next/link';
 import Image from 'next/image';
 import BtnRound from '@/components/ui/BtnRound';
@@ -68,7 +68,7 @@ export default function NotificationForm() {
   return (
     <div className="flex justify-center min-h-screen bg-white">
       <div className="relative w-[375px] bg-white min-h-screen flex flex-col">
-        <Header
+        <HeaderNotification
           title="알림"
           backTo="/home"
           hideNotification={true}
