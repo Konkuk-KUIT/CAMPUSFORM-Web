@@ -1,22 +1,19 @@
-// 면접 상세 페이지 클라이언트 컴포넌트
 'use client';
 
 import { useState } from 'react';
+import PullToRefresh from '@/components/PullToRefresh';
 import ApplicantCardBasic from '@/components/interview/ApplicantCardBasic';
 import AppointmentModal from '@/components/interview/AppointmentModal';
-import BottomSheet from '@/components/ui/BottomSheet';
-import InputComment from '@/components/ui/InputComment';
-import Reply from '@/components/ui/Reply';
+import CommentSection from '@/components/sections/CommentSection';
+import QuestionSection from '@/components/document/QuestionSection';
 import { mockInterviewApplicants } from '@/data/interviews';
-import { mockComments } from '@/data/comments';
 
 interface InterviewDetailClientProps {
-  applicantId: string;
+  applicantId: number;
 }
 
 export default function InterviewDetailClient({ applicantId }: InterviewDetailClientProps) {
-  // 지원자 데이터 가져오기
-  const applicant = mockInterviewApplicants.find((a) => a.id === applicantId);
+  const [applicant, setApplicant] = useState(mockInterviewApplicants.find(a => a.applicantId === applicantId));
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCommentOpen, setCommentOpen] = useState(false);
@@ -24,12 +21,20 @@ export default function InterviewDetailClient({ applicantId }: InterviewDetailCl
   const [appointmentDate, setAppointmentDate] = useState(applicant?.appointmentDate || '');
   const [appointmentTime, setAppointmentTime] = useState(applicant?.appointmentTime || '');
 
-  // 댓글 데이터 가져오기
-  const comments = mockComments.filter((c) => c.applicantId === applicantId);
+  const projectId = 1;
+  const currentUserId = 1;
 
-  const handleAppointmentClick = () => {
-    setIsModalOpen(true);
+  const handleRefresh = async () => {
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    const refreshedApplicant = mockInterviewApplicants.find(a => a.applicantId === applicantId);
+    setApplicant(refreshedApplicant);
+    if (refreshedApplicant) {
+      setAppointmentDate(refreshedApplicant.appointmentDate || '');
+      setAppointmentTime(refreshedApplicant.appointmentTime || '');
+    }
   };
+
+  const handleAppointmentClick = () => setIsModalOpen(true);
 
   const handleConfirm = (date: string, time: string) => {
     setAppointmentDate(date);
@@ -37,12 +42,8 @@ export default function InterviewDetailClient({ applicantId }: InterviewDetailCl
     setIsModalOpen(false);
   };
 
-  // 즐겨찾기 토글 핸들러
-  const handleToggleFavorite = () => {
-    setIsFavorite((prev) => !prev);
-  };
+  const handleToggleFavorite = () => setIsFavorite(prev => !prev);
 
-  // 지원자를 찾지 못한 경우
   if (!applicant) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-200px)]">
@@ -52,49 +53,51 @@ export default function InterviewDetailClient({ applicantId }: InterviewDetailCl
   }
 
   return (
-    <>
-      <div className="p-4">
-        {/* 상세 내용 */}
-        <ApplicantCardBasic
-          name={applicant.name}
-          gender={applicant.gender}
-          status={applicant.interviewStatus}
-          university={`${applicant.university}/${applicant.major}/${applicant.position}`}
-          phone={applicant.phone}
-          email={applicant.email}
-          commentCount={applicant.commentCount}
-          isFavorite={isFavorite}
-          onToggleFavorite={handleToggleFavorite}
-          onCommentClick={() => setCommentOpen(true)}
-          appointmentDate={appointmentDate}
-          appointmentTime={appointmentTime}
-          onAppointmentClick={handleAppointmentClick}
-        />
-
-        {/* 댓글 바텀시트 */}
-        <BottomSheet isOpen={isCommentOpen} onClose={() => setCommentOpen(false)}>
-          <InputComment />
-          <div className="space-y-4 mt-4">
-            {comments.length === 0 ? (
-              <p className="text-center text-gray-400 py-4">아직 댓글이 없습니다.</p>
-            ) : (
-              comments.map((comment) => (
-                <Reply
-                  key={comment.id}
-                  id={comment.id}
-                  author={comment.author}
-                  content={comment.content}
-                  createdAt={comment.createdAt}
-                  isAuthor={comment.isAuthor}
-                  replies={comment.replies}
-                />
-              ))
-            )}
+    <div className="h-full flex flex-col">
+      <PullToRefresh onRefresh={handleRefresh}>
+        <div className="pb-20">
+          <div className="p-4">
+            <ApplicantCardBasic
+              name={applicant.name}
+              gender={applicant.gender}
+              status={applicant.interviewStatus}
+              university={`${applicant.university}/${applicant.major}/${applicant.position}`}
+              phone={applicant.phoneNumber}
+              email={applicant.email}
+              commentCount={applicant.commentCount}
+              isFavorite={isFavorite}
+              onToggleFavorite={handleToggleFavorite}
+              onCommentClick={() => setCommentOpen(true)}
+              appointmentDate={appointmentDate}
+              appointmentTime={appointmentTime}
+              onAppointmentClick={handleAppointmentClick}
+            />
           </div>
-        </BottomSheet>
-      </div>
 
-      {/* 모달 */}
+          <div className="p-4 mx-4 bg-white rounded-10">
+            <QuestionSection
+              title="지원동기"
+              content="요리에 대한 관심을 꾸준히 가져왔고, 기본기를 제대로 배우고 싶어 지원했습니다. 혼자 할 때보다 함께 조리하며 배우는 과정이 더 큰 동기부여가 된다고 생각합니다. 다양한 레시피를 시도해 보고 서로의 노하우를 나누며 실력을 키우고 싶습니다. 동아리 활동을 통해 배운 내용을 일상에서도 활용할 수 있을 것이라 기대합니다."
+            />
+            <QuestionSection
+              title="이 동아리에 참여하고 싶은 이유를 서술해주세요."
+              content="요리에 대한 관심을 꾸준히 가져왔고, 기본기를 제대로 배우고 싶어 지원했습니다. 혼자 할 때보다 함께 조리하며 배우는 과정이 더 큰 동기부여가 된다고 생각합니다. 다양한 레시피를 시도해 보고 서로의 노하우를 나누며 실력을 키우고 싶습니다. 동아리 활동을 통해 배운 내용을 일상에서도 활용할 수 있을 것이라 기대합니다."
+              maxLength={700}
+            />
+            <QuestionSection title="질문내용" content="질문답변" />
+          </div>
+        </div>
+      </PullToRefresh>
+
+      <CommentSection
+        isOpen={isCommentOpen}
+        onClose={() => setCommentOpen(false)}
+        projectId={projectId}
+        applicantId={applicantId}
+        stage="INTERVIEW"
+        currentUserId={currentUserId}
+      />
+
       <AppointmentModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -102,6 +105,6 @@ export default function InterviewDetailClient({ applicantId }: InterviewDetailCl
         initialDate={appointmentDate}
         initialTime={appointmentTime}
       />
-    </>
+    </div>
   );
 }

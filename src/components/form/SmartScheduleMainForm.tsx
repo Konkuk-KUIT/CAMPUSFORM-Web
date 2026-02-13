@@ -1,17 +1,28 @@
 ﻿'use client';
 
-import { useState, useEffect } from 'react';
-import { createSmartSchedule } from '@/services/smartScheduleService';
-import { mockProjects } from '@/data/projects';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { useEffect } from 'react';
+import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Btn from '@/components/ui/Btn';
+import ConfirmResetDialog from '@/components/ui/ConfirmResetDialog';
 import AllAccordion from '@/components/ui/AllAccordion';
 import SmartScheduleButton from '@/components/ui/SmartScheduleButton';
 import SmartScheduleCalendarPreview from '@/components/ui/SmartScheduleCalendarPreview';
 
 export default function SmartScheduleMainForm() {
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const handleConfirm = () => {
+    setShowConfirmDialog(false);
+    router.push('/smart-schedule/result');
+  };
+    const [mounted, setMounted] = useState(false);
+    // useEffect to set mounted true after client hydration
+    useEffect(() => {
+      setMounted(true);
+    }, []);
   const router = useRouter();
   const [selectedInterviewer, setSelectedInterviewer] = useState<number | null>(null);
   const [requiredInterviewers, setRequiredInterviewers] = useState<{ [key: number]: boolean }>({ 0: true });
@@ -19,14 +30,12 @@ export default function SmartScheduleMainForm() {
   const isRepresentative = true; // 대표자 여부 (가정)
   const [showInterviewerView, setShowInterviewerView] = useState(false);
 
-  // Hydration 에러 방지: 클라이언트에서만 localStorage 접근
-  const [isConfigured, setIsConfigured] = useState<boolean | null>(null);
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setIsConfigured(!!localStorage.getItem('interviewInfoConfigured'));
-    }
-  }, []);
-  const showOverlay = isConfigured === false;
+  // 면접 정보 설정 완료 여부 확인
+  let isConfigured = null;
+  if (typeof window !== 'undefined') {
+    isConfigured = localStorage.getItem('interviewInfoConfigured');
+  }
+  const showOverlay = !isConfigured;
 
   // TODO: 실제 API에서 스마트 시간표 생성 여부와 대표자 여부를 가져와야 함
 
@@ -47,11 +56,11 @@ export default function SmartScheduleMainForm() {
       <div className="relative w-[375px] bg-white min-h-screen flex flex-col overflow-x-hidden">
         {/* Top app bar with logo and alarm */}
         <header className="flex items-center justify-between h-12 px-4 bg-white">
-          <div className="w-6 h-6">
+          <Link href="/home" className="w-6 h-6">
             <Image src="/icons/logo.svg" alt="로고" width={22} height={22} className="w-[22px] h-[22px]" />
-          </div>
+          </Link>
           <span className="text-title">스마트 시간표</span>
-          <button className="w-6 h-6">
+          <button className="w-6 h-6 cursor-pointer" onClick={() => router.push('/home/notification')}>
             <Image src="/icons/notification.svg" alt="알림" width={24} height={24} />
           </button>
         </header>
@@ -62,14 +71,14 @@ export default function SmartScheduleMainForm() {
           <div className="mb-6">
             <button
               onClick={() => router.push('/smart-schedule/setting')}
-              className="w-full flex items-start justify-between mb-2 group"
+              className="w-full flex items-start justify-between mb-2 group cursor-pointer"
             >
               <div className="text-left">
                 <h3 className="text-subtitle-sm-sb text-gray-950 mb-1">1. 면접 정보 설정</h3>
                 <p className="text-body-xs text-gray-300">면접 일정과 운영 방식을 설정해 주세요.</p>
               </div>
               <div className="mt-1 flex-shrink-0">
-                <Image src="/icons/chevron-right.svg" alt="next" width={24} height={7} className="w-6 h-[7px]" />
+                <Image src="/icons/chevron-right.svg" alt="next" width={24} height={24} className="w-6 h-6" />
               </div>
             </button>
           </div>
@@ -107,7 +116,7 @@ export default function SmartScheduleMainForm() {
                         setSelectedInterviewer(idx);
                       }
                     }}
-                    className="w-full h-[66px] px-0 py-[5px] flex items-center justify-between border-b border-gray-200"
+                    className="w-full h-[66px] px-0 py-[5px] flex items-center justify-between border-b border-gray-200 cursor-pointer"
                   >
                     <div className="flex items-center gap-[10px]">
                       <div className="w-[35px] h-[35px] rounded-full bg-gray-200 flex-shrink-0" />
@@ -143,7 +152,8 @@ export default function SmartScheduleMainForm() {
                         showProfiles={false}
                         showRequiredSection={true}
                         requiredInterviewer={requiredInterviewers[idx] || false}
-                        onRequiredInterviewerChange={(value) => setRequiredInterviewers(prev => ({ ...prev, [idx]: value }))} 
+                        onRequiredInterviewerChange={(value) => setRequiredInterviewers(prev => ({ ...prev, [idx]: value }))}
+                        interviewDates={interviewDates}
                       />
                     </div>
                   )}
@@ -172,7 +182,7 @@ export default function SmartScheduleMainForm() {
                   className="w-full bg-gray-50 border border-gray-100 rounded-radius-5 px-3 py-3 pr-10 text-body-md text-gray-300 placeholder-gray-300 cursor-pointer hover:bg-gray-100 transition-colors"
                 />
                 <button
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 hover:bg-gray-100 rounded transition-colors"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 hover:bg-gray-100 rounded transition-colors cursor-pointer"
                   aria-label="복사"
                   onClick={e => {
                     e.stopPropagation();
@@ -186,7 +196,7 @@ export default function SmartScheduleMainForm() {
               {/* Info box - 지원자 시간 페이지 편집 */}
               <button
                 onClick={() => router.push('/smart-schedule/interview-schedule')}
-                className="w-full bg-blue-50 border-[0.5px] border-blue-200 rounded-[10px] px-2.5 py-2.5 flex items-center justify-center gap-1 hover:bg-blue-100 transition-colors"
+                className="w-full bg-blue-50 border-[0.5px] border-blue-200 rounded-[10px] px-2.5 py-2.5 flex items-center justify-center gap-1 hover:bg-blue-100 transition-colors cursor-pointer"
               >
                 <span className="text-body-sm text-gray-950">지원자 시간 페이지 편집</span>
                 <Image src="/icons/edit-blue.svg" alt="edit" width={14} height={13} className="w-[14px] h-[13px]" />
@@ -213,27 +223,23 @@ export default function SmartScheduleMainForm() {
               variant="primary"
               size="lg"
               className="w-full"
-              onClick={async () => {
-                try {
-                  // 실제 프로젝트에서는 projectId를 동적으로 받아와야 함
-                  const projectId = mockProjects[0].id;
-                  await createSmartSchedule(projectId);
-                  alert('스마트 시간표가 성공적으로 생성되었습니다!');
-                  // 필요시 결과 페이지로 이동 등 추가 처리
-                } catch (e) {
-                  alert('스마트 시간표 생성에 실패했습니다.');
-                }
-              }}
+              onClick={() => setShowConfirmDialog(true)}
             >
               스마트 시간표 생성
             </Btn>
           </div>
+                    {/* Confirm Reset Dialog for 스마트 시간표 생성 */}
+                    <ConfirmResetDialog
+                      isOpen={showConfirmDialog}
+                      onClose={() => setShowConfirmDialog(false)}
+                      onConfirm={handleConfirm}
+                    />
           
           {/* Spacer for fixed button */}
           <div className="h-32" />
 
           {/* Overlay message - 면접 정보 미설정 */}
-          {showOverlay && (
+          {mounted && showOverlay && (
             <div className="absolute left-0 right-0 top-[115px] bottom-20 flex items-center justify-center z-50 bg-white/85">
               <div className="text-center">
                 <p className="text-subtitle-md text-gray-950 font-medium">면접 정보 설정 후 이용 가능합니다.</p>

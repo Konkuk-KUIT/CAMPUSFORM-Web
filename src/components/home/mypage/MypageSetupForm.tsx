@@ -9,6 +9,8 @@ import Header from '@/components/ui/Header';
 import ConfirmModal from '@/components/home/mypage/ConfirmModal';
 import { authService } from '@/services/authService';
 import type { User } from '@/types/auth';
+import Loading from '@/components/ui/Loading';
+import { toast } from '@/components/Toast';
 
 export default function MypageSetupForm() {
   const router = useRouter();
@@ -17,10 +19,13 @@ export default function MypageSetupForm() {
   const [nickname, setNickname] = useState('');
   const [nicknameError, setNicknameError] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [shouldDeleteImage, setShouldDeleteImage] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
+        // 1. 현재 사용자 확인 (인증 여부 + 이메일 얻기)
         const authResponse = await authService.getCurrentUser();
 
         if (!authResponse.isAuthenticated || !authResponse.user) {
@@ -28,8 +33,20 @@ export default function MypageSetupForm() {
           return;
         }
 
-        setUser(authResponse.user);
-        setNickname(authResponse.user.nickname || '');
+        // 2. /users/exists 전체 정보 가져오기
+        const userDetail = await authService.getUserDetailByEmail(authResponse.user.email);
+
+        // 3. User 타입에 맞게 변환
+        const fullUser: User = {
+          userId: userDetail.userId,
+          nickname: userDetail.nickname,
+          email: userDetail.email,
+          profileImageUrl: userDetail.profileImageUrl,
+          image: userDetail.profileImageUrl,
+        };
+
+        setUser(fullUser);
+        setNickname(userDetail.nickname);
       } catch (error) {
         console.error('Failed to fetch user:', error);
         router.push('/auth/login');
@@ -61,6 +78,16 @@ export default function MypageSetupForm() {
     return true;
   };
 
+  const handleImageChange = (file: File | null) => {
+    setImageFile(file);
+    setShouldDeleteImage(false);
+  };
+
+  const handleImageDelete = () => {
+    setImageFile(null);
+    setShouldDeleteImage(true);
+  };
+
   const handleSave = async () => {
     if (!validateNickname()) {
       return;
@@ -69,15 +96,47 @@ export default function MypageSetupForm() {
     setNicknameError(false);
 
     try {
-      await authService.updateNickname(nickname);
-      alert('변경사항이 저장되었습니다.');
+      let updatedProfileImageUrl = user?.profileImageUrl;
 
-      if (user) {
-        setUser({ ...user, nickname });
+      // 1. 이미지 삭제 요청이 있으면 삭제
+      if (shouldDeleteImage && user?.profileImageUrl) {
+        await authService.deleteProfileImage();
+        updatedProfileImageUrl = null;
       }
+
+      // 2. 새 이미지가 있으면 업로드
+      if (imageFile) {
+        const response = await authService.updateProfileImage(imageFile);
+        updatedProfileImageUrl = response.profileImageUrl;
+      }
+
+      // 3. 닉네임 변경
+      if (nickname && nickname !== user?.nickname) {
+        await authService.updateNickname(nickname);
+      }
+
+      toast.success('변경사항이 저장되었습니다.');
+
+      // 4. 최신 사용자 정보 다시 불러오기
+      if (user?.email) {
+        const updatedUserDetail = await authService.getUserDetailByEmail(user.email);
+        const updatedUser: User = {
+          userId: updatedUserDetail.userId,
+          nickname: updatedUserDetail.nickname,
+          email: updatedUserDetail.email,
+          profileImageUrl: updatedUserDetail.profileImageUrl,
+          image: updatedUserDetail.profileImageUrl,
+        };
+        setUser(updatedUser);
+        setNickname(updatedUserDetail.nickname);
+      }
+
+      // 상태 초기화
+      setImageFile(null);
+      setShouldDeleteImage(false);
     } catch (error) {
-      console.error('Failed to update nickname:', error);
-      alert('저장에 실패했습니다.');
+      console.error('Failed to save profile:', error);
+      toast.error('저장에 실패했습니다.');
     }
   };
 
@@ -88,23 +147,13 @@ export default function MypageSetupForm() {
     }
   };
 
-  const handleImageUpdate = (imageUrl: string | null) => {
-    if (user) {
-      setUser({ ...user, profileImageUrl: imageUrl });
-    }
-  };
-
   const handleLogout = async () => {
     setShowLogoutModal(false);
     await authService.logout();
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p>로딩 중...</p>
-      </div>
-    );
+    return <Loading />;
   }
 
   if (!user) {
@@ -115,18 +164,20 @@ export default function MypageSetupForm() {
     <div className="relative bg-white min-h-screen">
       <Header title="마이페이지" backTo="/home" hideNotification={true} />
 
-      <div className="absolute top-[14px] right-[16px] z-50">
+      <div className="absolute top-3.5 right-4 z-50">
         <button onClick={() => setShowLogoutModal(true)} className="text-body-md text-gray-500 cursor-pointer">
           로그아웃
         </button>
       </div>
 
       <div className="flex justify-center min-h-screen bg-white">
-        <div className="relative w-[375px] bg-white min-h-screen flex flex-col">
+        <div className="relative w-93.75 bg-white min-h-screen flex flex-col">
           <div className="px-6 py-8 pb-28 flex flex-col gap-3">
             <ProfileImageButton
+              key={user.profileImageUrl || 'default'}
               profileImageUrl={user.profileImageUrl || user.image}
-              onImageUpdate={handleImageUpdate}
+              onImageChange={handleImageChange}
+              onImageDelete={handleImageDelete}
             />
 
             <div className="flex flex-col gap-2 mt-15">
@@ -147,14 +198,47 @@ export default function MypageSetupForm() {
           </div>
 
           <div className="fixed bottom-0 left-0 right-0 bg-white px-6 py-4 max-w-93.75 mx-auto">
-            <div className="flex justify-center items-center gap-[5px] mb-5 text-body-sm-rg text-gray-500">
+            <div className="flex justify-center items-center gap-1.25 mb-5 text-body-sm-rg text-gray-500">
               <span className="text-gray-500">캠퍼스폼</span>
               <span className="text-gray-700">|</span>
-              <span className="text-gray-700">이용약관</span>
+              <span
+                className="text-gray-700 cursor-pointer"
+                onClick={() =>
+                  window.open(
+                    'https://spiky-cheek-6cb.notion.site/2f498732e20180f38b55ec4cf97b123c?source=copy_link',
+                    '_blank',
+                    'noopener,noreferrer'
+                  )
+                }
+              >
+                이용약관
+              </span>
               <span className="text-gray-700">|</span>
-              <span className="text-gray-700">개인정보 처리방침</span>
+              <span
+                className="text-gray-700 cursor-pointer"
+                onClick={() =>
+                  window.open(
+                    'https://spiky-cheek-6cb.notion.site/2f498732e20180c88f2ec5d914a66119?source=copy_link',
+                    '_blank',
+                    'noopener,noreferrer'
+                  )
+                }
+              >
+                개인정보 처리방침
+              </span>
               <span className="text-gray-700">|</span>
-              <span className="text-gray-700">문의하기</span>
+              <span
+                className="text-gray-700 cursor-pointer"
+                onClick={() =>
+                  window.open(
+                    'https://spiky-cheek-6cb.notion.site/2d698732e20180f7a445cd866f5023dc?source=copy_link',
+                    '_blank',
+                    'noopener,noreferrer'
+                  )
+                }
+              >
+                문의하기
+              </span>
             </div>
 
             <Button variant="primary" size="lg" onClick={handleSave}>

@@ -3,31 +3,42 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useParams } from 'next/navigation';
 import ResultSelectionModal from '@/components/ui/ResultSelectionModal';
+import { useCurrentProjectStore } from '@/store/currentProjectStore';
 
 export default function Navbar() {
   const pathname = usePathname();
+  const projectId = useCurrentProjectStore(s => s.projectId);
 
   const isManage = pathname.startsWith('/manage');
   const isDocument = pathname.startsWith('/document');
   const isInterview = pathname.startsWith('/interview');
-  const isSchedule = pathname.startsWith('/schedule') || pathname.startsWith('/smart-schedule');
+  const isSchedule = pathname.startsWith('/smart-schedule');
   const isResult = pathname.startsWith('/result');
 
   const [isResultOpen, setIsResultOpen] = useState(false);
 
+  // ← 추가: projectId가 있으면 해당 경로로, 없으면 기본 경로로
+  const documentHref = projectId ? `/document/${projectId}` : '/document';
+  const interviewHref = projectId ? `/interview/${projectId}` : '/interview';
+
   return (
     <>
-      <nav className="fixed bottom-0 left-0 w-full h-16.25 bg-white z-50 text-10">
+      <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-93.75 h-16.25 bg-white z-50 text-10">
         <div className="relative h-full">
-          <div className="grid grid-cols-5 items-center h-full mx-auto w-fit">
-            <Link href="/manage" className="flex flex-col items-center gap-2.25 px-6 py-2.25">
+          <div className="grid grid-cols-5 items-center h-full w-full">
+            <Link
+              href={projectId ? `/manage/${projectId}` : '/manage'}
+              className="flex flex-col items-center gap-2.25 px-6 py-2.25"
+            >
               <Image src={isManage ? '/icons/tool.svg' : '/icons/tool-off.svg'} alt="관리" width={24} height={24} />
               <span className={isManage ? 'text-black' : 'text-gray-500'}>관리</span>
             </Link>
 
-            <Link href="/document" className="flex flex-col items-center gap-2.25 px-6 py-2.25">
+            <Link href={documentHref} className="flex flex-col items-center gap-2.25 px-6 py-2.25">
+              {' '}
+              {/* ← 수정 */}
               <Image
                 src={isDocument ? '/icons/document.svg' : '/icons/document-off.svg'}
                 alt="서류"
@@ -38,7 +49,9 @@ export default function Navbar() {
             </Link>
             <div />
 
-            <Link href="/interview" className="flex flex-col items-center gap-2.25 px-6 py-2.25">
+            <Link href={interviewHref} className="flex flex-col items-center gap-2.25 px-6 py-2.25">
+              {' '}
+              {/* ← 수정 */}
               <Image
                 src={isInterview ? '/icons/interview.svg' : '/icons/interview-off.svg'}
                 alt="면접"

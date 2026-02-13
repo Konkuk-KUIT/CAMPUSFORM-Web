@@ -3,10 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ProfileImageButton from '@/components/auth/ProfileImageButton';
+import TermsCheckbox from '@/components/auth/TermsCheckbox';
 import Button from '@/components/ui/Btn';
 import Textbox from '@/components/ui/Textbox';
 import { authService } from '@/services/authService';
 import type { User } from '@/types/auth';
+import Loading from '@/components/ui/Loading';
 
 export default function ProfileSetupForm() {
   const router = useRouter();
@@ -14,10 +16,17 @@ export default function ProfileSetupForm() {
   const [isLoading, setIsLoading] = useState(true);
   const [nickname, setNickname] = useState('');
   const [nicknameError, setNicknameError] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [shouldDeleteImage, setShouldDeleteImage] = useState(false);
+
+  // 약관 동의 상태
+  const [termsAgreed, setTermsAgreed] = useState(false);
+  const [privacyAgreed, setPrivacyAgreed] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
+        // 1. 먼저 현재 사용자 확인 (인증 여부 + 이메일 얻기)
         const authResponse = await authService.getCurrentUser();
 
         if (!authResponse.isAuthenticated || !authResponse.user) {
@@ -25,8 +34,20 @@ export default function ProfileSetupForm() {
           return;
         }
 
-        setUser(authResponse.user);
-        setNickname(authResponse.user.nickname || '');
+        // 2. /users/exists 정보 가져오기
+        const userDetail = await authService.getUserDetailByEmail(authResponse.user.email);
+
+        // 3. User 타입에 맞게 변환
+        const fullUser: User = {
+          userId: userDetail.userId,
+          nickname: userDetail.nickname,
+          email: userDetail.email,
+          profileImageUrl: userDetail.profileImageUrl,
+          image: userDetail.profileImageUrl,
+        };
+
+        setUser(fullUser);
+        setNickname(userDetail.nickname);
       } catch (error) {
         console.error('Failed to fetch user:', error);
         router.push('/auth/login');
@@ -58,7 +79,23 @@ export default function ProfileSetupForm() {
     return true;
   };
 
+  const handleImageChange = (file: File | null) => {
+    setImageFile(file);
+    setShouldDeleteImage(false);
+  };
+
+  const handleImageDelete = () => {
+    setImageFile(null);
+    setShouldDeleteImage(true);
+  };
+
   const handleSignup = async () => {
+    // 약관 동의 검증
+    if (!termsAgreed || !privacyAgreed) {
+      alert('필수 약관에 모두 동의해주세요.');
+      return;
+    }
+
     if (!validateNickname()) {
       return;
     }
@@ -66,11 +103,25 @@ export default function ProfileSetupForm() {
     setNicknameError(false);
 
     try {
-      await authService.updateNickname(nickname);
+      // 1. 이미지 삭제 요청이 있으면 삭제
+      if (shouldDeleteImage && user?.profileImageUrl) {
+        await authService.deleteProfileImage();
+      }
+
+      // 2. 새 이미지가 있으면 업로드
+      if (imageFile) {
+        await authService.updateProfileImage(imageFile);
+      }
+
+      // 3. 닉네임 변경
+      if (nickname && nickname !== user?.nickname) {
+        await authService.updateNickname(nickname);
+      }
+
       router.push('/home');
     } catch (error) {
-      console.error('Failed to update nickname:', error);
-      alert('닉네임 저장에 실패했습니다. 다시 시도해주세요.');
+      console.error('Failed to save profile:', error);
+      alert('프로필 저장에 실패했습니다. 다시 시도해주세요.');
     }
   };
 
@@ -81,18 +132,8 @@ export default function ProfileSetupForm() {
     }
   };
 
-  const handleImageUpdate = (imageUrl: string | null) => {
-    if (user) {
-      setUser({ ...user, profileImageUrl: imageUrl });
-    }
-  };
-
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p>로딩 중...</p>
-      </div>
-    );
+    return <Loading />;
   }
 
   if (!user) {
@@ -101,9 +142,13 @@ export default function ProfileSetupForm() {
 
   return (
     <div className="flex justify-center min-h-screen bg-white">
-      <div className="relative w-[375px] bg-white min-h-screen flex flex-col">
+      <div className="relative w-93.75 bg-white min-h-screen flex flex-col">
         <div className="px-6 py-8 pb-28 flex flex-col gap-3">
-          <ProfileImageButton profileImageUrl={user.profileImageUrl || user.image} onImageUpdate={handleImageUpdate} />
+          <ProfileImageButton
+            profileImageUrl={user.profileImageUrl || user.image}
+            onImageChange={handleImageChange}
+            onImageDelete={handleImageDelete}
+          />
 
           <div className="flex flex-col gap-2 mt-15">
             <label className="text-subtitle-sm-md pl-2">이름(닉네임)</label>
@@ -122,8 +167,28 @@ export default function ProfileSetupForm() {
           </div>
         </div>
 
+        {/* 약관 동의 + 버튼을 하단 고정 영역으로 이동 */}
         <div className="fixed bottom-0 left-0 right-0 bg-white px-6 py-4 max-w-93.75 mx-auto">
-          <Button variant="primary" size="lg" onClick={handleSignup}>
+          <div className="flex flex-col gap-3 mb-4">
+            <TermsCheckbox
+              label=""
+              linkText="이용약관"
+              linkUrl="https://www.notion.so/your-terms-of-service-link"
+              isRequired={true}
+              checked={termsAgreed}
+              onChange={setTermsAgreed}
+            />
+            <TermsCheckbox
+              label=""
+              linkText="개인정보 처리방침"
+              linkUrl="https://www.notion.so/your-privacy-policy-link"
+              isRequired={true}
+              checked={privacyAgreed}
+              onChange={setPrivacyAgreed}
+            />
+          </div>
+
+          <Button variant="primary" size="lg" onClick={handleSignup} disabled={!termsAgreed || !privacyAgreed}>
             가입 완료
           </Button>
         </div>

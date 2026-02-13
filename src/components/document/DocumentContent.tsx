@@ -1,154 +1,227 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import PullToRefresh from '@/components/PullToRefresh';
 import TopTab from '@/components/ui/TopTab';
 import SearchBar from '@/components/form/SearchBar';
-import ApplicantFileCard from '@/components/ui/ApplicantFile';
+import ApplicantFileCard from '@/components/ui/ApplicantFileCard';
 import BottomSheet from '@/components/ui/BottomSheet';
 import BtnRound from '@/components/ui/BtnRound';
-import InputComment from '@/components/ui/InputComment';
-import Reply from '@/components/ui/Reply';
-import { mockApplicants } from '@/data/applicants';
-import { mockComments } from '@/data/comments';
+import CommentSection from '@/components/sections/CommentSection';
+import Loading from '@/components/ui/Loading';
+import { toast } from '@/components/Toast';
+import { applicantService } from '@/services/applicantService';
+import { authService } from '@/services/authService';
+import { projectService } from '@/services/projectService';
+import type { Applicant, ApplicantRaw } from '@/types/applicant';
 
-export default function DocumentContent() {
+const statusMap: Record<string, '보류' | '합격' | '불합격'> = {
+  HOLD: '보류',
+  PASS: '합격',
+  FAIL: '불합격',
+};
+
+const statusReverseMap: Record<string, string> = {
+  보류: 'HOLD',
+  합격: 'PASS',
+  불합격: 'FAIL',
+};
+
+const mapApplicant = (a: ApplicantRaw): Applicant => ({
+  applicantId: a.id,
+  name: a.name,
+  major: a.major,
+  university: a.school ?? '',
+  position: a.position ?? '',
+  gender: a.gender ?? '',
+  phoneNumber: a.phoneNumber ?? '',
+  email: a.email ?? '',
+  favorite: a.bookmarked,
+  status: statusMap[a.status] ?? '보류',
+  commentCount: a.commentCount,
+  answers: [],
+});
+
+export default function DocumentContent({ projectId }: { projectId: number }) {
   const [selectedTab, setSelectedTab] = useState<'전체' | '보류' | '합격' | '불합격'>('전체');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('name-asc');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isCommentOpen, setCommentOpen] = useState(false);
-  const [selectedApplicantId, setSelectedApplicantId] = useState<string>('');
   const [selectedPosition, setSelectedPosition] = useState<string>('전체');
-  const [favorites, setFavorites] = useState<Set<string>>(new Set());
-  const [applicants, setApplicants] = useState(mockApplicants);
-  const [comments, setComments] = useState(mockComments);
+  const [favorites, setFavorites] = useState<Set<number>>(new Set());
+  const [selectedApplicantId, setSelectedApplicantId] = useState<number>(0);
+  const [applicants, setApplicants] = useState<Applicant[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState(true);
 
-   // 새로고침 핸들러
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      const auth = await authService.getCurrentUser();
+      if (auth.isAuthenticated && auth.user) {
+        setCurrentUserId(auth.user.userId);
+      }
+    };
+    fetchCurrentUser();
+  }, []);
+
+  useEffect(() => {
+    const fetchApplicants = async () => {
+      try {
+        setIsLoading(true);
+        await projectService.syncSheet(projectId);
+        const res = await applicantService.getApplicants(projectId, 'DOCUMENT');
+        const mappedApplicants = res.applicants.map(mapApplicant);
+        setApplicants(mappedApplicants);
+        setFavorites(new Set(mappedApplicants.filter(a => a.favorite).map(a => a.applicantId)));
+      } catch (e) {
+        console.error('지원자 목록 조회 실패:', e);
+        toast.error('지원자 목록을 불러오지 못했습니다.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchApplicants();
+  }, [projectId]);
+
   const handleRefresh = async () => {
-    // 실제로는 API 호출 등을 수행
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    // 데이터 다시 불러오기
-    setApplicants([...mockApplicants]);
+    try {
+      const res = await applicantService.getApplicants(projectId, 'DOCUMENT');
+      const mappedApplicants = res.applicants.map(mapApplicant);
+      setApplicants(mappedApplicants);
+      setFavorites(new Set(mappedApplicants.filter(a => a.favorite).map(a => a.applicantId)));
+    } catch (e) {
+      console.error('지원자 목록 조회 실패:', e);
+      toast.error('지원자 목록을 불러오지 못했습니다.');
+    }
   };
 
-  // 포지션 목록 추출
+  const handleStatusChange = async (applicantId: number, newStatus: '보류' | '합격' | '불합격') => {
+    try {
+      await applicantService.updateStatus(projectId, applicantId, 'DOCUMENT', statusReverseMap[newStatus]);
+      setApplicants(prev => prev.map(a => (a.applicantId === applicantId ? { ...a, status: newStatus } : a)));
+    } catch (e) {
+      console.error('상태 변경 실패:', e);
+      toast.error('상태 변경에 실패했습니다.');
+    }
+  };
+
   const positions = useMemo(() => {
-    const uniquePositions = Array.from(new Set(applicants.map((a) => a.position)));
+    const uniquePositions = Array.from(new Set(applicants.map(a => a.position)));
     return ['전체', ...uniquePositions];
   }, [applicants]);
 
-  // 필터링 및 정렬된 지원자 목록
   const filteredApplicants = useMemo(() => {
     let result = [...applicants];
 
-    // 탭 필터링
     if (selectedTab !== '전체') {
-      result = result.filter((a) => a.status === selectedTab);
+      result = result.filter(a => a.status === selectedTab);
     }
 
-    // 검색 필터링
     if (searchQuery) {
-      result = result.filter((a) => a.name.toLowerCase().includes(searchQuery.toLowerCase()));
+      result = result.filter(a => a.name.toLowerCase().includes(searchQuery.toLowerCase()));
     }
 
-    // 포지션 필터링
     if (selectedPosition !== '전체') {
-      result = result.filter((a) => a.position === selectedPosition);
+      result = result.filter(a => a.position === selectedPosition);
     }
 
-    // 정렬
     result.sort((a, b) => {
       switch (sortBy) {
         case 'name-asc':
           return a.name.localeCompare(b.name, 'ko');
         case 'name-desc':
           return b.name.localeCompare(a.name, 'ko');
+        case 'star':
+          return (favorites.has(b.applicantId) ? 1 : 0) - (favorites.has(a.applicantId) ? 1 : 0);
         default:
           return 0;
       }
     });
 
     return result;
-  }, [applicants, selectedTab, searchQuery, selectedPosition, sortBy]);
+  }, [applicants, selectedTab, searchQuery, selectedPosition, sortBy, favorites]);
 
-  // 탭별 개수 계산
   const counts = useMemo(
     () => ({
       전체: applicants.length,
-      보류: applicants.filter((a) => a.status === '보류').length,
-      합격: applicants.filter((a) => a.status === '합격').length,
-      불합격: applicants.filter((a) => a.status === '불합격').length,
+      보류: applicants.filter(a => a.status === '보류').length,
+      합격: applicants.filter(a => a.status === '합격').length,
+      불합격: applicants.filter(a => a.status === '불합격').length,
     }),
     [applicants]
   );
 
-  // 선택된 지원자의 댓글 가져오기
-  const selectedApplicantComments = useMemo(() => {
-    return comments.filter((c) => c.applicantId === selectedApplicantId);
-  }, [comments, selectedApplicantId]);
-
-  // 댓글 열기 핸들러
-  const handleCommentClick = (applicantId: string) => {
+  const handleCommentClick = (applicantId: number) => {
     setSelectedApplicantId(applicantId);
     setCommentOpen(true);
   };
 
-  // 즐겨찾기 토글 핸들러
-  const handleToggleFavorite = (applicantId: string) => {
-    setFavorites((prev) => {
-      const newFavorites = new Set(prev);
-      if (newFavorites.has(applicantId)) {
-        newFavorites.delete(applicantId);
-      } else {
-        newFavorites.add(applicantId);
-      }
-      return newFavorites;
-    });
+  const handleToggleFavorite = async (applicantId: number) => {
+    try {
+      await applicantService.toggleBookmark(projectId, applicantId, 'DOCUMENT');
+      setFavorites(prev => {
+        const newFavorites = new Set(prev);
+        if (newFavorites.has(applicantId)) {
+          newFavorites.delete(applicantId);
+        } else {
+          newFavorites.add(applicantId);
+        }
+        return newFavorites;
+      });
+    } catch (e) {
+      console.error('즐겨찾기 토글 실패:', e);
+      toast.error('즐겨찾기 변경에 실패했습니다.');
+    }
   };
 
   return (
-    <PullToRefresh onRefresh={handleRefresh}>
-      {/* 상단 탭 */}
-      <TopTab counts={counts} onTabChange={setSelectedTab} />
-
-      {/* 검색 / 필터 */}
-      <SearchBar
-        placeholder="지원자의 이름을 검색하세요."
-        onSearch={setSearchQuery}
-        onFilterClick={() => setIsFilterOpen(true)}
-        showSort={true}
-        sortValue={sortBy}
-        onSortChange={setSortBy}
-      />
-
-      {/* 리스트 */}
-      <div className="flex-1 overflow-y-auto px-4 py-1 pb-20">
-        {filteredApplicants.length === 0 ? (
-          <div className="text-center py-8 text-gray-400">검색 결과가 없습니다.</div>
-        ) : (
-          filteredApplicants.map((applicant) => (
-            <ApplicantFileCard
-              key={applicant.id}
-              id={applicant.id}
-              name={applicant.name}
-              info={`${applicant.university} / ${applicant.major} / ${applicant.position}`}
-              initialStatus={applicant.status}
-              commentCount={applicant.commentCount}
-              isFavorite={favorites.has(applicant.id)}
-              onToggleFavorite={() => handleToggleFavorite(applicant.id)}
-              onCommentClick={() => handleCommentClick(applicant.id)}
-            />
-          ))
-        )}
+    <div className="h-full flex flex-col">
+      <div className="flex-shrink-0">
+        <TopTab counts={counts} onTabChange={setSelectedTab} />
+        <SearchBar
+          placeholder="지원자의 이름을 검색하세요."
+          onSearch={setSearchQuery}
+          onFilterClick={() => setIsFilterOpen(true)}
+          showSort={true}
+          sortValue={sortBy}
+          onSortChange={setSortBy}
+        />
       </div>
 
-      {/* 바텀시트 - 포지션 필터 */}
+      <PullToRefresh onRefresh={handleRefresh}>
+        <div className="px-4 py-1 pb-20">
+          {isLoading ? (
+            <div className="mt-20">
+              <Loading fullScreen={false} />
+            </div>
+          ) : filteredApplicants.length === 0 ? (
+            <div className="text-center py-8 text-gray-400">검색 결과가 없습니다.</div>
+          ) : (
+            filteredApplicants.map((applicant, index) => (
+              <ApplicantFileCard
+                key={applicant.applicantId ?? index}
+                href={`/document/${projectId}/${applicant.applicantId}`} // ✅ 수정
+                id={applicant.applicantId}
+                name={applicant.name}
+                info={[applicant.university, applicant.major, applicant.position].filter(Boolean).join(' / ')}
+                initialStatus={applicant.status}
+                commentCount={applicant.commentCount}
+                isFavorite={favorites.has(applicant.applicantId)}
+                onToggleFavorite={() => handleToggleFavorite(applicant.applicantId)}
+                onCommentClick={() => handleCommentClick(applicant.applicantId)}
+                onStatusChange={handleStatusChange}
+              />
+            ))
+          )}
+        </div>
+      </PullToRefresh>
+
       <BottomSheet isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)}>
         <h2 className="text-subtitle-md">지원 포지션</h2>
-
         <div className="mt-4 flex flex-wrap gap-2">
-          {positions.map((position) => (
+          {positions.map(position => (
             <BtnRound
               key={position}
               size="sm"
@@ -164,27 +237,14 @@ export default function DocumentContent() {
         </div>
       </BottomSheet>
 
-      {/* 바텀시트 - 댓글 */}
-      <BottomSheet isOpen={isCommentOpen} onClose={() => setCommentOpen(false)}>
-        <InputComment />
-        <div className="space-y-4 mt-4">
-          {selectedApplicantComments.length === 0 ? (
-            <p className="text-center text-gray-400 py-4">아직 댓글이 없습니다.</p>
-          ) : (
-            selectedApplicantComments.map((comment) => (
-              <Reply
-                key={comment.id}
-                id={comment.id}
-                author={comment.author}
-                content={comment.content}
-                createdAt={comment.createdAt}
-                isAuthor={comment.isAuthor}
-                replies={comment.replies}
-              />
-            ))
-          )}
-        </div>
-      </BottomSheet>
-    </PullToRefresh>
+      <CommentSection
+        isOpen={isCommentOpen}
+        onClose={() => setCommentOpen(false)}
+        projectId={projectId}
+        applicantId={selectedApplicantId}
+        stage="DOCUMENT"
+        currentUserId={currentUserId}
+      />
+    </div>
   );
 }

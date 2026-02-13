@@ -28,37 +28,34 @@ export default function DateRangePickerModal({
     }
   };
 
-  const handleConfirm = () => {
+  const handleClose = () => {
     onConfirm(startDate, endDate);
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg w-[375px]">
-        <div className="flex justify-between items-center p-4 border-b">
-          <h2 className="text-title">모집 기한 설정</h2>
-          <button onClick={onClose}>
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-lg w-75.75">
+        <div
+          className="flex justify-between items-center pt-4 px-4
+"
+        >
+          <h2 className="text-body-md">모집 기한 설정</h2>
+          <button onClick={handleClose}>
             <Image src="/icons/close.svg" alt="close" width={24} height={24} />
           </button>
         </div>
-        <div className="p-4">
+        <div className="p-3">
           <Calendar
+            variant="modal"
             selected={startDate}
             onDateChange={handleDateChange}
             startDate={startDate}
             endDate={endDate}
             selectsRange
             disableTodayHighlight
+            className="w-67.75"
           />
-        </div>
-        <div className="p-4 border-t">
-          <button
-            onClick={handleConfirm}
-            className="w-full bg-primary text-white py-3 rounded-lg"
-          >
-            확인
-          </button>
         </div>
       </div>
     </div>

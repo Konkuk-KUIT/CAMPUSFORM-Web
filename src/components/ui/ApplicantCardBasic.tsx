@@ -5,9 +5,9 @@ import Image from 'next/image';
 interface ApplicantCardProps {
   name: string;
   gender: string;
-  status: '합격' | '보류' | '불합격';
+  status: string;
   university: string;
-  phone: string;
+  phoneNumber: string;
   email: string;
   commentCount?: number;
   isFavorite?: boolean;
@@ -20,14 +20,14 @@ export default function ApplicantCard({
   gender,
   status,
   university,
-  phone,
+  phoneNumber,
   email,
   commentCount = 0,
   isFavorite = false,
   onToggleFavorite,
   onCommentClick,
 }: ApplicantCardProps) {
-  const statusColors = {
+  const statusColors: { [key: string]: string } = {
     합격: 'bg-point-green',
     보류: 'bg-point-yellow',
     불합격: 'bg-point-red',
@@ -51,17 +51,14 @@ export default function ApplicantCard({
       {/* 중단: 지원자 정보 */}
       <div className="flex flex-col gap-0.5 text-body-rg text-gray-950">
         <p>{university}</p>
-        <p>{phone}</p>
+        <p>{phoneNumber}</p>
 
         {/* 이메일 줄 + 댓글/즐겨찾기 */}
         <div className="flex items-center justify-between">
           <p>{email}</p>
 
           <div className="flex items-center gap-3">
-            <button
-              onClick={onCommentClick}
-              className="flex items-center gap-1 text-gray-300"
-            >
+            <button onClick={onCommentClick} className="flex items-center gap-1 text-gray-300">
               <Image src="/icons/comment.svg" alt="댓글" width={14} height={14} />
               <span className="text-body-xs">{commentCount}</span>
             </button>

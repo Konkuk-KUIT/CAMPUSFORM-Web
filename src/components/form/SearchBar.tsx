@@ -23,7 +23,7 @@ export default function SearchBar({
 }: SearchBarProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [lastRefreshTime, setLastRefreshTime] = useState<Date>(new Date());
-  const [elapsedMinutes, setElapsedMinutes] = useState(0);
+  const [timeText, setTimeText] = useState('0분 전');
 
   const sortOptions = [
     { id: 'name-asc', label: '이름 오름차순' },
@@ -31,13 +31,23 @@ export default function SearchBar({
     { id: 'star', label: '별표 순' },
   ];
 
-  // 새로고침 시간
+  // 새로고침 시간 계산 및 표시
   useEffect(() => {
-    const interval = setInterval(() => {
+    const updateElapsedTime = () => {
       const now = new Date();
-      const diff = Math.floor((now.getTime() - lastRefreshTime.getTime()) / 1000 / 60);
-      setElapsedMinutes(diff);
-    }, 60000);
+      const diffMs = now.getTime() - lastRefreshTime.getTime();
+      const diffMinutes = Math.floor(diffMs / 1000 / 60);
+
+      if (diffMinutes < 60) {
+        setTimeText(`${diffMinutes}분 전`);
+      } else {
+        const hours = Math.floor(diffMinutes / 60);
+        setTimeText(`${hours}시간 전`);
+      }
+    };
+
+    updateElapsedTime(); // 초기 실행
+    const interval = setInterval(updateElapsedTime, 60000); // 1분마다 업데이트
 
     return () => clearInterval(interval);
   }, [lastRefreshTime]);
@@ -49,7 +59,7 @@ export default function SearchBar({
 
   const handleRefresh = () => {
     setLastRefreshTime(new Date());
-    setElapsedMinutes(0);
+    setTimeText('0분 전');
     // TODO: 데이터 새로고침 로직
   };
 
@@ -74,13 +84,16 @@ export default function SearchBar({
       {/* 새로고침, 정렬 */}
       {showSort && (
         <div className="flex justify-between items-center px-4 py-1.5 relative">
-          <button onClick={handleRefresh} className="flex items-center gap-1 text-body-sm-rg text-gray-300">
+          <button
+            onClick={handleRefresh}
+            className="flex items-center gap-1 text-body-sm-rg text-gray-300 cursor-pointer"
+          >
             <Image src="/icons/arrow-refresh.svg" alt="새로고침" width={17} height={17} />
-            {elapsedMinutes}분 전
+            {timeText}
           </button>
 
           <button onClick={() => setIsOpen(!isOpen)} className="flex items-center text-body-sm text-gray-700">
-            정렬 방법
+            {sortOptions.find(opt => opt.id === sortValue)?.label ?? '정렬 방법'}
             <Image src="/icons/chevron-down.svg" alt="펼치기" width={15} height={15} />
           </button>
 
