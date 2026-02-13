@@ -9,7 +9,7 @@ export default async function ApplicantDetailPage({ params }: { params: Promise<
   return (
     <div className="h-screen flex flex-col bg-gray-50">
       {/* 고정 헤더 */}
-      <header className="flex-shrink-0 flex items-center justify-between h-12 px-4 bg-white">
+      <header className="shrink-0 flex items-center justify-between h-12 px-4 bg-white">
         <Link href="/document" className="w-6 h-6">
           <Image src="/icons/back.svg" alt="뒤로가기" width={24} height={24} />
         </Link>
