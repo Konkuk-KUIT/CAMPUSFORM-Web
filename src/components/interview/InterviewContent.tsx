@@ -10,7 +10,7 @@ import BtnRound from '@/components/ui/BtnRound';
 import CommentSection from '@/components/sections/CommentSection';
 import { mockInterviewApplicants } from '@/data/interviews';
 
-export default function InterviewContent() {
+export default function InterviewContent({ projectId }: { projectId: number }) {  // ← prop 추가
   const [selectedTab, setSelectedTab] = useState<'전체' | '보류' | '합격' | '불합격'>('전체');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('name-asc');
@@ -21,7 +21,6 @@ export default function InterviewContent() {
   const [favorites, setFavorites] = useState<Set<number>>(new Set());
   const [applicants, setApplicants] = useState(mockInterviewApplicants);
 
-  const projectId = 1;
   const currentUserId = 1;
 
   const handleRefresh = async () => {
