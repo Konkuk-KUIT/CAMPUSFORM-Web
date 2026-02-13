@@ -202,6 +202,7 @@ export default function DocumentContent({ projectId }: { projectId: number }) {
             filteredApplicants.map((applicant, index) => (
               <ApplicantFileCard
                 key={applicant.applicantId ?? index}
+                href={`/document/${projectId}/${applicant.applicantId}`} // ✅ 수정
                 id={applicant.applicantId}
                 name={applicant.name}
                 info={[applicant.university, applicant.major, applicant.position].filter(Boolean).join(' / ')}

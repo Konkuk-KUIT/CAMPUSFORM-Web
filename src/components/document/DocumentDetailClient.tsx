@@ -1,33 +1,89 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import PullToRefresh from '@/components/PullToRefresh';
 import ApplicantCardBasic from '@/components/ui/ApplicantCardBasic';
 import CommentSection from '@/components/sections/CommentSection';
 import QuestionSection from '@/components/document/QuestionSection';
-import { mockApplicants } from '@/data/applicants';
+import Loading from '@/components/ui/Loading';
+import { toast } from '@/components/Toast';
+import { applicantService } from '@/services/applicantService';
+import type { Applicant, ApplicantDetail, Stage } from '@/types/applicant';
 
 interface DocumentDetailClientProps {
   applicantId: number;
+  projectId: number;
+  stage: Stage;
 }
 
-export default function DocumentDetailClient({ applicantId }: DocumentDetailClientProps) {
-  const [applicant, setApplicant] = useState(mockApplicants.find(a => a.applicantId === applicantId));
+const statusMap: Record<string, string> = {
+  HOLD: '보류',
+  PASS: '합격',
+  FAIL: '불합격',
+};
+
+const mapApplicant = (data: ApplicantDetail): Applicant => ({
+  applicantId: data.applicantId,
+  name: data.name,
+  major: data.major,
+  university: data.school ?? '',
+  position: data.position ?? '',
+  gender: data.gender ?? '',
+  phoneNumber: data.phoneNumber ?? '',
+  email: data.email ?? '',
+  favorite: data.favorite,
+  status: statusMap[data.status] ?? '보류',
+  commentCount: 0, //TODO 서버
+  answers: data.answers ?? [],
+});
+
+export default function DocumentDetailClient({ applicantId, projectId, stage }: DocumentDetailClientProps) {
+  const [applicant, setApplicant] = useState<Applicant | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isCommentOpen, setCommentOpen] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
 
-  const projectId = 1;
   const currentUserId = 1;
 
-  const handleRefresh = async () => {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    const refreshedApplicant = mockApplicants.find(a => a.applicantId === applicantId);
-    setApplicant(refreshedApplicant);
+  const fetchApplicant = async () => {
+    try {
+      const data = await applicantService.getApplicant(projectId, applicantId, stage);
+      const mapped = mapApplicant(data);
+      setApplicant(mapped);
+      setIsFavorite(data.favorite);
+    } catch (error) {
+      console.error('지원자 조회 실패:', error);
+      toast.error('지원자 정보를 불러오지 못했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleToggleFavorite = () => {
-    setIsFavorite(prev => !prev);
+  useEffect(() => {
+    fetchApplicant();
+  }, [applicantId, projectId, stage]);
+
+  const handleRefresh = async () => {
+    try {
+      await fetchApplicant();
+    } catch {
+      toast.error('새로고침에 실패했습니다.');
+    }
   };
+
+  const handleToggleFavorite = async () => {
+    try {
+      await applicantService.toggleBookmark(projectId, applicantId, stage);
+      setIsFavorite(prev => !prev);
+    } catch (error) {
+      console.error('북마크 토글 실패:', error);
+      toast.error('즐겨찾기 변경에 실패했습니다.');
+    }
+  };
+
+  if (isLoading) {
+    return <Loading fullScreen={false} />;
+  }
 
   if (!applicant) {
     return (
@@ -41,7 +97,6 @@ export default function DocumentDetailClient({ applicantId }: DocumentDetailClie
     <div className="h-full flex flex-col">
       <PullToRefresh onRefresh={handleRefresh}>
         <div className="pb-20">
-          {/* 지원자 기본 정보 카드 */}
           <div className="p-4">
             <ApplicantCardBasic
               name={applicant.name}
@@ -57,31 +112,20 @@ export default function DocumentDetailClient({ applicantId }: DocumentDetailClie
             />
           </div>
 
-          {/* 질문 섹션들 */}
           <div className="p-4 mx-4 bg-white rounded-10">
-            <QuestionSection
-              title="지원동기"
-              content="요리에 대한 관심을 꾸준히 가져왔고, 기본기를 제대로 배우고 싶어 지원했습니다. 혼자 할 때보다 함께 조리하며 배우는 과정이 더 큰 동기부여가 된다고 생각합니다. 다양한 레시피를 시도해 보고 서로의 노하우를 나누며 실력을 키우고 싶습니다. 동아리 활동을 통해 배운 내용을 일상에서도 활용할 수 있을 것이라 기대합니다."
-            />
-
-            <QuestionSection
-              title="이 동아리에 참여하고 싶은 이유를 서술해주세요."
-              content="요리에 대한 관심을 꾸준히 가져왔고, 기본기를 제대로 배우고 싶어 지원했습니다. 혼자 할 때보다 함께 조리하며 배우는 과정이 더 큰 동기부여가 된다고 생각합니다. 다양한 레시피를 시도해 보고 서로의 노하우를 나누며 실력을 키우고 싶습니다. 동아리 활동을 통해 배운 내용을 일상에서도 활용할 수 있을 것이라 기대합니다."
-              maxLength={700}
-            />
-
-            <QuestionSection title="질문내용" content="질문답변" />
+            {applicant.answers.map((answer, index) => (
+              <QuestionSection key={index} title={answer.question} content={answer.answer} />
+            ))}
           </div>
         </div>
       </PullToRefresh>
 
-      {/* CommentSection */}
       <CommentSection
         isOpen={isCommentOpen}
         onClose={() => setCommentOpen(false)}
         projectId={projectId}
         applicantId={applicantId}
-        stage="DOCUMENT"
+        stage={stage}
         currentUserId={currentUserId}
       />
     </div>

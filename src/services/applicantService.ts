@@ -1,5 +1,5 @@
 import apiClient from '@/lib/api';
-import type { Applicant, ApplicantsRawResponse, Stage } from '@/types/applicant';
+import type { ApplicantDetail, ApplicantRaw, ApplicantsRawResponse, Stage } from '@/types/applicant';
 
 class ApplicantService {
   // GET : 지원자 목록 조회 (stage별 필터링)
@@ -11,8 +11,8 @@ class ApplicantService {
   }
 
   // GET : 특정 지원자 상세 조회
-  async getApplicant(projectId: number, applicantId: number, stage: Stage): Promise<Applicant> {
-    const response = await apiClient.get(`/projects/${projectId}/applicants/${applicantId}`, {
+  async getApplicant(projectId: number, applicantId: number, stage: Stage): Promise<ApplicantDetail> {
+    const response = await apiClient.get<ApplicantDetail>(`/projects/${projectId}/applicants/${applicantId}`, {
       params: { stage },
     });
     return response.data;

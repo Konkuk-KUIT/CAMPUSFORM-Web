@@ -7,6 +7,7 @@ import StatusDropdown from '@/components/ui/StatusDropdown';
 
 interface ApplicantFileCardProps {
   id: number;
+  href: string;
   name: string;
   info: string;
   initialStatus: string;
@@ -22,6 +23,7 @@ interface ApplicantFileCardProps {
 
 export default function ApplicantFileCard({
   id,
+  href,
   name,
   info,
   initialStatus,
@@ -43,7 +45,7 @@ export default function ApplicantFileCard({
 
   return (
     <div className="relative w-85.75 h-18.75 bg-white border-b border-gray-100 flex items-center first:border-t">
-      <Link href={`/interview/${id}`} className="flex flex-col flex-1">
+      <Link href={href} className="flex flex-col flex-1">
         <h3 className="text-subtitle-sm-md text-gray-950">{name}</h3>
         <p className="mt-1 text-body-rg text-gray-400">{info}</p>
         {appointmentDate && appointmentTime && (

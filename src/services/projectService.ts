@@ -34,8 +34,8 @@ class ProjectService {
 
   // GET : 프로젝트 목록 조회
   async getProjects(): Promise<Project[]> {
-    const response = await apiClient.get<Project[]>('/projects');
-    return response.data;
+    const response = await apiClient.get('/projects');
+    return Array.isArray(response.data) ? response.data : (response.data.projects ?? []);
   }
 
   // POST : 프로젝트 생성 (exchangeGoogleCode 완료 후 호출)
