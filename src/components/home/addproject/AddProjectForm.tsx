@@ -15,6 +15,7 @@ import { toast, ToastContainer } from '@/components/Toast';
 import { useNewProjectStore } from '@/store/newProjectStore';
 import { projectService } from '@/services/projectService';
 import { authService } from '@/services/authService';
+import { syncSheet } from '@/services/googleSheetService';
 
 interface Admin {
   id: number;
@@ -152,9 +153,11 @@ export default function AddProjectForm() {
         updatedForm as Parameters<typeof projectService.createProject>[0]
       );
 
+      await syncSheet(createdProject.id); // 추가
+
       setCreatedProjectId(createdProject.id);
       reset();
-      router.push('/document');
+      router.push(`/document/${createdProject.id}`);
     } catch (e) {
       console.error('프로젝트 생성 오류:', e);
       toast.error('프로젝트 생성에 실패했습니다.');
