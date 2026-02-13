@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import ReactDatePicker, { registerLocale } from "react-datepicker";
-import { ko } from "date-fns/locale";
-import "react-datepicker/dist/react-datepicker.css";
-import Image from "next/image";
-import clsx from "clsx";
+import { useState } from 'react';
+import ReactDatePicker, { registerLocale } from 'react-datepicker';
+import { ko } from 'date-fns/locale';
+import 'react-datepicker/dist/react-datepicker.css';
+import Image from 'next/image';
+import clsx from 'clsx';
 
-registerLocale("ko", ko);
+registerLocale('ko', ko);
 
 interface CalendarProps {
   selected?: Date | null;
@@ -17,9 +17,11 @@ interface CalendarProps {
   events?: Array<{ date: Date; title: string }>;
   selectsRange?: boolean;
   disableTodayHighlight?: boolean;
+  className?: string;
+  variant?: 'home' | 'modal';
 }
 
-export default function Calendar({ 
+export default function Calendar({
   selected,
   onDateChange,
   startDate,
@@ -27,6 +29,8 @@ export default function Calendar({
   events = [],
   selectsRange = false,
   disableTodayHighlight = false,
+  className,
+  variant = 'modal',
 }: CalendarProps) {
   const [currentDate, setCurrentDate] = useState<Date>(selected || startDate || new Date());
 
@@ -68,16 +72,13 @@ export default function Calendar({
     eventMap.get(key)?.push(title);
   });
 
-  const containerClasses = clsx(
-    "w-full flex flex-col items-center justify-center",
-    {
-      "calendar-no-today": disableTodayHighlight,
-    }
-  );
+  const containerClasses = clsx('w-full flex flex-col items-center justify-center', {
+    'calendar-no-today': disableTodayHighlight,
+  });
 
   return (
     <div className={containerClasses}>
-      <div className="w-[343px] mx-auto">
+      <div className={`${className ?? 'w-[343px]'} mx-auto`}>
         <style>{`
           .react-datepicker {
             border: none !important;
@@ -89,7 +90,7 @@ export default function Calendar({
           .react-datepicker__header {
             background: transparent !important;
             border: none !important;
-            padding: 0 0 15px 0 !important;
+            padding: 0 0 5px 0 !important;
             text-align: center !important;
             font-size: 14px !important;
             font-weight: 500 !important;
@@ -118,7 +119,7 @@ export default function Calendar({
             margin: 0 !important;
             font-size: 13px !important;
             color: var(--color-gray-400) !important;
-            font-weight: 500 !important;
+            font-weight: 400 !important;
             line-height: 32px !important;
             padding: 0 !important;
           }
@@ -127,27 +128,29 @@ export default function Calendar({
             grid-template-columns: repeat(7, 1fr) !important;
             width: 100% !important;
             gap: 0 !important;
-            margin-bottom: 3px !important;
+            margin-bottom: ${variant === 'home' ? '12px' : '8px'} !important;
           }
           .react-datepicker__day {
             width: 100% !important;
             margin: 0 !important;
             padding: 4px 0 !important;
             height: auto !important;
-            min-height: 45px !important;
+            min-height: ${variant === 'home' ? '45px' : '30px'} !important;
             display: flex !important;
             flex-direction: column !important;
             align-items: center !important;
             justify-content: flex-start !important;
             font-size: 14px !important;
-            color: var(--color-gray-950) !important;
+            font-weight: 400 !important;
+            line-height: 20px !important;
+            color: black !important;
             background: transparent !important;
             border: none !important;
             cursor: pointer !important;
             gap: 2px !important;
           }
           .react-datepicker__day--outside-month {
-            color: var(--color-gray-200);
+            color: var(--color-gray-400) !important;
           }
           .react-datepicker__day--today {
             background: transparent;
@@ -233,62 +236,59 @@ export default function Calendar({
         <ReactDatePicker
           key={`calendar-${currentDate.getFullYear()}-${currentDate.getMonth()}`}
           selected={selected}
-          onMonthChange={(date) => setCurrentDate(date)}
+          onMonthChange={date => setCurrentDate(date)}
           openToDate={currentDate}
           inline
           locale="ko"
           showMonthYearPicker={false}
           calendarClassName="w-full"
-          dayClassName={(date) => {
+          dayClassName={date => {
             const eventKey = date.toDateString();
             const dayEvents = eventMap.get(eventKey) || [];
             return dayEvents.length > 0 ? 'react-datepicker__day--has-event' : '';
           }}
           {...datePickerRangeProps}
-          {...(!selectsRange && !disableTodayHighlight && {
-            renderDayContents: (day: number, date?: Date) => {
-              if (!date) return day;
-              const eventKey = date.toDateString();
-              const dayEvents = eventMap.get(eventKey) || [];
-              const compareDate = new Date(date);
-              compareDate.setHours(0, 0, 0, 0);
-              const selectedDate = selected ? new Date(selected) : null;
-              if (selectedDate) {
-                selectedDate.setHours(0, 0, 0, 0);
-              }
-              const isSelected = selectedDate && compareDate.getTime() === selectedDate.getTime();
+          {...(!selectsRange &&
+            !disableTodayHighlight && {
+              renderDayContents: (day: number, date?: Date) => {
+                if (!date) return day;
+                const eventKey = date.toDateString();
+                const dayEvents = eventMap.get(eventKey) || [];
+                const compareDate = new Date(date);
+                compareDate.setHours(0, 0, 0, 0);
+                const selectedDate = selected ? new Date(selected) : null;
+                if (selectedDate) {
+                  selectedDate.setHours(0, 0, 0, 0);
+                }
+                const isSelected = selectedDate && compareDate.getTime() === selectedDate.getTime();
 
-              return (
-                <div className="flex flex-col items-center justify-start w-full h-full gap-[2px] pt-[4px]">
-                  <span className={`text-[14px] font-normal ${isSelected ? 'w-[24px] h-[24px] flex items-center justify-center rounded-full bg-[var(--color-primary)] text-white' : ''}`}>
-                    {day}
-                  </span>
-                  {dayEvents.length > 0 && (
-                    <div className="w-[40px] h-[14px] bg-blue-200 rounded-[2px] flex items-center justify-center px-[1px] py-[2px]">
-                      <span className="overflow-hidden text-gray-900 text-center text-ellipsis whitespace-nowrap text-[10px] font-normal leading-[17px] max-w-full">
-                        {dayEvents[0]}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              );
-            },
-          })}
+                return (
+                  <div className="flex flex-col items-center justify-start w-full h-full gap-[2px] pt-[4px]">
+                    <span
+                      className={`text-body-rg ${isSelected ? 'w-[24px] h-[24px] flex items-center justify-center rounded-full bg-primary text-white' : ''}`}
+                    >
+                      {day}
+                    </span>
+                    {dayEvents.length > 0 && (
+                      <div className="w-[40px] h-[14px] bg-blue-200 rounded-[2px] flex items-center justify-center px-[1px] py-[2px]">
+                        <span className="overflow-hidden text-gray-900 text-center text-ellipsis whitespace-nowrap text-[10px] font-normal leading-[17px] max-w-full">
+                          {dayEvents[0]}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                );
+              },
+            })}
           renderCustomHeader={({ date, decreaseMonth, increaseMonth }) => (
-            <div className="flex items-center justify-center gap-15 mb-[8px]">
-              <button
-                onClick={decreaseMonth}
-                className="w-[33px] h-[33px] flex items-center justify-center"
-              >
+            <div className="flex items-center justify-center gap-16">
+              <button onClick={decreaseMonth} className="w-[33px] h-[33px] flex items-center justify-center">
                 <Image src="/icons/back-gray.svg" alt="이전 월" width={33} height={33} />
               </button>
-              <div className="text-center text-[14px] font-medium text-gray-950">
+              <div className="text-center text-body-md text-gray-950">
                 {date.getFullYear()}년 {(date.getMonth() + 1).toString().padStart(2, '0')}월
               </div>
-              <button
-                onClick={increaseMonth}
-                className="w-[33px] h-[33px] flex items-center justify-center"
-              >
+              <button onClick={increaseMonth} className="w-[33px] h-[33px] flex items-center justify-center">
                 <Image src="/icons/back-gray.svg" alt="다음 월" width={33} height={33} className="rotate-180" />
               </button>
             </div>
