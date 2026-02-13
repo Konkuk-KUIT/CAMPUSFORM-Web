@@ -79,9 +79,15 @@ class ProjectService {
     await apiClient.post(`/projects/${projectId}/sync-sheet`);
   }
 
-  // 서류 단계 종료
+  // PATCH : 서류 단계 종료
   async completeDocument(projectId: number): Promise<Project> {
     const response = await apiClient.patch<Project>(`/recruiting/projects/${projectId}/complete-document`);
+    return response.data;
+  }
+
+  // PATCH : 면접 단계 종료 (프로젝트 전체 종료)
+  async completeAll(projectId: number): Promise<Project> {
+    const response = await apiClient.patch<Project>(`/recruiting/projects/${projectId}/complete-all`);
     return response.data;
   }
 }

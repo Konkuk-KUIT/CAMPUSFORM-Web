@@ -5,7 +5,7 @@ import Link from 'next/link';
 interface ConfirmModalProps {
   isOpen: boolean;
   onCancel: () => void;
-  onConfirm: () => void;  // ← Link 대신 콜백으로 변경
+  onConfirm: () => void;
 }
 
 export default function ConfirmModal({ isOpen, onCancel }: ConfirmModalProps) {

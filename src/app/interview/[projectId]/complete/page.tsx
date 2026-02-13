@@ -5,14 +5,12 @@ import Navbar from '@/components/Navbar';
 import Image from 'next/image';
 import Link from 'next/link';
 
-export default function InterviewCompletePage() {
-  // TODO: 실제 프로젝트 ID는 URL params나 전역 상태에서 가져와야 함
-  const projectId = 1; // 임시값
+export default async function InterviewCompletePage({ params }: { params: Promise<{ projectId: string }> }) {
+  const { projectId } = await params;
 
   return (
     <>
       <div className="min-h-screen flex flex-col">
-        {/* 헤더 */}
         <header className="flex items-center justify-between h-12 px-4 bg-white">
           <Link href="/interview/result" className="w-6 h-6">
             <Image src="/icons/back.svg" alt="뒤로가기" width={24} height={24} />
@@ -23,7 +21,6 @@ export default function InterviewCompletePage() {
           </button>
         </header>
 
-        {/* 메인 컨텐츠 */}
         <div className="flex-1 flex flex-col items-center justify-center px-4">
           <div className="mb-2">
             <Image src="/icons/celebration.svg" alt="축하" width={196} height={196} />
@@ -33,8 +30,7 @@ export default function InterviewCompletePage() {
           <p className="text-subtitle-md text-black text-center mb-8">긴 절차 동안 수고 많으셨어요</p>
         </div>
 
-        {/* 버튼 영역 */}
-        <InterviewCompleteButtons projectId={projectId} />
+        <InterviewCompleteButtons projectId={Number(projectId)} />
       </div>
       <Navbar />
     </>
