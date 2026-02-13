@@ -1,5 +1,11 @@
 import apiClient from '@/lib/api';
-import type { Project, ProjectAdmin, AddAdminResponse, CreateProjectRequest, AddAdminRequest } from '@/types/project';
+import type {
+  Project,
+  GetProjectAdminsResponse,
+  AddAdminResponse,
+  CreateProjectRequest,
+  AddAdminRequest,
+} from '@/types/project';
 
 class ProjectService {
   // GET : 구글 OAuth 동의 URL 조회
@@ -50,7 +56,7 @@ class ProjectService {
   }
 
   // GET : 관리자 목록 조회 (OWNER 제외하고 ADMIN만 반환)
-  async getProjectAdmins(projectId: number): Promise<{ admins: ProjectAdmin[] }> {
+  async getProjectAdmins(projectId: number): Promise<GetProjectAdminsResponse> {
     const response = await apiClient.get(`/projects/${projectId}/admins`);
     return response.data;
   }
