@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import HeaderNotification from '@/components/home/notification/HeaderNotification';
+import HeaderNotification from './HeaderNotification';
+import Link from 'next/link';
+import Image from 'next/image';
 import BtnRound from '@/components/ui/BtnRound';
 import NotificationCard from '@/components/home/notification/NotificationCard';
 
@@ -66,7 +68,16 @@ export default function NotificationForm() {
   return (
     <div className="flex justify-center min-h-screen bg-white">
       <div className="relative w-[375px] bg-white min-h-screen flex flex-col">
-        <HeaderNotification />
+        <HeaderNotification
+          title="알림"
+          backTo="/home"
+          hideNotification={true}
+          rightElement={
+            <Link href="/home/notification/setting" className="w-6 h-6 flex items-center justify-center">
+              <Image src="/icons/setting.svg" alt="설정" width={24} height={24} />
+            </Link>
+          }
+        />
 
         <div className="flex items-center justify-between px-5 py-3 bg-white sticky top-12 z-10">
           <div className="flex gap-2">

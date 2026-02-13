@@ -8,6 +8,7 @@ import AppointmentInfoButton from '@/components/ui/AppointmentInfoButton';
 
 interface ApplicantFileCardProps {
   id: number;
+  projectId: number;
   name: string;
   info: string;
   initialStatus: '보류' | '합격' | '불합격';
@@ -18,10 +19,12 @@ interface ApplicantFileCardProps {
   appointmentDate?: string;
   appointmentTime?: string;
   onAppointmentClick?: () => void;
+  onStatusChange?: (applicantId: number, newStatus: '보류' | '합격' | '불합격') => void;
 }
 
 export default function ApplicantFileCard({
   id,
+  projectId, 
   name,
   info,
   initialStatus,
@@ -32,6 +35,7 @@ export default function ApplicantFileCard({
   appointmentDate,
   appointmentTime,
   onAppointmentClick,
+  onStatusChange,
 }: ApplicantFileCardProps) {
   const [status, setStatus] = useState(initialStatus);
 
@@ -44,7 +48,7 @@ export default function ApplicantFileCard({
 
   return (
     <div className="relative w-85.75 h-18.75 bg-white border-b border-gray-100 flex items-center px-5 first:border-t">
-      <Link href={`/interview/${id}`} className="flex flex-col flex-1">
+      <Link href={`/interview/${projectId}/${id}`} className="flex flex-col flex-1">
         <div className="flex items-center gap-2.5">
           <h3 className="text-subtitle-sm-md text-gray-950">{name}</h3>
           {onAppointmentClick && (
@@ -55,7 +59,10 @@ export default function ApplicantFileCard({
       </Link>
 
       <div className="flex flex-col items-end gap-2">
-        <StatusDropdown value={status} onChange={setStatus} />
+        <StatusDropdown value={status} onChange={(newStatus) => {
+          setStatus(newStatus);
+          onStatusChange?.(id, newStatus);
+        }} />
 
         <div className="flex items-center gap-2.5 text-gray-300">
           <div className="flex items-center gap-1">

@@ -5,11 +5,11 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useParams } from 'next/navigation';
 import ResultSelectionModal from '@/components/ui/ResultSelectionModal';
+import { useCurrentProjectStore } from '@/store/currentProjectStore';
 
 export default function Navbar() {
   const pathname = usePathname();
-  const params = useParams();
-  const projectId = params?.projectId;
+  const projectId = useCurrentProjectStore(s => s.projectId);
 
   const isManage = pathname.startsWith('/manage');
   const isDocument = pathname.startsWith('/document');
@@ -18,6 +18,10 @@ export default function Navbar() {
   const isResult = pathname.startsWith('/result');
 
   const [isResultOpen, setIsResultOpen] = useState(false);
+
+  // ← 추가: projectId가 있으면 해당 경로로, 없으면 기본 경로로
+  const documentHref = projectId ? `/document/${projectId}` : '/document';
+  const interviewHref = projectId ? `/interview/${projectId}` : '/interview';
 
   return (
     <>
@@ -32,10 +36,9 @@ export default function Navbar() {
               <span className={isManage ? 'text-black' : 'text-gray-500'}>관리</span>
             </Link>
 
-            <Link
-              href={projectId ? `/document/${projectId}` : '/document'}
-              className="flex flex-col items-center gap-2.25 px-6 py-2.25"
-            >
+            <Link href={documentHref} className="flex flex-col items-center gap-2.25 px-6 py-2.25">
+              {' '}
+              {/* ← 수정 */}
               <Image
                 src={isDocument ? '/icons/document.svg' : '/icons/document-off.svg'}
                 alt="서류"
@@ -46,10 +49,9 @@ export default function Navbar() {
             </Link>
             <div />
 
-            <Link
-              href={projectId ? `/interview/${projectId}` : '/interview'}
-              className="flex flex-col items-center gap-2.25 px-6 py-2.25"
-            >
+            <Link href={interviewHref} className="flex flex-col items-center gap-2.25 px-6 py-2.25">
+              {' '}
+              {/* ← 수정 */}
               <Image
                 src={isInterview ? '/icons/interview.svg' : '/icons/interview-off.svg'}
                 alt="면접"

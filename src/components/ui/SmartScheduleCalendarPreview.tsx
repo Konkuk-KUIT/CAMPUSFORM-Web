@@ -91,6 +91,7 @@ export default function SmartScheduleCalendarPreview({
   showInterviewerView?: boolean;
   onShowInterviewerViewChange?: (value: boolean) => void;
 }) {
+  const [cellActive, setCellActive] = useState<{ [key: string]: { top: boolean; bottom: boolean } }>({});
   const [currentStartDate, setCurrentStartDate] = useState(new Date());
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date()); // 캘린더 모달 내부에서만 사용
@@ -215,15 +216,15 @@ export default function SmartScheduleCalendarPreview({
           {/* Calendar Header with gray background */}
           <div className="rounded-[10px] bg-gray-50 p-4 mt-3">
         {/* Header with month and calendar icon */}
-        <div className="flex items-center justify-center relative mb-[15px]">
+        <div className="flex items-center justify-center relative mb-[15px] gap-5 ml-8">
           <span className="text-[15px] font-medium leading-[20px] text-gray-950">{currentMonthYear}</span>
-          <button
-            onClick={() => setShowCalendarModal(!showCalendarModal)}
-            className="absolute right-0"
-            aria-label="날짜 선택"
-          >
-            <Image src="/icons/calendar-black.svg" alt="calendar" width={14.3} height={14.3} />
-          </button>
+            <button
+              onClick={() => setShowCalendarModal(!showCalendarModal)}
+              className="cursor-pointer"
+              aria-label="날짜 선택"
+            >
+              <Image src="/icons/calendar-black.svg" alt="calendar" width={14.3} height={14.3} />
+            </button>
         </div>
 
         {/* Navigation arrows and day headers */}
@@ -291,9 +292,14 @@ export default function SmartScheduleCalendarPreview({
                   let topColor: string;
                   let bottomColor: string;
 
+                  // 셀 활성/비활성 상태 적용 (interviewerName 있을 때만)
+                  const cellKey = `${dayIdx}-${timeIdx}`;
+                  const isTopActive = interviewerName ? (cellActive[cellKey]?.top ?? (topCount >= 1)) : undefined;
+                  const isBottomActive = interviewerName ? (cellActive[cellKey]?.bottom ?? (bottomCount >= 1)) : undefined;
+
                   if (interviewerName) {
-                    topColor = topCount >= 1 ? BLUE2 : GRAY1;
-                    bottomColor = bottomCount >= 1 ? BLUE2 : GRAY1;
+                    topColor = isTopActive ? BLUE2 : GRAY1;
+                    bottomColor = isBottomActive ? BLUE2 : GRAY1;
                   } else {
                     topColor = BLUE_COLORS[Math.min(topCount, 10)];
                     bottomColor = BLUE_COLORS[Math.min(bottomCount, 10)];
@@ -323,7 +329,18 @@ export default function SmartScheduleCalendarPreview({
                       {/* Top half - solid border */}
                       <div
                         className="flex-1 border-t border-white border-solid cursor-pointer hover:opacity-80"
-                        style={{ backgroundColor: topColor }}
+                        style={{ backgroundColor: topColor, cursor: 'pointer' }}
+                        onClick={() => {
+                          if (interviewerName) {
+                            setCellActive(prev => ({
+                              ...prev,
+                              [cellKey]: {
+                                top: !(prev[cellKey]?.top ?? (topCount >= 1)),
+                                bottom: prev[cellKey]?.bottom ?? (bottomCount >= 1),
+                              },
+                            }));
+                          }
+                        }}
                         onMouseEnter={() =>
                           !interviewerName && setHoveredCell({ day: dayIdx, time: timeIdx, half: 'top' })
                         }
@@ -332,9 +349,17 @@ export default function SmartScheduleCalendarPreview({
                       {/* Bottom half - dashed border */}
                       <div
                         className="flex-1 border-t border-white cursor-pointer hover:opacity-80"
-                        style={{
-                          backgroundColor: bottomColor,
-                          borderStyle: 'dashed',
+                        style={{ backgroundColor: bottomColor, borderStyle: 'dashed', cursor: 'pointer' }}
+                        onClick={() => {
+                          if (interviewerName) {
+                            setCellActive(prev => ({
+                              ...prev,
+                              [cellKey]: {
+                                top: prev[cellKey]?.top ?? (topCount >= 1),
+                                bottom: !(prev[cellKey]?.bottom ?? (bottomCount >= 1)),
+                              },
+                            }));
+                          }
                         }}
                         onMouseEnter={() =>
                           !interviewerName && setHoveredCell({ day: dayIdx, time: timeIdx, half: 'bottom' })
@@ -533,24 +558,25 @@ export default function SmartScheduleCalendarPreview({
                   d.getDate() === date.getDate()
                 );
                 
-                // 텍스트 색상 결정
-                let textColor = 'text-[#1f1f1f]'; // 기본 검정
+                // 텍스트 색상 결정 (Tailwind 기준)
+                let textColor = 'text-gray-900'; // 기본 검정
                 if (!isCurrentMonth) {
-                  textColor = 'text-[#888888]'; // 다른 달 = 회색
+                  textColor = 'text-gray-400'; // 다른 달 = 회색
                 } else if (isSelected && isInterviewDate) {
                   textColor = 'text-white'; // 선택됨 + 면접날짜 = 흰색
                 } else if (isSelected && !isInterviewDate) {
-                  textColor = 'text-[#1f1f1f]'; // 선택됨 + 면접날짜 아님 = 검정
+                  textColor = 'text-gray-900'; // 선택됨 + 면접날짜 아님 = 검정
                 } else if (!isSelected && isInterviewDate) {
-                  textColor = 'text-[#5a81fa]'; // 선택안됨 + 면접날짜 = 파랑
+                  textColor = 'text-primary'; // 선택안됨 + 면접날짜 = 파랑 (Tailwind에서 text-primary가 파랑으로 지정되어 있다고 가정)
                 }
                 
                 return (
                   <button
                     key={idx}
                     onClick={() => {
-                      setPendingDate(date);
-                      setShowConfirmDialog(true);
+                      setCurrentStartDate(date);
+                      setSelectedDate(date);
+                      setShowCalendarModal(false);
                     }}
                     className={`
                       h-[30px] flex items-center justify-center text-[14px] leading-[20px] relative
@@ -572,22 +598,7 @@ export default function SmartScheduleCalendarPreview({
         </div>
       )}
 
-      {/* Confirm Reset Dialog */}
-      <ConfirmResetDialog
-        isOpen={showConfirmDialog}
-        onClose={() => {
-          setShowConfirmDialog(false);
-          setPendingDate(null);
-        }}
-        onConfirm={() => {
-          if (pendingDate) {
-            setCurrentStartDate(pendingDate);
-            setSelectedDate(pendingDate);
-            setShowCalendarModal(false);
-            setPendingDate(null);
-          }
-        }}
-      />
+      {/* ConfirmResetDialog 제거: 날짜 선택 시 바로 변경 */}
     </div>
   );
 }
