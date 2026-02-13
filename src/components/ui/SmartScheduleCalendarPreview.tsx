@@ -558,24 +558,25 @@ export default function SmartScheduleCalendarPreview({
                   d.getDate() === date.getDate()
                 );
                 
-                // 텍스트 색상 결정
-                let textColor = 'text-[#1f1f1f]'; // 기본 검정
+                // 텍스트 색상 결정 (Tailwind 기준)
+                let textColor = 'text-gray-900'; // 기본 검정
                 if (!isCurrentMonth) {
-                  textColor = 'text-[#888888]'; // 다른 달 = 회색
+                  textColor = 'text-gray-400'; // 다른 달 = 회색
                 } else if (isSelected && isInterviewDate) {
                   textColor = 'text-white'; // 선택됨 + 면접날짜 = 흰색
                 } else if (isSelected && !isInterviewDate) {
-                  textColor = 'text-[#1f1f1f]'; // 선택됨 + 면접날짜 아님 = 검정
+                  textColor = 'text-gray-900'; // 선택됨 + 면접날짜 아님 = 검정
                 } else if (!isSelected && isInterviewDate) {
-                  textColor = 'text-[#5a81fa]'; // 선택안됨 + 면접날짜 = 파랑
+                  textColor = 'text-primary'; // 선택안됨 + 면접날짜 = 파랑 (Tailwind에서 text-primary가 파랑으로 지정되어 있다고 가정)
                 }
                 
                 return (
                   <button
                     key={idx}
                     onClick={() => {
-                      setPendingDate(date);
-                      setShowConfirmDialog(true);
+                      setCurrentStartDate(date);
+                      setSelectedDate(date);
+                      setShowCalendarModal(false);
                     }}
                     className={`
                       h-[30px] flex items-center justify-center text-[14px] leading-[20px] relative
@@ -597,22 +598,7 @@ export default function SmartScheduleCalendarPreview({
         </div>
       )}
 
-      {/* Confirm Reset Dialog */}
-      <ConfirmResetDialog
-        isOpen={showConfirmDialog}
-        onClose={() => {
-          setShowConfirmDialog(false);
-          setPendingDate(null);
-        }}
-        onConfirm={() => {
-          if (pendingDate) {
-            setCurrentStartDate(pendingDate);
-            setSelectedDate(pendingDate);
-            setShowCalendarModal(false);
-            setPendingDate(null);
-          }
-        }}
-      />
+      {/* ConfirmResetDialog 제거: 날짜 선택 시 바로 변경 */}
     </div>
   );
 }

@@ -7,11 +7,17 @@ import { useEffect } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Btn from '@/components/ui/Btn';
+import ConfirmResetDialog from '@/components/ui/ConfirmResetDialog';
 import AllAccordion from '@/components/ui/AllAccordion';
 import SmartScheduleButton from '@/components/ui/SmartScheduleButton';
 import SmartScheduleCalendarPreview from '@/components/ui/SmartScheduleCalendarPreview';
 
 export default function SmartScheduleMainForm() {
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const handleConfirm = () => {
+    setShowConfirmDialog(false);
+    router.push('/smart-schedule/result');
+  };
     const [mounted, setMounted] = useState(false);
     // useEffect to set mounted true after client hydration
     useEffect(() => {
@@ -146,7 +152,8 @@ export default function SmartScheduleMainForm() {
                         showProfiles={false}
                         showRequiredSection={true}
                         requiredInterviewer={requiredInterviewers[idx] || false}
-                        onRequiredInterviewerChange={(value) => setRequiredInterviewers(prev => ({ ...prev, [idx]: value }))} 
+                        onRequiredInterviewerChange={(value) => setRequiredInterviewers(prev => ({ ...prev, [idx]: value }))}
+                        interviewDates={interviewDates}
                       />
                     </div>
                   )}
@@ -212,7 +219,12 @@ export default function SmartScheduleMainForm() {
 
           {/* CTA Button */}
           <div className="fixed bottom-20 left-0 right-0 px-5 max-w-93.75 mx-auto">
-            <Btn variant="primary" size="lg" className="w-full">
+            <Btn
+              variant="primary"
+              size="lg"
+              className="w-full"
+              onClick={() => setShowConfirmDialog(true)}
+            >
               스마트 시간표 생성
             </Btn>
           </div>
