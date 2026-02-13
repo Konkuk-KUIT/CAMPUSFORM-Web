@@ -99,9 +99,7 @@ export default function ManageApplicationForm() {
 
       <div className="relative w-[375px] bg-white min-h-screen flex flex-col">
         <div className="flex items-center justify-between h-12 px-4 bg-white border-b border-gray-100">
-          <Link href="/home" className="w-6 h-6 flex items-center justify-center">
-            <Image src="/icons/logo.svg" alt="logo" width={21} height={22} />
-          </Link>
+          <Image src="/icons/logo.svg" alt="logo" width={21} height={22} />
           <span className="text-[15px] font-semibold text-gray-950">지원서 관리</span>
           <Link href="/home/notification" className="w-6 h-6 flex items-center justify-center">
             <Image src="/icons/alarm.svg" alt="alarm" width={18} height={18} />

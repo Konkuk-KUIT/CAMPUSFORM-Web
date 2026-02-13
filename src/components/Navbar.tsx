@@ -9,7 +9,7 @@ import ResultSelectionModal from '@/components/ui/ResultSelectionModal';
 export default function Navbar() {
   const pathname = usePathname();
 
-  const isManage = pathname.startsWith('/home/manage');
+  const isManage = pathname.startsWith('/manage');
   const isDocument = pathname.startsWith('/document');
   const isInterview = pathname.startsWith('/interview');
   const isSchedule = pathname.startsWith('/schedule') || pathname.startsWith('/smart-schedule');
@@ -22,8 +22,7 @@ export default function Navbar() {
       <nav className="fixed bottom-0 left-0 w-full h-16.25 bg-white z-50 text-10">
         <div className="relative h-full">
           <div className="grid grid-cols-5 items-center h-full mx-auto w-fit">
-            {/* '관리' 버튼을 /home/manage로 이동하도록 변경 및 선택 효과 적용 */}
-            <Link href="/home/manage" className="flex flex-col items-center gap-2.25 px-6 py-2.25">
+            <Link href="/manage" className="flex flex-col items-center gap-2.25 px-6 py-2.25">
               <Image src={isManage ? '/icons/tool.svg' : '/icons/tool-off.svg'} alt="관리" width={24} height={24} />
               <span className={isManage ? 'text-black' : 'text-gray-500'}>관리</span>
             </Link>
