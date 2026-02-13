@@ -228,6 +228,12 @@ export default function SmartScheduleMainForm() {
               스마트 시간표 생성
             </Btn>
           </div>
+                    {/* Confirm Reset Dialog for 스마트 시간표 생성 */}
+                    <ConfirmResetDialog
+                      isOpen={showConfirmDialog}
+                      onClose={() => setShowConfirmDialog(false)}
+                      onConfirm={handleConfirm}
+                    />
           
           {/* Spacer for fixed button */}
           <div className="h-32" />
