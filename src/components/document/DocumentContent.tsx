@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import PullToRefresh from '@/components/PullToRefresh';
 import TopTab from '@/components/ui/TopTab';
 import SearchBar from '@/components/form/SearchBar';
@@ -8,10 +8,41 @@ import ApplicantFileCard from '@/components/ui/ApplicantFileCard';
 import BottomSheet from '@/components/ui/BottomSheet';
 import BtnRound from '@/components/ui/BtnRound';
 import CommentSection from '@/components/sections/CommentSection';
-import { useNewProjectStore } from '@/store/newProjectStore';
-import { mockApplicants } from '@/data/applicants';
+import Loading from '@/components/ui/Loading';
+import { toast } from '@/components/Toast';
+import { applicantService } from '@/services/applicantService';
+import { authService } from '@/services/authService';
+import { projectService } from '@/services/projectService';
+import type { Applicant, ApplicantRaw } from '@/types/applicant';
 
-export default function DocumentContent() {
+const statusMap: Record<string, '보류' | '합격' | '불합격'> = {
+  HOLD: '보류',
+  PASS: '합격',
+  FAIL: '불합격',
+};
+
+const statusReverseMap: Record<string, string> = {
+  보류: 'HOLD',
+  합격: 'PASS',
+  불합격: 'FAIL',
+};
+
+const mapApplicant = (a: ApplicantRaw): Applicant => ({
+  applicantId: a.id,
+  name: a.name,
+  major: a.major,
+  university: a.school ?? '',
+  position: a.position ?? '',
+  gender: a.gender ?? '',
+  phoneNumber: a.phoneNumber ?? '',
+  email: a.email ?? '',
+  favorite: a.bookmarked,
+  status: statusMap[a.status] ?? '보류',
+  commentCount: a.commentCount,
+  answers: [],
+});
+
+export default function DocumentContent({ projectId }: { projectId: number }) {
   const [selectedTab, setSelectedTab] = useState<'전체' | '보류' | '합격' | '불합격'>('전체');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('name-asc');
@@ -20,15 +51,60 @@ export default function DocumentContent() {
   const [selectedPosition, setSelectedPosition] = useState<string>('전체');
   const [favorites, setFavorites] = useState<Set<number>>(new Set());
   const [selectedApplicantId, setSelectedApplicantId] = useState<number>(0);
-  const [applicants, setApplicants] = useState(mockApplicants);
-  const { createdProjectId } = useNewProjectStore();
+  const [applicants, setApplicants] = useState<Applicant[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const projectId = createdProjectId ?? 1;
-  const currentUserId = 1;
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      const auth = await authService.getCurrentUser();
+      if (auth.isAuthenticated && auth.user) {
+        setCurrentUserId(auth.user.userId);
+      }
+    };
+    fetchCurrentUser();
+  }, []);
+
+  useEffect(() => {
+    const fetchApplicants = async () => {
+      try {
+        setIsLoading(true);
+        await projectService.syncSheet(projectId);
+        const res = await applicantService.getApplicants(projectId, 'DOCUMENT');
+        const mappedApplicants = res.applicants.map(mapApplicant);
+        setApplicants(mappedApplicants);
+        setFavorites(new Set(mappedApplicants.filter(a => a.favorite).map(a => a.applicantId)));
+      } catch (e) {
+        console.error('지원자 목록 조회 실패:', e);
+        toast.error('지원자 목록을 불러오지 못했습니다.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchApplicants();
+  }, [projectId]);
 
   const handleRefresh = async () => {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setApplicants([...mockApplicants]);
+    try {
+      const res = await applicantService.getApplicants(projectId, 'DOCUMENT');
+      const mappedApplicants = res.applicants.map(mapApplicant);
+      setApplicants(mappedApplicants);
+      setFavorites(new Set(mappedApplicants.filter(a => a.favorite).map(a => a.applicantId)));
+    } catch (e) {
+      console.error('지원자 목록 조회 실패:', e);
+      toast.error('지원자 목록을 불러오지 못했습니다.');
+    }
+  };
+
+  const handleStatusChange = async (applicantId: number, newStatus: '보류' | '합격' | '불합격') => {
+    try {
+      await applicantService.updateStatus(projectId, applicantId, 'DOCUMENT', statusReverseMap[newStatus]);
+      setApplicants(prev => prev.map(a => (a.applicantId === applicantId ? { ...a, status: newStatus } : a)));
+    } catch (e) {
+      console.error('상태 변경 실패:', e);
+      toast.error('상태 변경에 실패했습니다.');
+    }
   };
 
   const positions = useMemo(() => {
@@ -80,21 +156,26 @@ export default function DocumentContent() {
     setCommentOpen(true);
   };
 
-  const handleToggleFavorite = (applicantId: number) => {
-    setFavorites(prev => {
-      const newFavorites = new Set(prev);
-      if (newFavorites.has(applicantId)) {
-        newFavorites.delete(applicantId);
-      } else {
-        newFavorites.add(applicantId);
-      }
-      return newFavorites;
-    });
+  const handleToggleFavorite = async (applicantId: number) => {
+    try {
+      await applicantService.toggleBookmark(projectId, applicantId, 'DOCUMENT');
+      setFavorites(prev => {
+        const newFavorites = new Set(prev);
+        if (newFavorites.has(applicantId)) {
+          newFavorites.delete(applicantId);
+        } else {
+          newFavorites.add(applicantId);
+        }
+        return newFavorites;
+      });
+    } catch (e) {
+      console.error('즐겨찾기 토글 실패:', e);
+      toast.error('즐겨찾기 변경에 실패했습니다.');
+    }
   };
 
   return (
     <div className="h-full flex flex-col">
-      {/* 고정 영역 */}
       <div className="flex-shrink-0">
         <TopTab counts={counts} onTabChange={setSelectedTab} />
         <SearchBar
@@ -107,30 +188,33 @@ export default function DocumentContent() {
         />
       </div>
 
-      {/* 스크롤 가능 영역 */}
       <PullToRefresh onRefresh={handleRefresh}>
         <div className="px-4 py-1 pb-20">
-          {filteredApplicants.length === 0 ? (
+          {isLoading ? (
+            <div className="mt-20">
+              <Loading fullScreen={false} />
+            </div>
+          ) : filteredApplicants.length === 0 ? (
             <div className="text-center py-8 text-gray-400">검색 결과가 없습니다.</div>
           ) : (
-            filteredApplicants.map(applicant => (
+            filteredApplicants.map((applicant, index) => (
               <ApplicantFileCard
-                key={applicant.applicantId}
+                key={applicant.applicantId ?? index}
                 id={applicant.applicantId}
                 name={applicant.name}
-                info={`${applicant.university} / ${applicant.major} / ${applicant.position}`}
+                info={[applicant.university, applicant.major, applicant.position].filter(Boolean).join(' / ')}
                 initialStatus={applicant.status}
                 commentCount={applicant.commentCount}
                 isFavorite={favorites.has(applicant.applicantId)}
                 onToggleFavorite={() => handleToggleFavorite(applicant.applicantId)}
                 onCommentClick={() => handleCommentClick(applicant.applicantId)}
+                onStatusChange={handleStatusChange}
               />
             ))
           )}
         </div>
       </PullToRefresh>
 
-      {/* 바텀시트 */}
       <BottomSheet isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)}>
         <h2 className="text-subtitle-md">지원 포지션</h2>
         <div className="mt-4 flex flex-wrap gap-2">
@@ -150,7 +234,6 @@ export default function DocumentContent() {
         </div>
       </BottomSheet>
 
-      {/* 댓글 섹션 */}
       <CommentSection
         isOpen={isCommentOpen}
         onClose={() => setCommentOpen(false)}

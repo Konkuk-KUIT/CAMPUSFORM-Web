@@ -2,14 +2,13 @@ import DocumentContent from '@/components/document/DocumentContent';
 import DocumentHeader from '@/components/ui/DocumentHeader';
 import Navbar from '@/components/Navbar';
 
-// 서류 지원자 관리 페이지
-export default function DocumentListPage() {
+export default async function DocumentListPage({ params }: { params: Promise<{ projectId: string }> }) {
+  const { projectId } = await params;
+
   return (
-    <div className="">
+    <div>
       <DocumentHeader />
-      <div className="">
-        <DocumentContent />
-      </div>
+      <DocumentContent projectId={Number(projectId)} />
       <Navbar />
     </div>
   );
