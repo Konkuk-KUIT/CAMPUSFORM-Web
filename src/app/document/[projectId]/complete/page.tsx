@@ -5,7 +5,9 @@ import Navbar from '@/components/Navbar';
 import Image from 'next/image';
 import Link from 'next/link';
 
-export default function DocumentCompletePage() {
+export default async function DocumentCompletePage({ params }: { params: Promise<{ projectId: string }> }) {
+  const { projectId } = await params;
+
   return (
     <>
       <div className="min-h-screen flex flex-col">
@@ -31,7 +33,7 @@ export default function DocumentCompletePage() {
         </div>
 
         {/* 버튼 영역 */}
-        <DocumentCompleteButtons />
+        <DocumentCompleteButtons projectId={Number(projectId)} />
       </div>
       <Navbar />
     </>

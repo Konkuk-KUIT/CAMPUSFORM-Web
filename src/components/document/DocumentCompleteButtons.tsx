@@ -7,13 +7,13 @@ import ConfirmModal from '@/components/document/ConfirmModal';
 import { projectService } from '@/services/projectService';
 import { useCurrentProjectStore } from '@/store/currentProjectStore';
 
-export default function DocumentCompleteButtons() {
+export default function DocumentCompleteButtons({ projectId }: { projectId: number }) {
   const router = useRouter();
-  const projectId = useCurrentProjectStore(s => s.projectId);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleConfirm = async () => {
+    console.log('projectId:', projectId);
     if (!projectId) return;
     try {
       setIsLoading(true);
