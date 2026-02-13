@@ -28,7 +28,7 @@ export default function StatusDropdown({ value, onChange }: StatusDropdownProps)
     { value: '보류', label: '보류', color: 'bg-gray-400' },
   ];
 
-  const selectedOption = options.find(opt => opt.value === selected)!;
+  const selectedOption = options.find(opt => opt.value === selected) ?? options[2];
 
   const handleSelect = (newValue: StatusType) => {
     if (onChange) {

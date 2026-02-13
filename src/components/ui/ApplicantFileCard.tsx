@@ -14,6 +14,7 @@ interface ApplicantFileCardProps {
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
   onCommentClick?: () => void;
+  onStatusChange?: (id: number, newStatus: '보류' | '합격' | '불합격') => void;
   appointmentDate?: string;
   appointmentTime?: string;
   onAppointmentClick?: () => void;
@@ -28,17 +29,23 @@ export default function ApplicantFileCard({
   isFavorite = false,
   onToggleFavorite,
   onCommentClick,
+  onStatusChange,
   appointmentDate,
   appointmentTime,
   onAppointmentClick,
 }: ApplicantFileCardProps) {
   const [status, setStatus] = useState(initialStatus as '보류' | '합격' | '불합격');
 
+  const handleStatusChange = (newStatus: '보류' | '합격' | '불합격') => {
+    setStatus(newStatus);
+    onStatusChange?.(id, newStatus);
+  };
+
   return (
-    <div className="relative w-85.75 h-18.75 bg-white border-b border-gray-100 flex items-center px-5 first:border-t">
+    <div className="relative w-85.75 h-18.75 bg-white border-b border-gray-100 flex items-center first:border-t">
       <Link href={`/interview/${id}`} className="flex flex-col flex-1">
         <h3 className="text-subtitle-sm-md text-gray-950">{name}</h3>
-        <p className="mt-1 text-body-md text-gray-400">{info}</p>
+        <p className="mt-1 text-body-rg text-gray-400">{info}</p>
         {appointmentDate && appointmentTime && (
           <p className="mt-1 text-body-xs-rg text-gray-400">
             {appointmentDate} {appointmentTime}
@@ -47,7 +54,7 @@ export default function ApplicantFileCard({
       </Link>
 
       <div className="flex flex-col items-end gap-2">
-        <StatusDropdown value={status} onChange={setStatus} />
+        <StatusDropdown value={status} onChange={handleStatusChange} />
 
         <div className="flex items-center gap-2.5 text-gray-300">
           <div className="flex items-center gap-1">

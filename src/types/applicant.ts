@@ -32,6 +32,34 @@ export interface ApplicantsResponse {
   applicants: Applicant[];
 }
 
+// API 실제 응답 타입
+export interface ApplicantRaw {
+  id: number;
+  name: string;
+  major: string;
+  bookmarked: boolean;
+  status: string;
+  commentCount: number;
+  school?: string;
+  position?: string;
+  gender?: string;
+  phoneNumber?: string;
+  email?: string;
+  interviewDate?: string | null;
+  interviewStartTime?: string | null;
+  interviewTimeSource?: string | null;
+}
+
+export interface ApplicantsRawResponse {
+  status: {
+    totalCount: number;
+    pendingCount: number;
+    passCount: number;
+    failCount: number;
+  };
+  applicants: ApplicantRaw[];
+}
+
 export interface UpdateStatusRequest {
   status: string;
 }
