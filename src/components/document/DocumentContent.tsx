@@ -133,13 +133,15 @@ export default function DocumentContent({ projectId }: { projectId: number }) {
           return a.name.localeCompare(b.name, 'ko');
         case 'name-desc':
           return b.name.localeCompare(a.name, 'ko');
+        case 'star':
+          return (favorites.has(b.applicantId) ? 1 : 0) - (favorites.has(a.applicantId) ? 1 : 0);
         default:
           return 0;
       }
     });
 
     return result;
-  }, [applicants, selectedTab, searchQuery, selectedPosition, sortBy]);
+  }, [applicants, selectedTab, searchQuery, selectedPosition, sortBy, favorites]);
 
   const counts = useMemo(
     () => ({
