@@ -12,7 +12,7 @@ import Navbar from '@/components/Navbar';
 import Button from '@/components/ui/Btn';
 import { projectService } from '@/services/projectService';
 import { authService } from '@/services/authService';
-import type { Project, ProjectAdmin } from '@/types/project';
+import type { Project, ProjectAdmin, ProjectAdminRaw } from '@/types/project';
 
 export default function ManageApplicationForm({ projectId }: { projectId: number }) {
   const [project, setProject] = useState<Project | null>(null);
@@ -45,6 +45,13 @@ export default function ManageApplicationForm({ projectId }: { projectId: number
         const auth = await authService.getCurrentUser();
         const { admins } = await projectService.getProjectAdmins(projectId);
 
+        const mappedAdmins: ProjectAdmin[] = admins.map((a: ProjectAdminRaw) => ({
+          userId: a.adminId,
+          nickname: a.adminName,
+          email: a.email,
+          profileImageUrl: a.profileImageUrl ?? '',
+        }));
+
         if (auth.isAuthenticated && auth.user) {
           setOwnerUserId(auth.user.userId);
           const owner: ProjectAdmin = {
@@ -53,9 +60,9 @@ export default function ManageApplicationForm({ projectId }: { projectId: number
             email: auth.user.email ?? '',
             profileImageUrl: auth.user.profileImageUrl ?? '',
           };
-          setAdminList([owner, ...admins]);
+          setAdminList([owner, ...mappedAdmins]);
         } else {
-          setAdminList(admins);
+          setAdminList(mappedAdmins);
         }
       } catch (e) {
         console.error('프로젝트 정보 조회 오류:', e);
@@ -143,7 +150,9 @@ export default function ManageApplicationForm({ projectId }: { projectId: number
 
       <div className="relative w-[375px] bg-white min-h-screen flex flex-col">
         <div className="flex items-center justify-between h-12 px-4 bg-white border-b border-gray-100">
-          <Image src="/icons/logo.svg" alt="logo" width={21} height={22} />
+          <Link href="/home" className="w-6 h-6 flex items-center justify-center">
+            <Image src="/icons/logo.svg" alt="logo" width={21} height={22} />
+          </Link>
           <span className="text-[15px] font-semibold text-gray-950">지원서 관리</span>
           <Link href="/home/notification" className="w-6 h-6 flex items-center justify-center">
             <Image src="/icons/alarm.svg" alt="alarm" width={18} height={18} />

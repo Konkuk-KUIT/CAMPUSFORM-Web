@@ -1,11 +1,5 @@
 import apiClient from '@/lib/api';
-import type {
-  CommentRequest,
-  CreateCommentResponse,
-  UpdateCommentResponse,
-  CommentResponse,
-  CommentStage,
-} from '@/types/comment';
+import type { CommentRequest, CommentMutationResponse, CommentResponse, CommentStage } from '@/types/comment';
 
 class CommentService {
   // GET : 댓글 조회
@@ -22,7 +16,7 @@ class CommentService {
     applicantId: number,
     stage: CommentStage,
     data: CommentRequest
-  ): Promise<CreateCommentResponse> {
+  ): Promise<CommentMutationResponse> {
     const response = await apiClient.post(`/projects/${projectId}/applicants/${applicantId}/comments`, data, {
       params: { stage },
     });
@@ -36,7 +30,7 @@ class CommentService {
     commentId: number,
     stage: CommentStage,
     data: CommentRequest
-  ): Promise<UpdateCommentResponse> {
+  ): Promise<CommentMutationResponse> {
     const response = await apiClient.patch(
       `/projects/${projectId}/applicants/${applicantId}/comments/${commentId}`,
       data,

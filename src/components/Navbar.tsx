@@ -21,7 +21,7 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="fixed bottom-0 left-0 w-full h-16.25 bg-white z-50 text-10">
+      <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-93.75 h-16.25 bg-white z-50 text-10">
         <div className="relative h-full">
           <div className="grid grid-cols-5 items-center h-full w-full">
             <Link
