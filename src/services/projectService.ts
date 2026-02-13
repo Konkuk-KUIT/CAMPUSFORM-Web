@@ -78,6 +78,12 @@ class ProjectService {
   async syncSheet(projectId: number): Promise<void> {
     await apiClient.post(`/projects/${projectId}/sync-sheet`);
   }
+
+  // 서류 단계 종료
+  async completeDocument(projectId: number): Promise<Project> {
+    const response = await apiClient.patch<Project>(`/recruiting/projects/${projectId}/complete-document`);
+    return response.data;
+  }
 }
 
 export const projectService = new ProjectService();
