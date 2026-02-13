@@ -216,9 +216,8 @@ export default function SmartScheduleCalendarPreview({
           {/* Calendar Header with gray background */}
           <div className="rounded-[10px] bg-gray-50 p-4 mt-3">
         {/* Header with month and calendar icon */}
-        <div className="flex items-center justify-center relative mb-[15px]">
+        <div className="flex items-center justify-center relative mb-[15px] gap-5 ml-8">
           <span className="text-[15px] font-medium leading-[20px] text-gray-950">{currentMonthYear}</span>
-          <div className="absolute right-0 flex items-center gap-2">
             <button
               onClick={() => setShowCalendarModal(!showCalendarModal)}
               className="cursor-pointer"
@@ -226,14 +225,6 @@ export default function SmartScheduleCalendarPreview({
             >
               <Image src="/icons/calendar-black.svg" alt="calendar" width={14.3} height={14.3} />
             </button>
-            <button
-              className="ml-2 cursor-pointer"
-              onClick={() => window.location.href = '/home/notification'}
-              aria-label="알림"
-            >
-              <Image src="/icons/notification.svg" alt="알림" width={22} height={22} />
-            </button>
-          </div>
         </div>
 
         {/* Navigation arrows and day headers */}
