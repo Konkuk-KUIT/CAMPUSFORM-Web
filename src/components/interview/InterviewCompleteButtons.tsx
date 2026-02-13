@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/Btn';
 import ConfirmModal from '@/components/interview/ConfirmModal';
-import { projectService } from '@/services/interview/projectService';
+import { projectService } from '@/services/projectService';
 
 interface InterviewCompleteButtonsProps {
   projectId: number;
@@ -19,7 +19,7 @@ export default function InterviewCompleteButtons({ projectId }: InterviewComplet
     try {
       setIsLoading(true);
       await projectService.completeAll(projectId);
-      router.push('/interview');
+      router.push('/home');
     } catch (error) {
       console.error('Failed to complete interview:', error);
       alert('면접 종료에 실패했습니다. 다시 시도해주세요.');
