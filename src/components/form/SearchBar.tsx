@@ -93,7 +93,7 @@ export default function SearchBar({
           </button>
 
           <button onClick={() => setIsOpen(!isOpen)} className="flex items-center text-body-sm text-gray-700">
-            정렬 방법
+            {sortOptions.find(opt => opt.id === sortValue)?.label ?? '정렬 방법'}
             <Image src="/icons/chevron-down.svg" alt="펼치기" width={15} height={15} />
           </button>
 

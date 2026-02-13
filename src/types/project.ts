@@ -89,3 +89,15 @@ export interface CreateProjectRequest {
 export interface AddAdminRequest {
   email: string;
 }
+
+export interface ProjectAdminRaw {
+  adminId: number;
+  adminName: string;
+  email: string;
+  profileImageUrl: string;
+  role: ProjectRole;
+}
+
+export interface GetProjectAdminsResponse {
+  admins: ProjectAdminRaw[];
+}

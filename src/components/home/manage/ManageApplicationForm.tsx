@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import TextboxGoogle from '@/components/home/TextboxGoogle';
@@ -13,12 +12,9 @@ import Navbar from '@/components/Navbar';
 import Button from '@/components/ui/Btn';
 import { projectService } from '@/services/projectService';
 import { authService } from '@/services/authService';
-import type { Project, ProjectAdmin } from '@/types/project';
+import type { Project, ProjectAdmin, ProjectAdminRaw } from '@/types/project';
 
-export default function ManageApplicationForm() {
-  const searchParams = useSearchParams();
-  const projectId = searchParams.get('projectId') ? Number(searchParams.get('projectId')) : null;
-
+export default function ManageApplicationForm({ projectId }: { projectId: number }) {
   const [project, setProject] = useState<Project | null>(null);
   const [showWarningModal, setShowWarningModal] = useState(false);
   const [isDateModalOpen, setIsDateModalOpen] = useState(false);
@@ -30,6 +26,7 @@ export default function ManageApplicationForm() {
   const [adminInput, setAdminInput] = useState('');
   const [isAdminError, setIsAdminError] = useState(false);
   const [adminList, setAdminList] = useState<ProjectAdmin[]>([]);
+  const [ownerUserId, setOwnerUserId] = useState<number | null>(null);
 
   useEffect(() => {
     if (!projectId) return;
@@ -45,8 +42,28 @@ export default function ManageApplicationForm() {
           setEndDate(new Date(found.endAt));
         }
 
+        const auth = await authService.getCurrentUser();
         const { admins } = await projectService.getProjectAdmins(projectId);
-        setAdminList(admins);
+
+        const mappedAdmins: ProjectAdmin[] = admins.map((a: ProjectAdminRaw) => ({
+          userId: a.adminId,
+          nickname: a.adminName,
+          email: a.email,
+          profileImageUrl: a.profileImageUrl ?? '',
+        }));
+
+        if (auth.isAuthenticated && auth.user) {
+          setOwnerUserId(auth.user.userId);
+          const owner: ProjectAdmin = {
+            userId: auth.user.userId,
+            nickname: auth.user.nickname ?? '나(대표)',
+            email: auth.user.email ?? '',
+            profileImageUrl: auth.user.profileImageUrl ?? '',
+          };
+          setAdminList([owner, ...mappedAdmins]);
+        } else {
+          setAdminList(mappedAdmins);
+        }
       } catch (e) {
         console.error('프로젝트 정보 조회 오류:', e);
       }
@@ -133,7 +150,9 @@ export default function ManageApplicationForm() {
 
       <div className="relative w-[375px] bg-white min-h-screen flex flex-col">
         <div className="flex items-center justify-between h-12 px-4 bg-white border-b border-gray-100">
-          <Image src="/icons/logo.svg" alt="logo" width={21} height={22} />
+          <Link href="/home" className="w-6 h-6 flex items-center justify-center">
+            <Image src="/icons/logo.svg" alt="logo" width={21} height={22} />
+          </Link>
           <span className="text-[15px] font-semibold text-gray-950">지원서 관리</span>
           <Link href="/home/notification" className="w-6 h-6 flex items-center justify-center">
             <Image src="/icons/alarm.svg" alt="alarm" width={18} height={18} />
@@ -268,7 +287,7 @@ export default function ManageApplicationForm() {
                   nickname={admin.nickname}
                   email={admin.email}
                   profileImageUrl={admin.profileImageUrl}
-                  isLeader={false}
+                  isLeader={admin.userId === ownerUserId}
                   onDelete={() => handleDeleteAdmin(admin.userId)}
                 />
               ))}

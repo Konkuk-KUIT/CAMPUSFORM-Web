@@ -6,6 +6,8 @@ import type { ReplyProps, CommentResponse, CommentStage } from '@/types/comment'
 import BottomSheet from '@/components/ui/BottomSheet';
 import InputComment from '@/components/ui/InputComment';
 import Reply from '@/components/ui/Reply';
+import { toast } from '@/components/Toast';
+import Loading from '@/components/ui/Loading';
 
 interface CommentSectionProps {
   isOpen: boolean;
@@ -27,40 +29,14 @@ export default function CommentSection({
   const [comments, setComments] = useState<ReplyProps[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // 댓글 트리 만들기
-  const buildCommentTree = (commentList: CommentResponse[]): ReplyProps[] => {
-    const commentMap = new Map<number, ReplyProps>();
-    const rootComments: ReplyProps[] = [];
-
-    commentList.forEach(comment => {
-      commentMap.set(comment.commentId, {
-        commentId: comment.commentId,
-        authorId: comment.authorId,
-        authorName: `사용자${comment.authorId}`,
-        authorProfileImage: undefined,
-        content: comment.content,
-        createdAt: comment.createdAt,
-        updatedAt: comment.updatedAt,
-        parentId: comment.parentId,
-        isAuthor: comment.authorId === currentUserId,
-        replies: [],
-      });
-    });
-
-    commentList.forEach(comment => {
-      const currentComment = commentMap.get(comment.commentId)!;
-      if (comment.parentId === 0) {
-        rootComments.push(currentComment);
-      } else {
-        const parent = commentMap.get(comment.parentId);
-        if (parent) {
-          parent.replies = parent.replies || [];
-          parent.replies.push(currentComment);
-        }
-      }
-    });
-
-    return rootComments;
+  // 서버가 트리로 주기 때문에 isAuthor만 추가
+  const mapComments = (commentList: CommentResponse[]): ReplyProps[] => {
+    return commentList.map(comment => ({
+      ...comment,
+      authorProfileImage: comment.authorProfileImageUrl ?? undefined,
+      isAuthor: comment.authorId === currentUserId,
+      replies: comment.replies ? mapComments(comment.replies) : [],
+    }));
   };
 
   // 댓글 불러오기
@@ -70,8 +46,7 @@ export default function CommentSection({
     setIsLoading(true);
     try {
       const response = await commentService.getComments(projectId, Number(applicantId), stage);
-      const tree = buildCommentTree(response);
-      setComments(tree);
+      setComments(mapComments(response));
     } catch (error) {
       console.error('댓글 불러오기 실패:', error);
     } finally {
@@ -84,39 +59,47 @@ export default function CommentSection({
     try {
       await commentService.createComment(projectId, Number(applicantId), stage, {
         content,
-        parentId: 0,
+        parentId: null,
       });
       await loadComments();
     } catch (error) {
-      alert('댓글 작성 실패');
+      toast.error('댓글 작성에 실패했습니다.');
+    }
+  };
+
+  // 답글 작성
+  const handleReply = async (parentId: number, content: string) => {
+    try {
+      await commentService.createComment(projectId, Number(applicantId), stage, {
+        content,
+        parentId,
+      });
+      await loadComments();
+    } catch (error) {
+      toast.error('답글 작성에 실패했습니다.');
     }
   };
 
   // 댓글 수정
-  const handleEdit = async (commentId: number) => {
-    const newContent = prompt('수정할 내용:');
-    if (!newContent) return;
-
+  const handleEdit = async (commentId: number, newContent: string) => {
     try {
       await commentService.updateComment(projectId, Number(applicantId), commentId, stage, {
         content: newContent,
-        parentId: 0,
+        parentId: null,
       });
       await loadComments();
     } catch (error) {
-      alert('댓글 수정 실패');
+      toast.error('댓글 수정에 실패했습니다.');
     }
   };
 
   // 댓글 삭제
   const handleDelete = async (commentId: number) => {
-    if (!confirm('삭제하시겠습니까?')) return;
-
     try {
       await commentService.deleteComment(projectId, Number(applicantId), commentId, stage);
       await loadComments();
     } catch (error) {
-      alert('댓글 삭제 실패');
+      toast.error('댓글 삭제에 실패했습니다.');
     }
   };
 
@@ -131,14 +114,20 @@ export default function CommentSection({
     <BottomSheet isOpen={isOpen} onClose={onClose}>
       <InputComment onSubmit={handleCommentSubmit} />
 
-      <div className="space-y-4 mt-4">
+      <div className="space-y-2 mt-4">
         {isLoading ? (
-          <p className="text-center text-gray-400 py-4">로딩 중...</p>
+          <Loading />
         ) : comments.length === 0 ? (
           <p className="text-center text-gray-400 py-4">아직 댓글이 없습니다.</p>
         ) : (
           comments.map(comment => (
-            <Reply key={comment.commentId} {...comment} onEdit={handleEdit} onDelete={handleDelete} />
+            <Reply
+              key={comment.commentId}
+              {...comment}
+              onReply={handleReply}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
           ))
         )}
       </div>
