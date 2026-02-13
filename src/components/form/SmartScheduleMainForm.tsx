@@ -65,14 +65,14 @@ export default function SmartScheduleMainForm() {
           <div className="mb-6">
             <button
               onClick={() => router.push('/smart-schedule/setting')}
-              className="w-full flex items-start justify-between mb-2 group"
+              className="w-full flex items-start justify-between mb-2 group cursor-pointer"
             >
               <div className="text-left">
                 <h3 className="text-subtitle-sm-sb text-gray-950 mb-1">1. 면접 정보 설정</h3>
                 <p className="text-body-xs text-gray-300">면접 일정과 운영 방식을 설정해 주세요.</p>
               </div>
               <div className="mt-1 flex-shrink-0">
-                <Image src="/icons/chevron-right.svg" alt="next" width={24} height={7} className="w-6 h-[7px]" />
+                <Image src="/icons/chevron-right.svg" alt="next" width={24} height={24} className="w-6 h-6" />
               </div>
             </button>
           </div>
@@ -110,7 +110,7 @@ export default function SmartScheduleMainForm() {
                         setSelectedInterviewer(idx);
                       }
                     }}
-                    className="w-full h-[66px] px-0 py-[5px] flex items-center justify-between border-b border-gray-200"
+                    className="w-full h-[66px] px-0 py-[5px] flex items-center justify-between border-b border-gray-200 cursor-pointer"
                   >
                     <div className="flex items-center gap-[10px]">
                       <div className="w-[35px] h-[35px] rounded-full bg-gray-200 flex-shrink-0" />
@@ -175,7 +175,7 @@ export default function SmartScheduleMainForm() {
                   className="w-full bg-gray-50 border border-gray-100 rounded-radius-5 px-3 py-3 pr-10 text-body-md text-gray-300 placeholder-gray-300 cursor-pointer hover:bg-gray-100 transition-colors"
                 />
                 <button
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 hover:bg-gray-100 rounded transition-colors"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 hover:bg-gray-100 rounded transition-colors cursor-pointer"
                   aria-label="복사"
                   onClick={e => {
                     e.stopPropagation();
@@ -189,7 +189,7 @@ export default function SmartScheduleMainForm() {
               {/* Info box - 지원자 시간 페이지 편집 */}
               <button
                 onClick={() => router.push('/smart-schedule/interview-schedule')}
-                className="w-full bg-blue-50 border-[0.5px] border-blue-200 rounded-[10px] px-2.5 py-2.5 flex items-center justify-center gap-1 hover:bg-blue-100 transition-colors"
+                className="w-full bg-blue-50 border-[0.5px] border-blue-200 rounded-[10px] px-2.5 py-2.5 flex items-center justify-center gap-1 hover:bg-blue-100 transition-colors cursor-pointer"
               >
                 <span className="text-body-sm text-gray-950">지원자 시간 페이지 편집</span>
                 <Image src="/icons/edit-blue.svg" alt="edit" width={14} height={13} className="w-[14px] h-[13px]" />
