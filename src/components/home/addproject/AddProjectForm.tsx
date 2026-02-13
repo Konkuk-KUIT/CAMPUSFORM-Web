@@ -186,7 +186,7 @@ export default function AddProjectForm() {
       `}</style>
 
       <div className="relative w-93.75 bg-white min-h-screen flex flex-col">
-        <Header title="새 프로젝트 추가" backTo="/home" />
+        <Header title="새 프로젝트 추가" backTo="/home" hideNotification={true} />
 
         <div className="flex-1 px-5 py-6 flex flex-col gap-6 overflow-y-auto scrollbar-hide pb-10">
           <div className="flex flex-col gap-2">

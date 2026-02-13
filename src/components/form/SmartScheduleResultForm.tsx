@@ -158,7 +158,7 @@ export default function SmartScheduleResultForm() {
       </div>
 
       {/* Bottom Button */}
-      <div className="fixed bottom-[65px] left-0 right-0 bg-white border-t border-gray-100 px-4 pt-[10px] pb-[10px]">
+      <div className="fixed bottom-[65px] left-0 right-0 bg-white border-t border-gray-100 px-5 max-w-93.75 mx-auto pt-[10px] pb-[10px]">
         <Btn variant="primary" size="lg" className="w-full" onClick={handleConfirm}>
           면접 시간 확정
         </Btn>
