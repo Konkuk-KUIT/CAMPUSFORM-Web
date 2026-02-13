@@ -9,6 +9,7 @@ import BottomSheet from '@/components/ui/BottomSheet';
 import BtnRound from '@/components/ui/BtnRound';
 import CommentSection from '@/components/sections/CommentSection';
 import Loading from '@/components/ui/Loading';
+import { toast } from '@/components/Toast';
 import { applicantService } from '@/services/applicantService';
 import { authService } from '@/services/authService';
 import { projectService } from '@/services/projectService';
@@ -75,6 +76,7 @@ export default function DocumentContent({ projectId }: { projectId: number }) {
         setFavorites(new Set(mappedApplicants.filter(a => a.favorite).map(a => a.applicantId)));
       } catch (e) {
         console.error('지원자 목록 조회 실패:', e);
+        toast.error('지원자 목록을 불러오지 못했습니다.');
       } finally {
         setIsLoading(false);
       }
@@ -91,6 +93,7 @@ export default function DocumentContent({ projectId }: { projectId: number }) {
       setFavorites(new Set(mappedApplicants.filter(a => a.favorite).map(a => a.applicantId)));
     } catch (e) {
       console.error('지원자 목록 조회 실패:', e);
+      toast.error('지원자 목록을 불러오지 못했습니다.');
     }
   };
 
@@ -100,6 +103,7 @@ export default function DocumentContent({ projectId }: { projectId: number }) {
       setApplicants(prev => prev.map(a => (a.applicantId === applicantId ? { ...a, status: newStatus } : a)));
     } catch (e) {
       console.error('상태 변경 실패:', e);
+      toast.error('상태 변경에 실패했습니다.');
     }
   };
 
@@ -166,6 +170,7 @@ export default function DocumentContent({ projectId }: { projectId: number }) {
       });
     } catch (e) {
       console.error('즐겨찾기 토글 실패:', e);
+      toast.error('즐겨찾기 변경에 실패했습니다.');
     }
   };
 
