@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import TextboxGoogle from '@/components/home/TextboxGoogle';
@@ -10,36 +11,57 @@ import InfoModal from '@/components/ui/InfoModal';
 import SheetDropdown from '@/components/home/addproject/SheetDropdown';
 import Navbar from '@/components/Navbar';
 import Button from '@/components/ui/Btn';
-
-interface Admin {
-  id: number;
-  name: string;
-  email: string;
-  isLeader: boolean;
-}
+import { projectService } from '@/services/projectService';
+import { authService } from '@/services/authService';
+import type { Project, ProjectAdmin } from '@/types/project';
 
 export default function ManageApplicationForm() {
+  const searchParams = useSearchParams();
+  const projectId = searchParams.get('projectId') ? Number(searchParams.get('projectId')) : null;
+
+  const [project, setProject] = useState<Project | null>(null);
   const [showWarningModal, setShowWarningModal] = useState(false);
   const [isDateModalOpen, setIsDateModalOpen] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [showPositionTooltip, setShowPositionTooltip] = useState(false);
   const [status, setStatus] = useState('모집 중');
-  const [url] = useState('');
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [adminInput, setAdminInput] = useState('');
   const [isAdminError, setIsAdminError] = useState(false);
-  const [adminList, setAdminList] = useState<Admin[]>([
-    { id: 1, name: '나(대표)', email: 'myemail@gmail.com', isLeader: true },
-  ]);
+  const [adminList, setAdminList] = useState<ProjectAdmin[]>([]);
+
+  useEffect(() => {
+    if (!projectId) return;
+
+    const fetchData = async () => {
+      try {
+        const projects = await projectService.getProjects();
+        const found = projects.find(p => p.id === projectId);
+        if (found) {
+          setProject(found);
+          setStatus(found.state === 'DOCUMENT' ? '모집 중' : '모집 마감');
+          setStartDate(new Date(found.startAt));
+          setEndDate(new Date(found.endAt));
+        }
+
+        const { admins } = await projectService.getProjectAdmins(projectId);
+        setAdminList(admins);
+      } catch (e) {
+        console.error('프로젝트 정보 조회 오류:', e);
+      }
+    };
+
+    fetchData();
+  }, [projectId]);
 
   const handleAdminInputChange = (newValue: string) => {
     setAdminInput(newValue);
     if (newValue === '') setIsAdminError(false);
   };
 
-  const handleAddAdmin = () => {
-    if (!adminInput.trim()) return;
+  const handleAddAdmin = async () => {
+    if (!adminInput.trim() || !projectId) return;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(adminInput)) {
       setIsAdminError(true);
@@ -47,23 +69,35 @@ export default function ManageApplicationForm() {
     }
     setIsAdminError(false);
 
-    if (adminInput === 'unregistered@test.com') {
-      setShowInfoModal(true);
-      return;
-    }
+    try {
+      const user = await authService.getUserDetailByEmail(adminInput);
+      if (!user.exists) {
+        setShowInfoModal(true);
+        return;
+      }
 
-    const newAdmin: Admin = {
-      id: Date.now(),
-      name: '새 관리자',
-      email: adminInput,
-      isLeader: false,
-    };
-    setAdminList([...adminList, newAdmin]);
-    setAdminInput('');
+      const result = await projectService.addProjectAdmin(projectId, { email: adminInput });
+      const newAdmin: ProjectAdmin = {
+        userId: result.adminId,
+        nickname: result.adminName,
+        email: result.email,
+        profileImageUrl: result.profileImageUrl,
+      };
+      setAdminList([...adminList, newAdmin]);
+      setAdminInput('');
+    } catch (e) {
+      console.error('관리자 추가 오류:', e);
+    }
   };
 
-  const handleDeleteAdmin = (id: number) => {
-    setAdminList(adminList.filter(admin => admin.id !== id));
+  const handleDeleteAdmin = async (userId: number) => {
+    if (!projectId) return;
+    try {
+      await projectService.removeProjectAdmin(projectId, userId);
+      setAdminList(adminList.filter(admin => admin.userId !== userId));
+    } catch (e) {
+      console.error('관리자 삭제 오류:', e);
+    }
   };
 
   const handleDateConfirm = (start: Date | null, end: Date | null) => {
@@ -125,7 +159,11 @@ export default function ManageApplicationForm() {
             </p>
             <div className="flex gap-2 items-start relative">
               <div className="flex-1">
-                <TextboxGoogle placeholder="https://docs.google.com/spreadsheets..." value={url} disabled />
+                <TextboxGoogle
+                  placeholder="https://docs.google.com/spreadsheets..."
+                  value={project?.sheetUrl ?? ''}
+                  disabled
+                />
               </div>
             </div>
           </div>
@@ -153,7 +191,13 @@ export default function ManageApplicationForm() {
                   onMouseEnter={() => setShowPositionTooltip(true)}
                   onMouseLeave={() => setShowPositionTooltip(false)}
                 >
-                  <Image src="/icons/info-2.svg" alt="info" width={13.5} height={13.5} className="ml-0.5 cursor-pointer" />
+                  <Image
+                    src="/icons/info-2.svg"
+                    alt="info"
+                    width={13.5}
+                    height={13.5}
+                    className="ml-0.5 cursor-pointer"
+                  />
                   {showPositionTooltip && (
                     <div className="absolute left-[-20px] bottom-full mb-2 z-50">
                       <div className="relative">
@@ -166,7 +210,7 @@ export default function ManageApplicationForm() {
                         </div>
                         <div className="absolute left-6 -bottom-2">
                           <svg width="14" height="8" viewBox="0 0 14 8" fill="none">
-                            <path d="M7 8L0.937823 0.5L13.0622 0.5L7 8Z" fill="#93affd"/>
+                            <path d="M7 8L0.937823 0.5L13.0622 0.5L7 8Z" fill="#93affd" />
                           </svg>
                         </div>
                       </div>
@@ -180,7 +224,13 @@ export default function ManageApplicationForm() {
               >
                 편집하기
                 <svg width="6" height="10" viewBox="0 0 6 10" fill="none">
-                  <path d="M1 1l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path
+                    d="M1 1l4 4-4 4"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               </Link>
             </div>
@@ -214,11 +264,12 @@ export default function ManageApplicationForm() {
             <div className="flex flex-col mt-2">
               {adminList.map(admin => (
                 <ProfileCross
-                  key={admin.id}
-                  nickname={admin.name}
+                  key={admin.userId}
+                  nickname={admin.nickname}
                   email={admin.email}
-                  isLeader={admin.isLeader}
-                  onDelete={() => handleDeleteAdmin(admin.id)}
+                  profileImageUrl={admin.profileImageUrl}
+                  isLeader={false}
+                  onDelete={() => handleDeleteAdmin(admin.userId)}
                 />
               ))}
             </div>
@@ -243,10 +294,10 @@ export default function ManageApplicationForm() {
 
         {showWarningModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-            <div className="relative w-[300px] bg-white rounded-[20px] px-6 py-8 flex flex-col items-center shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="relative w-[300px] bg-white rounded-[20px] px-6 py-8 flex flex-col items-center shadow-2xl">
               <button
                 onClick={() => setShowWarningModal(false)}
-                className="absolute top-4 right-4 w-6 h-6 flex items-center justify-center opacity-70 hover:opacity-100 transition-opacity"
+                className="absolute top-4 right-4 w-6 h-6 flex items-center justify-center"
               >
                 <Image src="/icons/cross.svg" alt="close" width={14} height={14} />
               </button>
@@ -258,13 +309,6 @@ export default function ManageApplicationForm() {
                 같은 포지션이라도 명칭이 다르면
                 <br />
                 서로 다른 그룹으로 분류될 수 있어요.
-                <br />
-                <span className="text-gray-500 text-[12px] mt-1 block">(예: 디자인팀 / Design팀)</span>
-              </p>
-              <p className="text-[13px] text-gray-950 text-center leading-snug">
-                원활한 분류를 위해 구글 시트에서
-                <br />
-                <span className="text-primary font-bold">포지션 명칭을 하나로 통일</span> 후 연동해 주세요.
               </p>
             </div>
           </div>

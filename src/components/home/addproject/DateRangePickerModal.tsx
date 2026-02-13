@@ -47,6 +47,7 @@ export default function DateRangePickerModal({
         </div>
         <div className="p-3">
           <Calendar
+            variant="modal"
             selected={startDate}
             onDateChange={handleDateChange}
             startDate={startDate}

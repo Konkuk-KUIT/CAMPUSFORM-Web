@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/ui/Header';
 import Button from '@/components/ui/Btn';
 import SheetDropdown from '@/components/home/addproject/SheetDropdown';
 import { useNewProjectStore } from '@/store/newProjectStore';
+import { projectService } from '@/services/projectService';
 
 interface PositionMapping {
   original: string;
@@ -16,10 +17,27 @@ export default function PositionEditForm() {
   const router = useRouter();
   const { setProjectForm, projectForm } = useNewProjectStore();
 
-  // 빈 배열, 수정 후 getMappingColumnValues로 교체 예정
   const [collectedPositions, setCollectedPositions] = useState<string[]>([]);
   const [positions, setPositions] = useState<PositionMapping[]>([{ original: '', changed: '' }]);
   const [selectedPositions, setSelectedPositions] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchPositions = async () => {
+      const sheetUrl = projectForm.sheetUrl;
+      const positionColumnIndex = projectForm.requiredMappings?.positionIdx ?? -1;
+
+      if (!sheetUrl) return; // sheetUrl만 체크
+
+      try {
+        const result = await projectService.getMappingColumnValues(sheetUrl, positionColumnIndex);
+        setCollectedPositions(result.values);
+      } catch (e) {
+        console.error('포지션 목록 조회 오류:', e);
+      }
+    };
+
+    fetchPositions();
+  }, [projectForm.sheetUrl, projectForm.requiredMappings?.positionIdx]);
 
   const handleAddPosition = () => {
     setPositions([...positions, { original: '', changed: '' }]);

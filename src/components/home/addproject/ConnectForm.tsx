@@ -25,7 +25,7 @@ export default function ConnectForm({ sheetUrl: sheetUrlProp }: { sheetUrl: stri
     (typeof window !== 'undefined' ? sessionStorage.getItem('pendingSheetUrl') : '') ||
     '';
 
-  const [sheetHeaders, setSheetHeaders] = useState<string[]>([]);
+  const [sheetHeaders, setSheetHeaders] = useState<SheetHeader[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [mappings, setMappings] = useState(mappingFields);
 
@@ -38,14 +38,13 @@ export default function ConnectForm({ sheetUrl: sheetUrlProp }: { sheetUrl: stri
       return;
     }
 
-    // store에 없으면 저장
     if (!projectForm.sheetUrl) {
       setProjectForm({ sheetUrl });
     }
 
     getSheetHeaders(sheetUrl)
       .then((data: SheetHeader[]) => {
-        setSheetHeaders(data.map(h => h.name));
+        setSheetHeaders(data);
       })
       .catch(() => {
         toast.error('시트 헤더를 불러오지 못했습니다.');
@@ -58,20 +57,25 @@ export default function ConnectForm({ sheetUrl: sheetUrlProp }: { sheetUrl: stri
     setMappingFields({ [field]: value });
   };
 
-  const handleConnect = () => {
-    const requiredMappings = {
-      nameIdx: sheetHeaders.indexOf(mappings.name),
-      schoolIdx: sheetHeaders.indexOf(mappings.school),
-      majorIdx: sheetHeaders.indexOf(mappings.major),
-      genderIdx: sheetHeaders.indexOf(mappings.gender),
-      phoneIdx: sheetHeaders.indexOf(mappings.phone),
-      emailIdx: sheetHeaders.indexOf(mappings.email),
-      positionIdx: sheetHeaders.indexOf(mappings.position),
-    };
+  const buildRequiredMappings = () => ({
+    nameIdx: sheetHeaders.find(h => h.name === mappings.name)?.index ?? -1,
+    schoolIdx: sheetHeaders.find(h => h.name === mappings.school)?.index ?? -1,
+    majorIdx: sheetHeaders.find(h => h.name === mappings.major)?.index ?? -1,
+    genderIdx: sheetHeaders.find(h => h.name === mappings.gender)?.index ?? -1,
+    phoneIdx: sheetHeaders.find(h => h.name === mappings.phone)?.index ?? -1,
+    emailIdx: sheetHeaders.find(h => h.name === mappings.email)?.index ?? -1,
+    positionIdx: sheetHeaders.find(h => h.name === mappings.position)?.index ?? -1,
+  });
 
-    setProjectForm({ sheetUrl, requiredMappings });
+  const handleEditPosition = () => {
+    setProjectForm({ sheetUrl, requiredMappings: buildRequiredMappings() });
+    router.push('/home/addproject/connect/edit-position');
+  };
+
+  const handleConnect = () => {
+    setProjectForm({ sheetUrl, requiredMappings: buildRequiredMappings() });
     sessionStorage.removeItem('pendingSheetUrl');
-    router.back();
+    router.push('/home/addproject');
   };
 
   const renderSection = (label: string, fieldKey: keyof typeof mappings, placeholder: string, showEdit = false) => (
@@ -79,16 +83,13 @@ export default function ConnectForm({ sheetUrl: sheetUrlProp }: { sheetUrl: stri
       <div className="flex justify-between items-center pr-2">
         <label className="text-14 font-bold text-gray-950">{label}</label>
         {showEdit && (
-          <button
-            onClick={() => router.push('/home/addproject/connect/edit-position')}
-            className="text-body-sm-rg text-primary underline"
-          >
+          <button onClick={handleEditPosition} className="text-body-sm-rg text-primary underline">
             편집하기
           </button>
         )}
       </div>
       <SheetDropdown
-        options={sheetHeaders}
+        options={sheetHeaders.map(h => h.name)}
         value={mappings[fieldKey]}
         onChange={val => handleMappingChange(fieldKey, val)}
         placeholder={placeholder}

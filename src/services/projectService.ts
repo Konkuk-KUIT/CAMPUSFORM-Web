@@ -67,8 +67,10 @@ class ProjectService {
   }
 
   // GET : 포지션 컬럼 고유값 조회 (치환 규칙 설정용)
-  async getMappingColumnValues(projectId: number): Promise<{ values: string[] }> {
-    const response = await apiClient.get(`/projects/${projectId}/mapping-column-values`);
+  async getMappingColumnValues(sheetUrl: string, positionColumnIndex: number): Promise<{ values: string[] }> {
+    const response = await apiClient.get('/projects/mapping-column-values', {
+      params: { sheetUrl, positionColumnIndex },
+    });
     return response.data;
   }
 

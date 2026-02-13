@@ -18,6 +18,7 @@ interface CalendarProps {
   selectsRange?: boolean;
   disableTodayHighlight?: boolean;
   className?: string;
+  variant?: 'home' | 'modal';
 }
 
 export default function Calendar({
@@ -29,6 +30,7 @@ export default function Calendar({
   selectsRange = false,
   disableTodayHighlight = false,
   className,
+  variant = 'modal',
 }: CalendarProps) {
   const [currentDate, setCurrentDate] = useState<Date>(selected || startDate || new Date());
 
@@ -117,7 +119,7 @@ export default function Calendar({
             margin: 0 !important;
             font-size: 13px !important;
             color: var(--color-gray-400) !important;
-            font-weight: 500 !important;
+            font-weight: 400 !important;
             line-height: 32px !important;
             padding: 0 !important;
           }
@@ -126,14 +128,14 @@ export default function Calendar({
             grid-template-columns: repeat(7, 1fr) !important;
             width: 100% !important;
             gap: 0 !important;
-            margin-bottom: 8px !important;
+            margin-bottom: ${variant === 'home' ? '12px' : '8px'} !important;
           }
           .react-datepicker__day {
             width: 100% !important;
             margin: 0 !important;
             padding: 4px 0 !important;
             height: auto !important;
-            min-height: 30px !important;
+            min-height: ${variant === 'home' ? '45px' : '30px'} !important;
             display: flex !important;
             flex-direction: column !important;
             align-items: center !important;
