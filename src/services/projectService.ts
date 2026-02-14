@@ -132,6 +132,40 @@ class ProjectService {
     const response = await apiClient.put(`/recruiting/projects/${projectId}/investigation-link/config`, data);
     return response.data;
   }
+
+  // GET : 지원자 시간 제출 링크 조회
+  async getInvestigationLink(projectId: number): Promise<any> {
+    const response = await apiClient.get(`/recruiting/projects/${projectId}/investigation-link`);
+    return response.data;
+  }
+
+  // POST : 지원자 면접 가능 시간 제출 (공개 API)
+  async submitApplicantAvailability(token: string, data: {
+    name: string;
+    phoneNumber: string;
+    availabilities: Array<{ date: string; startTimes: string[] }>;
+  }): Promise<any> {
+    const response = await apiClient.post(`/public/interview/submit?token=${token}`, data);
+    return response.data;
+  }
+
+  // GET : 슬롯별 신청 지원자 목록 조회 (응답 결과)
+  async getInterviewSlotsApplicants(projectId: number): Promise<any> {
+    const response = await apiClient.get(`/recruiting/projects/${projectId}/interview-slots/applicants`);
+    return response.data;
+  }
+
+  // GET : 면접 슬롯 조회 (공개 API - 지원자용, 토큰 기반)
+  async getPublicInterviewSlots(token: string): Promise<any> {
+    const response = await apiClient.get(`/public/interview/slots?token=${token}`);
+    return response.data;
+  }
+
+  // GET : 관리자용 전체 면접 슬롯 목록 조회
+  async getInterviewSlots(projectId: number): Promise<any> {
+    const response = await apiClient.get(`/recruiting/projects/${projectId}/interview-slots`);
+    return response.data;
+  }
 }
 
 export const projectService = new ProjectService();

@@ -15,6 +15,7 @@ import { useCurrentProjectStore } from '@/store/currentProjectStore';
 import { useNewProjectStore } from '@/store/newProjectStore';
 import { projectService } from '@/services/projectService';
 import { authService } from '@/services/authService';
+import { toast } from '@/components/Toast';
 import type { ProjectAdminRaw } from '@/types/project';
 
 export default function SmartScheduleMainForm() {
@@ -116,11 +117,45 @@ export default function SmartScheduleMainForm() {
     checkInterviewSetting();
   }, [projectId]);
 
+  // 지원자 시간 제출 링크 조회
+  useEffect(() => {
+    const fetchInvestigationLink = async () => {
+      if (!projectId) return;
+      
+      try {
+        const linkData = await projectService.getInvestigationLink(projectId);
+        console.log('[SmartSchedule] Investigation Link:', linkData);
+        
+        let link = linkData?.link || linkData?.url;
+        
+        if (link) {
+          // /submit 경로를 실제 페이지 경로로 변환
+          if (link.startsWith('/submit')) {
+            link = link.replace('/submit', '/smart-schedule/applicant-submit');
+          }
+          
+          // 상대 경로인 경우 전체 URL로 변환
+          if (link.startsWith('/')) {
+            const origin = typeof window !== 'undefined' ? window.location.origin : '';
+            link = `${origin}${link}`;
+          }
+          setInvestigationLink(link);
+        }
+      } catch (error) {
+        console.log('[SmartSchedule] Investigation Link 조회 실패 (아직 생성되지 않았을 수 있음):', error);
+      }
+    };
+    
+    fetchInvestigationLink();
+  }, [projectId]);
+
   const [selectedInterviewer, setSelectedInterviewer] = useState<number | null>(null);
   const [requiredInterviewers, setRequiredInterviewers] = useState<{ [key: number]: boolean }>({ 0: true });
   const hasSchedule = true; // 스마트 시간표 생성 여부 (가정)
   const isRepresentative = true; // 대표자 여부 (가정)
   const [showInterviewerView, setShowInterviewerView] = useState(false);
+  const [investigationLink, setInvestigationLink] = useState<string>('');
+  const [isGeneratingLink, setIsGeneratingLink] = useState(false);
 
   // 각 면접관별 선택된 시간 상태 (interviewerId -> cellActive)
   const [interviewersCellActive, setInterviewersCellActive] = useState<{ 
@@ -592,17 +627,20 @@ export default function SmartScheduleMainForm() {
               <div className="relative">
                 <input
                   type="text"
-                  value="https://www.campusform.com/interview/apply"
+                  value={investigationLink || '링크를 생성해주세요'}
                   readOnly
-                  onClick={() => router.push('/smart-schedule/applicant-submit')}
-                  className="w-full bg-gray-50 border border-gray-100 rounded-radius-5 px-3 py-3 pr-10 text-body-md text-gray-300 placeholder-gray-300 cursor-pointer hover:bg-gray-100 transition-colors"
+                  className="w-full bg-gray-50 border border-gray-100 rounded-radius-5 px-3 py-3 pr-10 text-body-md text-gray-300 placeholder-gray-300"
                 />
                 <button
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 hover:bg-gray-100 rounded transition-colors cursor-pointer"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 hover:bg-gray-100 rounded transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   aria-label="복사"
+                  disabled={!investigationLink}
                   onClick={e => {
                     e.stopPropagation();
-                    navigator.clipboard.writeText('https://www.campusform.com/interview/apply');
+                    if (investigationLink) {
+                      navigator.clipboard.writeText(investigationLink);
+                      toast.success('링크가 복사되었습니다.');
+                    }
                   }}
                 >
                   <Image src="/icons/copy-gray.svg" alt="copy" width={16} height={16} className="w-4 h-4" />
