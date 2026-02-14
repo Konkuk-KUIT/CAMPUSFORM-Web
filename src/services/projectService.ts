@@ -120,6 +120,18 @@ class ProjectService {
     const response = await apiClient.put(`/recruiting/projects/${projectId}/interviewers/${adminId}/availability`, data);
     return response.data;
   }
+
+  // GET : 지원자 시간 제출 페이지 설정 조회
+  async getApplicantLinkConfig(projectId: number): Promise<any> {
+    const response = await apiClient.get(`/recruiting/projects/${projectId}/investigation-link/config`);
+    return response.data;
+  }
+
+  // PUT : 지원자 시간 제출 페이지 설정 수정
+  async updateApplicantLinkConfig(projectId: number, data: { enabled?: boolean; guidanceText?: string }): Promise<any> {
+    const response = await apiClient.put(`/recruiting/projects/${projectId}/investigation-link/config`, data);
+    return response.data;
+  }
 }
 
 export const projectService = new ProjectService();

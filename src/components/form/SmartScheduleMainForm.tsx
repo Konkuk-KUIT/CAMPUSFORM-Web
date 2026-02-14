@@ -125,7 +125,27 @@ export default function SmartScheduleMainForm() {
   // 각 면접관별 선택된 시간 상태 (interviewerId -> cellActive)
   const [interviewersCellActive, setInterviewersCellActive] = useState<{ 
     [interviewerId: number]: { [key: string]: { top: boolean; bottom: boolean } } 
-  }>({});
+  }>(() => {
+    // localStorage에서 초기값 로드
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('interviewersCellActive');
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          return {};
+        }
+      }
+    }
+    return {};
+  });
+
+  // interviewersCellActive 변경 시 localStorage에 저장
+  useEffect(() => {
+    if (typeof window !== 'undefined' && Object.keys(interviewersCellActive).length > 0) {
+      localStorage.setItem('interviewersCellActive', JSON.stringify(interviewersCellActive));
+    }
+  }, [interviewersCellActive]);
 
   // 면접관 목록 state
   const [interviewers, setInterviewers] = useState<Array<{ 
@@ -134,7 +154,6 @@ export default function SmartScheduleMainForm() {
     email: string; 
     profileImageUrl?: string; 
     isLeader: boolean;
-    participated?: boolean; // 시간 등록 참여 여부
   }>>([]);
 
   // 개별 면접관 시간 저장 함수
@@ -211,7 +230,6 @@ export default function SmartScheduleMainForm() {
         // OWNER 추가 (대표자)
         if (auth.isAuthenticated && auth.user) {
           // OWNER availability 확인
-          let ownerParticipated = false;
           try {
             const availability = await projectService.getInterviewerAvailability(projectId, auth.user.userId);
             
@@ -242,9 +260,8 @@ export default function SmartScheduleMainForm() {
                 });
               });
               
-              // cellActive에 데이터가 있으면 참여로 표시
+              // cellActive에 데이터가 있으면 저장
               if (Object.keys(cellActive).length > 0) {
-                ownerParticipated = true;
                 newInterviewersCellActive[auth.user.userId] = cellActive;
               }
               console.log(`[SmartSchedule] OWNER ${auth.user.userId} 변환된 cellActive:`, cellActive);
@@ -259,13 +276,11 @@ export default function SmartScheduleMainForm() {
             email: auth.user.email ?? '',
             profileImageUrl: auth.user.profileImageUrl ?? '',
             isLeader: true,
-            participated: ownerParticipated,
           });
         }
         
         // ADMIN 목록 추가 및 availability 확인
         for (const admin of admins) {
-          let adminParticipated = false;
           try {
             const availability = await projectService.getInterviewerAvailability(projectId, admin.adminId);
             
@@ -296,9 +311,8 @@ export default function SmartScheduleMainForm() {
                 });
               });
               
-              // cellActive에 데이터가 있으면 참여로 표시
+              // cellActive에 데이터가 있으면 저장
               if (Object.keys(cellActive).length > 0) {
-                adminParticipated = true;
                 newInterviewersCellActive[admin.adminId] = cellActive;
               }
               console.log(`[SmartSchedule] ADMIN ${admin.adminId} (${admin.adminName}) 변환된 cellActive:`, cellActive);
@@ -313,13 +327,28 @@ export default function SmartScheduleMainForm() {
             email: admin.email,
             profileImageUrl: admin.profileImageUrl ?? '',
             isLeader: false,
-            participated: adminParticipated,
           });
         }
         
         setInterviewers(adminList);
-        setInterviewersCellActive(newInterviewersCellActive);
-        console.log('[SmartSchedule] 전체 interviewersCellActive 초기화:', newInterviewersCellActive);
+        
+        // API에서 가져온 데이터와 현재 상태를 머지 (사용자가 선택한 데이터 유지)
+        setInterviewersCellActive(prev => {
+          const merged = { ...prev };
+          
+          // API 데이터를 추가하되, 이미 있는 데이터는 유지
+          Object.entries(newInterviewersCellActive).forEach(([userId, cellActive]) => {
+            const userIdNum = parseInt(userId);
+            if (!merged[userIdNum] || Object.keys(merged[userIdNum]).length === 0) {
+              // 현재 상태에 데이터가 없으면 API 데이터 사용
+              merged[userIdNum] = cellActive;
+            }
+            // 현재 상태에 데이터가 있으면 그대로 유지 (사용자가 선택한 것)
+          });
+          
+          console.log('[SmartSchedule] 머지된 interviewersCellActive:', merged);
+          return merged;
+        });
       } catch (error) {
         console.error('면접관 목록 조회 실패:', error);
       }
@@ -400,6 +429,16 @@ export default function SmartScheduleMainForm() {
     return combined;
   }, [interviewersCellActive]);
 
+  // interviewersCellActive 상태를 기반으로 participated 동적 계산
+  const interviewersWithParticipation = useMemo(() => {
+    return interviewers.map(interviewer => ({
+      ...interviewer,
+      participated: interviewersCellActive[interviewer.userId] 
+        ? Object.keys(interviewersCellActive[interviewer.userId]).length > 0
+        : false
+    }));
+  }, [interviewers, interviewersCellActive]);
+
   return (
     <main className="min-h-screen flex justify-center bg-white ">
       <div className="relative w-[375px] bg-white min-h-screen flex flex-col overflow-x-hidden">
@@ -443,8 +482,8 @@ export default function SmartScheduleMainForm() {
             <div className="mb-3">
               <AllAccordion title="전체">
                 <SmartScheduleCalendarPreview 
-                  seeds={interviewers.map((_, idx) => idx + 1)} 
-                  interviewers={interviewers.map((int, idx) => ({ ...int, isRequired: requiredInterviewers[idx] || false }))} 
+                  seeds={interviewersWithParticipation.map((_, idx) => idx + 1)} 
+                  interviewers={interviewersWithParticipation.map((int, idx) => ({ ...int, isRequired: requiredInterviewers[idx] || false }))} 
                   interviewDates={interviewDates}
                   timeSlots={timeSlots}
                   showInterviewerView={showInterviewerView}
@@ -456,7 +495,7 @@ export default function SmartScheduleMainForm() {
 
             {/* Interviewer List (always visible) */}
             <div className="bg-white">
-              {interviewers.map((interviewer, idx) => (
+              {interviewersWithParticipation.map((interviewer, idx) => (
                 <div key={idx}>
                   {/* 면접관 카드 */}
                   <button
@@ -521,7 +560,7 @@ export default function SmartScheduleMainForm() {
                           console.log(`[SmartSchedule] 면접관 ${interviewer.userId} (${interviewer.name}) 시간 변경:`, newCellActive);
                           console.log(`[SmartSchedule] 전달받은 cellActive:`, interviewersCellActive[interviewer.userId]);
                           
-                          // cellActive 상태 업데이트
+                          // cellActive 상태 업데이트 (participated는 useMemo에서 자동 계산됨)
                           setInterviewersCellActive(prev => {
                             const updated = {
                               ...prev,
@@ -530,16 +569,6 @@ export default function SmartScheduleMainForm() {
                             console.log('[SmartSchedule] 업데이트된 interviewersCellActive:', updated);
                             return updated;
                           });
-                          
-                          // participated 상태 업데이트
-                          const hasData = Object.keys(newCellActive).length > 0;
-                          setInterviewers(prev => 
-                            prev.map(int => 
-                              int.userId === interviewer.userId 
-                                ? { ...int, participated: hasData }
-                                : int
-                            )
-                          );
                         }}
                       />
                     </div>

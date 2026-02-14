@@ -19,7 +19,20 @@ export default function ApplicantInterviewSchedule() {
   const router = useRouter();
   const [isRecruiting, setIsRecruiting] = useState(true);
   const [guidance, setGuidance] = useState('');
-  const [selectedSlots, setSelectedSlots] = useState<ScheduleState>({});
+  const [selectedSlots, setSelectedSlots] = useState<ScheduleState>(() => {
+    // localStorage에서 초기값 로드
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('applicantInterviewSlots');
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          return {};
+        }
+      }
+    }
+    return {};
+  });
   const [isFocused, setIsFocused] = useState(false);
   
   const projectId = useCurrentProjectStore(s => s.projectId);
@@ -70,6 +83,38 @@ export default function ApplicantInterviewSchedule() {
     fetchInterviewSetting();
   }, [projectId]);
 
+  // 지원자 링크 설정 불러오기
+  useEffect(() => {
+    const fetchApplicantConfig = async () => {
+      if (!projectId) return;
+      
+      try {
+        const config = await projectService.getApplicantLinkConfig(projectId);
+        console.log('[ApplicantInterview] 지원자 링크 설정:', config);
+        
+        if (config) {
+          if (config.enabled !== undefined) {
+            setIsRecruiting(config.enabled);
+          }
+          if (config.guidanceText !== undefined && config.guidanceText !== null) {
+            setGuidance(config.guidanceText);
+          }
+        }
+      } catch (error) {
+        console.log('지원자 링크 설정 조회 실패 (미설정일 수 있음):', error);
+      }
+    };
+    
+    fetchApplicantConfig();
+  }, [projectId]);
+
+  // selectedSlots 변경 시 localStorage에 저장
+  useEffect(() => {
+    if (typeof window !== 'undefined' && Object.keys(selectedSlots).length > 0) {
+      localStorage.setItem('applicantInterviewSlots', JSON.stringify(selectedSlots));
+    }
+  }, [selectedSlots]);
+
   // 면접 시간 데이터 동적 생성
   const timeSlotsByDate: Record<string, string[]> = useMemo(() => {
     if (!interviewSetting) {
@@ -119,16 +164,33 @@ export default function ApplicantInterviewSchedule() {
     }));
   };
 
-  const handleSave = () => {
-    const selected = Object.entries(selectedSlots)
-      .filter(([_, isSelected]) => isSelected)
-      .map(([key]) => key);
+  const handleSave = async () => {
+    if (!projectId) {
+      alert('프로젝트가 선택되지 않았습니다.');
+      return;
+    }
 
-    console.log('Guidance:', guidance);
-    console.log('Selected Slots:', selected);
-    
-    // 스마트 시간표 페이지로 이동
-    router.push('/smart-schedule');
+    try {
+      // API로 설정 저장
+      await projectService.updateApplicantLinkConfig(projectId, {
+        enabled: isRecruiting,
+        guidanceText: guidance,
+      });
+
+      const selected = Object.entries(selectedSlots)
+        .filter(([_, isSelected]) => isSelected)
+        .map(([key]) => key);
+
+      console.log('[ApplicantInterview] 저장 완료');
+      console.log('Guidance:', guidance);
+      console.log('Selected Slots:', selected);
+
+      // 스마트 시간표 페이지로 이동
+      router.push('/smart-schedule');
+    } catch (error) {
+      console.error('지원자 링크 설정 저장 실패:', error);
+      alert('저장에 실패했습니다.');
+    }
   };
 
   return (
@@ -178,11 +240,6 @@ export default function ApplicantInterviewSchedule() {
               placeholder="면접 가능 시간 선택 위해 안내 사항을 입력하세요."
               className="w-full bg-transparent text-body-sm-rg text-gray-950 placeholder:text-gray-400 resize-none focus:outline-none min-h-[120px]"
             />
-            {guidance && (
-              <p className="absolute bottom-2 right-3 text-[10px] leading-[14px] text-gray-200">
-                자동저장됨
-              </p>
-            )}
           </div>
         </div>
 
