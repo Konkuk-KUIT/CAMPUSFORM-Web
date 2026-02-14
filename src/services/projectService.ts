@@ -108,6 +108,18 @@ class ProjectService {
     const response = await apiClient.patch<Project>(`/recruiting/projects/${projectId}/complete-all`);
     return response.data;
   }
+
+  // GET : 면접관 시간 등록 상태 조회 (availability)
+  async getInterviewerAvailability(projectId: number, adminId: number): Promise<any> {
+    const response = await apiClient.get(`/recruiting/projects/${projectId}/interviewers/${adminId}/availability`);
+    return response.data;
+  }
+
+  // POST/PUT : 면접관 시간 등록 (availability 저장)
+  async updateInterviewerAvailability(projectId: number, adminId: number, data: any): Promise<any> {
+    const response = await apiClient.put(`/recruiting/projects/${projectId}/interviewers/${adminId}/availability`, data);
+    return response.data;
+  }
 }
 
 export const projectService = new ProjectService();

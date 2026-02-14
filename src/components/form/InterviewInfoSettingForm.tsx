@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { projectService } from '@/services/projectService';
 import { useCurrentProjectStore } from '@/store/currentProjectStore';
+import { useNewProjectStore } from '@/store/newProjectStore';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/ui/Header';
@@ -10,7 +11,7 @@ import Navbar from '@/components/Navbar';
 import Btn from '@/components/ui/Btn';
 import SmartScheduleDropdown from '@/components/ui/SmartScheduleDropdown';
 import TimePicker from '@/components/ui/TimePicker';
-import DateRangePickerModal from '@/components/home/addproject/DateRangePickerModal';
+import Calendar from '@/components/home/Calendar';
 
 type TimeOption = { label: string; value: string };
 
@@ -19,7 +20,6 @@ export default function InterviewInfoSettingForm() {
   // Date state
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
-  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
   // Time state
   const hourOptions = useMemo<TimeOption[]>(() => {
@@ -88,6 +88,14 @@ export default function InterviewInfoSettingForm() {
     setEndDate(end);
   };
 
+  const handleDateChange = (date: Date | [Date | null, Date | null] | null) => {
+    if (Array.isArray(date)) {
+      const [start, end] = date;
+      setStartDate(start);
+      setEndDate(end);
+    }
+  };
+
   const formatDateRange = () => {
     if (!startDate || !endDate) return '날짜를 선택해주세요';
     const formatDate = (date: Date) => {
@@ -101,8 +109,84 @@ export default function InterviewInfoSettingForm() {
 
   // zustand store에서 현재 projectId 받아오기
   const projectId = useCurrentProjectStore(state => state.projectId);
+  const setProjectId = useCurrentProjectStore(state => state.setProjectId);
+  const createdProjectId = useNewProjectStore(state => state.createdProjectId);
+
+  // projectId가 없으면 프로젝트 목록에서 가져오기
+  useEffect(() => {
+    const initializeProjectId = async () => {
+      console.log('[InterviewSetting] 현재 projectId:', projectId);
+      console.log('[InterviewSetting] 생성된 projectId:', createdProjectId);
+      
+      // 1순위: 이미 currentStore에 projectId가 있으면 사용
+      if (projectId) {
+        console.log('[InterviewSetting] 기존 projectId 사용:', projectId);
+        return;
+      }
+      
+      // 2순위: 방금 생성한 프로젝트 ID가 있으면 사용
+      if (createdProjectId) {
+        console.log('[InterviewSetting] 생성된 projectId 설정:', createdProjectId);
+        setProjectId(createdProjectId);
+        return;
+      }
+      
+      // 3순위: 프로젝트 목록에서 가져오기
+      try {
+        console.log('[InterviewSetting] 프로젝트 목록 조회 중...');
+        const projects = await projectService.getProjects();
+        console.log('[InterviewSetting] 프로젝트 목록:', projects);
+        
+        if (projects.length > 0) {
+          console.log('[InterviewSetting] 첫 번째 프로젝트 사용:', projects[0].id);
+          setProjectId(projects[0].id);
+        } else {
+          console.warn('[InterviewSetting] 프로젝트가 없습니다');
+        }
+      } catch (error) {
+        console.error('[InterviewSetting] 프로젝트 목록 조회 실패:', error);
+      }
+    };
+    
+    initializeProjectId();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSubmit = async () => {
+    console.log('[InterviewSetting] 제출 시도 - projectId:', projectId);
+    console.log('[InterviewSetting] createdProjectId:', createdProjectId);
+    
+    // projectId 가져오기 (우선순위: projectId > createdProjectId > 프로젝트 목록)
+    let targetProjectId = projectId;
+    
+    if (!targetProjectId && createdProjectId) {
+      console.log('[InterviewSetting] createdProjectId 사용:', createdProjectId);
+      targetProjectId = createdProjectId;
+      setProjectId(createdProjectId); // store에도 저장
+    }
+    
+    if (!targetProjectId) {
+      console.log('[InterviewSetting] 프로젝트 목록에서 가져오기 시도');
+      try {
+        const projects = await projectService.getProjects();
+        if (projects.length > 0) {
+          targetProjectId = projects[0].id;
+          setProjectId(targetProjectId);
+          console.log('[InterviewSetting] 프로젝트 목록에서 가져옴:', targetProjectId);
+        }
+      } catch (error) {
+        console.error('[InterviewSetting] 프로젝트 목록 조회 실패:', error);
+      }
+    }
+    
+    if (!targetProjectId) {
+      console.error('[InterviewSetting] projectId를 가져올 수 없습니다');
+      alert('프로젝트를 찾을 수 없습니다.\n프로젝트를 먼저 생성해주세요.');
+      return;
+    }
+    
+    console.log('[InterviewSetting] 최종 사용 projectId:', targetProjectId);
+    
     if (!startDate) {
       alert('면접 시작 날짜를 선택해주세요');
       return;
@@ -131,16 +215,17 @@ export default function InterviewInfoSettingForm() {
       slotDurationMin: estimatedDuration ? parseInt(estimatedDuration) : 0,
       slotBreakMin: restDuration ? parseInt(restDuration) : 0,
     };
-    if (!projectId) {
-      alert('프로젝트가 선택되지 않았습니다.');
-      return;
-    }
+    
+    console.log('[InterviewSetting] API 호출 - projectId:', targetProjectId, 'payload:', payload);
+    
     try {
-      await projectService.updateInterviewSetting(projectId, payload);
+      await projectService.updateInterviewSetting(targetProjectId, payload);
       localStorage.setItem('interviewInfoConfigured', 'true');
+      console.log('[InterviewSetting] 면접 정보 설정 성공');
       alert('면접 정보가 설정되었습니다');
       router.push('/smart-schedule');
     } catch (e) {
+      console.error('[InterviewSetting] 면접 정보 설정 실패:', e);
       alert('면접 정보 설정에 실패했습니다.');
     }
   };
@@ -155,22 +240,20 @@ export default function InterviewInfoSettingForm() {
         <div className="flex-1 px-4 pb-24 overflow-y-auto">
           {/* 면접 날짜 */}
           <div className="mt-2">
-            <div className="flex items-center gap-2 py-1 mb-2">
+            <div className="flex items-center gap-2 py-1 mb-3">
               <Image src="/icons/calendar-black.svg" alt="calendar" width={15.75} height={15.75} />
               <span className="text-[15px] font-medium text-gray-950">면접 날짜</span>
             </div>
 
-            <button
-              onClick={() => setIsDatePickerOpen(true)}
-              className="w-full px-4 py-3 bg-gray-50 rounded-lg border border-gray-200 text-left hover:bg-gray-100 transition-colors"
-            >
-              <div className="flex items-center justify-between">
-                <span className={startDate && endDate ? 'text-gray-950' : 'text-gray-400'}>
-                  {formatDateRange()}
-                </span>
-                <Image src="/icons/calendar-black.svg" alt="calendar" width={16} height={16} />
-              </div>
-            </button>
+            <Calendar
+              variant="modal"
+              selected={startDate}
+              onDateChange={handleDateChange}
+              startDate={startDate}
+              endDate={endDate}
+              selectsRange
+              disableTodayHighlight
+            />
           </div>
 
           {/* 면접 시간대 */}
@@ -309,16 +392,6 @@ export default function InterviewInfoSettingForm() {
         {/* Bottom nav */}
         <Navbar />
       </div>
-
-      {/* Date Range Picker Modal */}
-      {isDatePickerOpen && (
-        <DateRangePickerModal
-          onClose={() => setIsDatePickerOpen(false)}
-          onConfirm={handleDateConfirm}
-          initialStartDate={startDate}
-          initialEndDate={endDate}
-        />
-      )}
     </main>
   );
 }
