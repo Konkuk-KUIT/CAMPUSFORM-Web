@@ -32,7 +32,17 @@ export default function InterviewResultContent() {
   return (
     <>
       {/* 면접 결과 */}
-      <ResultCard type="면접결과" totalApplicants={48} passed={10} ratio="0:0" malePercent={80} femalePercent={20} />
+      <ResultCard
+        type="면접결과"
+        totalApplicantCount={48}
+        currentStagePassCount={10}
+        competitionRate="0:0"
+        genderRatio={{
+          malePercent: 80,
+          femalePercent: 20,
+          otherPercent: 0,
+        }}
+      />
 
       {/* 합격자, 불합격자 */}
       <ResultTab onTabChange={setSelectedTab} />
