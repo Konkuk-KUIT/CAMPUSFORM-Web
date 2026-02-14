@@ -1,8 +1,14 @@
 import apiClient from '@/lib/api';
-import type { Notification, NotificationsResponse, UnreadCountResponse, ReadAllResponse } from '@/types/notification';
+import type {
+  Notification,
+  NotificationsResponse,
+  UnreadCountResponse,
+  ReadAllResponse,
+  NotificationSetting,
+} from '@/types/notification';
 
 class NotificationService {
-  // GET : 알림 목록 조회
+  // GET : 알림 목록 조회 (페이지네이션)
   async getNotifications(page = 0, size = 20): Promise<NotificationsResponse> {
     const response = await apiClient.get<NotificationsResponse>('/notifications', {
       params: { page, size },
@@ -25,6 +31,18 @@ class NotificationService {
   // PATCH : 모든 알림 읽음 처리
   async markAllAsRead(): Promise<ReadAllResponse> {
     const response = await apiClient.patch<ReadAllResponse>('/notifications/read-all');
+    return response.data;
+  }
+
+  // GET : 알림 수신 설정 조회
+  async getNotificationSetting(): Promise<NotificationSetting> {
+    const response = await apiClient.get<NotificationSetting>('/users/notification-setting');
+    return response.data;
+  }
+
+  // PATCH : 알림 수신 설정 변경
+  async updateNotificationSetting(enabled: boolean): Promise<NotificationSetting> {
+    const response = await apiClient.patch<NotificationSetting>('/users/notification-setting', { enabled });
     return response.data;
   }
 }

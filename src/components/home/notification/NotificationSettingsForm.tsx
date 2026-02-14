@@ -1,19 +1,45 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from '@/components/ui/Header';
 import Toggle from '@/components/ui/Toggle';
+import { toast, ToastContainer } from '@/components/Toast';
+import { notificationService } from '@/services/notificationService';
 
 export default function NotificationSettingsForm() {
-  const [isAgreed, setIsAgreed] = useState(true);
+  const [isEnabled, setIsEnabled] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const toggleHandler = () => {
-    setIsAgreed(!isAgreed);
-    console.log(`알림 설정 변경: ${!isAgreed}`);
+  useEffect(() => {
+    const fetchSetting = async () => {
+      try {
+        const data = await notificationService.getNotificationSetting();
+        setIsEnabled(data.enabled);
+      } catch (error) {
+        console.error('알림 설정 조회 실패:', error);
+        toast.error('알림 설정을 불러오지 못했습니다.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchSetting();
+  }, []);
+
+  const toggleHandler = async () => {
+    const next = !isEnabled;
+    setIsEnabled(next);
+    try {
+      await notificationService.updateNotificationSetting(next);
+    } catch (error) {
+      console.error('알림 설정 변경 실패:', error);
+      toast.error('알림 설정 변경에 실패했습니다.');
+      setIsEnabled(!next);
+    }
   };
 
   return (
     <div className="flex justify-center min-h-screen bg-white">
+      <ToastContainer />
       <div className="relative w-[375px] bg-white min-h-screen flex flex-col">
         <Header title="알림 설정" backTo="/home/notification" />
 
@@ -26,7 +52,7 @@ export default function NotificationSettingsForm() {
               </p>
             </div>
 
-            <Toggle checked={isAgreed} onChange={toggleHandler} />
+            <Toggle checked={isEnabled} onChange={toggleHandler} />
           </div>
         </div>
       </div>

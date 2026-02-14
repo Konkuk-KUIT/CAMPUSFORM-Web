@@ -32,3 +32,7 @@ export interface UnreadCountResponse {
 export interface ReadAllResponse {
   updatedCount: number;
 }
+
+export interface NotificationSetting {
+  enabled: boolean;
+}
