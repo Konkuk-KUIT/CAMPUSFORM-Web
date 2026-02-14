@@ -1,10 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Toggle from './Toggle';
 import Btn from './Btn';
+import { useCurrentProjectStore } from '@/store/currentProjectStore';
+import { useNewProjectStore } from '@/store/newProjectStore';
+import { projectService } from '@/services/projectService';
+import { format } from 'date-fns';
+import { ko } from 'date-fns/locale';
 
 interface ScheduleState {
   [key: string]: boolean;
@@ -16,13 +21,95 @@ export default function ApplicantInterviewSchedule() {
   const [guidance, setGuidance] = useState('');
   const [selectedSlots, setSelectedSlots] = useState<ScheduleState>({});
   const [isFocused, setIsFocused] = useState(false);
+  
+  const projectId = useCurrentProjectStore(s => s.projectId);
+  const setProjectId = useCurrentProjectStore(s => s.setProjectId);
+  const createdProjectId = useNewProjectStore(s => s.createdProjectId);
+  const [interviewSetting, setInterviewSetting] = useState<any>(null);
 
-  // 면접 시간 데이터
-  const timeSlotsByDate: Record<string, string[]> = {
-    '9월 1일 (월)': ['10:00', '10:30', '11:00', '11:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30'],
-    '9월 2일 (화)': ['10:00', '10:30', '11:00', '11:30', '16:00', '16:30'],
-    '9월 3일 (수)': ['16:00', '16:30', '17:00'],
-  };
+  // 프로젝트 ID 초기화
+  useEffect(() => {
+    const initializeProjectId = async () => {
+      if (projectId) return;
+      
+      if (createdProjectId) {
+        setProjectId(createdProjectId);
+        return;
+      }
+      
+      try {
+        const projects = await projectService.getProjects();
+        if (projects.length > 0) {
+          setProjectId(projects[0].id);
+        }
+      } catch (error) {
+        console.error('프로젝트 목록 조회 실패:', error);
+      }
+    };
+    
+    initializeProjectId();
+  }, []);
+
+  // 면접 설정 조회
+  useEffect(() => {
+    const fetchInterviewSetting = async () => {
+      if (!projectId) return;
+      
+      try {
+        const setting = await projectService.getInterviewSetting(projectId);
+        console.log('[ApplicantInterview] 면접 설정:', setting);
+        
+        if (setting && setting.startDate && setting.endDate && setting.startTime && setting.endTime) {
+          setInterviewSetting(setting);
+        }
+      } catch (error) {
+        console.error('면접 설정 조회 실패:', error);
+      }
+    };
+    
+    fetchInterviewSetting();
+  }, [projectId]);
+
+  // 면접 시간 데이터 동적 생성
+  const timeSlotsByDate: Record<string, string[]> = useMemo(() => {
+    if (!interviewSetting) {
+      return {};
+    }
+
+    const result: Record<string, string[]> = {};
+    const startDate = new Date(interviewSetting.startDate);
+    const endDate = new Date(interviewSetting.endDate);
+    
+    // 시작 시간과 종료 시간 파싱
+    const [startHour, startMin] = interviewSetting.startTime.split(':').map(Number);
+    const [endHour, endMin] = interviewSetting.endTime.split(':').map(Number);
+    
+    // 날짜별로 순회
+    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+      const dateKey = format(d, 'M월 d일 (E)', { locale: ko });
+      const times: string[] = [];
+      
+      // 30분 단위로 시간 생성
+      // 종료 시간이 :00이면 그 시간대는 포함하지 않음 (ex. 18:00 종료 -> 17:30까지)
+      // 종료 시간이 :30이면 :00까지 포함 (ex. 18:30 종료 -> 18:00까지)
+      let currentHour = startHour;
+      let currentMin = startMin;
+      
+      while (currentHour < endHour || (currentHour === endHour && currentMin < endMin)) {
+        times.push(`${currentHour.toString().padStart(2, '0')}:${currentMin.toString().padStart(2, '0')}`);
+        
+        currentMin += 30;
+        if (currentMin >= 60) {
+          currentMin = 0;
+          currentHour += 1;
+        }
+      }
+      
+      result[dateKey] = times;
+    }
+    
+    return result;
+  }, [interviewSetting]);
 
   const handleTimeSlotToggle = (date: string, time: string) => {
     const key = `${date}-${time}`;
@@ -105,38 +192,48 @@ export default function ApplicantInterviewSchedule() {
             면접 가능 시간
           </h2>
 
-          {Object.entries(timeSlotsByDate).map(([date, times]) => (
-            <div key={date} className="space-y-3">
-              {/* 날짜 라벨 */}
-              <h3 className="text-subtitle-sm-md text-gray-950">{date}</h3>
-
-              {/* 시간 버튼 그리드 */}
-              <div className="grid grid-cols-4 gap-2">
-                {times.map((time) => {
-                  const key = `${date}-${time}`;
-                  const isSelected = selectedSlots[key] || false;
-
-                  return (
-                    <button
-                      key={key}
-                      onClick={() => handleTimeSlotToggle(date, time)}
-                      className={`
-                        py-2 px-3 rounded-[5px] border text-body-sm-rg
-                        transition-all duration-200
-                        ${
-                          isSelected
-                            ? 'bg-primary text-white border-primary'
-                            : 'bg-white text-gray-950 border-gray-200 hover:border-primary'
-                        }
-                      `}
-                    >
-                      {time}
-                    </button>
-                  );
-                })}
-              </div>
+          {!interviewSetting ? (
+            <div className="text-center py-8 text-body-sm text-gray-300">
+              면접 설정 정보를 불러오는 중...
             </div>
-          ))}
+          ) : Object.keys(timeSlotsByDate).length === 0 ? (
+            <div className="text-center py-8 text-body-sm text-gray-300">
+              면접 정보 설정 후 이용 가능합니다.
+            </div>
+          ) : (
+            Object.entries(timeSlotsByDate).map(([date, times]) => (
+              <div key={date} className="space-y-3">
+                {/* 날짜 라벨 */}
+                <h3 className="text-subtitle-sm-md text-gray-950">{date}</h3>
+
+                {/* 시간 버튼 그리드 */}
+                <div className="grid grid-cols-4 gap-2">
+                  {times.map((time) => {
+                    const key = `${date}-${time}`;
+                    const isSelected = selectedSlots[key] || false;
+
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => handleTimeSlotToggle(date, time)}
+                        className={`
+                          py-2 px-3 rounded-[5px] border text-body-sm-rg
+                          transition-all duration-200
+                          ${
+                            isSelected
+                              ? 'bg-primary text-white border-primary'
+                              : 'bg-white text-gray-950 border-gray-200 hover:border-primary'
+                          }
+                        `}
+                      >
+                        {time}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 

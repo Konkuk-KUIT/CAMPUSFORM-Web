@@ -293,7 +293,7 @@ export default function SmartScheduleCalendarPreview({
           {timeSlots.map((timeSlot, timeIdx) => (
             <div key={timeSlot} className="flex gap-2" style={{ height: '50px' }}>
               {/* Time label */}
-              <div className="text-[14px] text-gray-950 font-normal flex items-center justify-start flex-shrink-0" style={{ width: '30px' }}>
+              <div className="text-[14px] text-gray-950 font-normal flex items-start justify-start flex-shrink-0 pt" style={{ width: '30px' }}>
                 {timeSlot.split(':')[0]}
               </div>
 

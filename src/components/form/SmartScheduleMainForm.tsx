@@ -361,13 +361,14 @@ export default function SmartScheduleMainForm() {
     // 시작 시간: 항상 해당 시간의 00분으로 내림 (예: 10:15 → 10:00)
     const actualStartHour = startHour;
     
-    // 끝 시간: 분이 00이 아니면 다음 시간의 00분으로 올림 (예: 17:25 → 18:00)
-    const actualEndHour = endMin > 0 ? endHour + 1 : endHour;
+    // 끝 시간 처리:
+    // - 종료 시간이 :00이면 그 시간대는 표시 안 함 (예: 18:00 종료 → 17시까지)
+    // - 종료 시간이 :30이면 해당 시간의 :00까지 표시 (예: 18:30 종료 → 18시까지)
+    const actualEndHour = endMin > 0 ? endHour : endHour - 1;
     
     const slots: string[] = [];
     
     // 1시간 단위로 슬롯 생성 (각 슬롯은 상/하반부로 나뉘어 30분씩 표현)
-    // actualEndHour까지 포함 (예: 11:25까지면 12:00 행까지 표시)
     for (let hour = actualStartHour; hour <= actualEndHour; hour++) {
       slots.push(`${hour.toString().padStart(2, '0')}:00`);
     }
