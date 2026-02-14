@@ -21,15 +21,13 @@ export default function InterviewPassedList() {
   return (
     <>
       <ApplicantCountHeader type="합격자" />
-      <NotificationMessageForm 
-        type="합격자" 
+      <NotificationMessageForm
+        type="합격자"
         onTemplateApply={handleTemplateApply}
+        projectId={projectId!}
+        status="PASS"
       />
-      <ApplicantMessageCard 
-        type="합격자" 
-        template={template}
-        isVariableEnabled={isVariableEnabled}
-      />
+      <ApplicantMessageCard type="합격자" template={template} isVariableEnabled={isVariableEnabled} />
       <Link href={`/interview/${projectId}/complete`}>
         <Button variant="primary" size="lg" className="fixed bottom-20">
           면접 마감하기
