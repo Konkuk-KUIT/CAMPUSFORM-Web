@@ -11,9 +11,16 @@ import type { DocumentApplicantResult } from '@/types/document';
 interface DocumentPassedListProps {
   list: DocumentApplicantResult[];
   projectId: number;
+  initialTemplate: string;
+  onTemplateChange: (template: string) => void;
 }
 
-export default function DocumentPassedList({ list, projectId }: DocumentPassedListProps) {
+export default function DocumentPassedList({
+  list,
+  projectId,
+  initialTemplate,
+  onTemplateChange,
+}: DocumentPassedListProps) {
   const [template, setTemplate] = useState('');
   const [isVariableEnabled, setIsVariableEnabled] = useState(false);
 
@@ -25,7 +32,14 @@ export default function DocumentPassedList({ list, projectId }: DocumentPassedLi
   return (
     <>
       <ApplicantCountHeader type="합격자" list={list} />
-      <NotificationMessageForm type="합격자" onTemplateApply={handleTemplateApply} />
+      <NotificationMessageForm
+        type="합격자"
+        onTemplateApply={handleTemplateApply}
+        onTemplateChange={onTemplateChange}
+        projectId={projectId}
+        status="PASS"
+        initialTemplate={initialTemplate}
+      />
       <ApplicantMessageCard type="합격자" template={template} isVariableEnabled={isVariableEnabled} list={list} />
       <Link href={`/document/${projectId}/complete`}>
         <Button variant="primary" size="lg" className="fixed bottom-20">

@@ -18,6 +18,9 @@ export default function DocumentResultContent({ projectId }: DocumentResultConte
   const [stats, setStats] = useState<DocumentResultStats | null>(null);
   const [passedList, setPassedList] = useState<DocumentApplicantResult[]>([]);
   const [failedList, setFailedList] = useState<DocumentApplicantResult[]>([]);
+  const [passedTemplate, setPassedTemplate] = useState<string>('');
+  const [failedTemplate, setFailedTemplate] = useState<string>('');
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     const fetchResults = async () => {
@@ -28,6 +31,9 @@ export default function DocumentResultContent({ projectId }: DocumentResultConte
       setStats(passedRes.stats);
       setPassedList(passedRes.applicants);
       setFailedList(failedRes.applicants);
+      setPassedTemplate(passedRes.template.content);
+      setFailedTemplate(failedRes.template.content);
+      setIsLoaded(true);
     };
 
     fetchResults();
@@ -46,11 +52,22 @@ export default function DocumentResultContent({ projectId }: DocumentResultConte
       )}
       <ResultTab onTabChange={setSelectedTab} />
       <div className="p-4 bg-gray-50 min-h-screen">
-        {selectedTab === '합격자' ? (
-          <DocumentPassedList list={passedList} projectId={projectId} />
-        ) : (
-          <DocumentFailedList list={failedList} projectId={projectId} />
-        )}
+        {isLoaded &&
+          (selectedTab === '합격자' ? (
+            <DocumentPassedList
+              list={passedList}
+              projectId={projectId}
+              initialTemplate={passedTemplate}
+              onTemplateChange={setPassedTemplate}
+            />
+          ) : (
+            <DocumentFailedList
+              list={failedList}
+              projectId={projectId}
+              initialTemplate={failedTemplate}
+              onTemplateChange={setFailedTemplate}
+            />
+          ))}
       </div>
       <Navbar />
     </>
