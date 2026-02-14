@@ -5,7 +5,7 @@ import { useState, useRef, useEffect } from 'react';
 interface AppointmentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (date: string, time: string) => void;
+  onConfirm: (date: string, time: string, rawDate: string) => void;
   initialDate?: string;
   initialTime?: string;
 }
@@ -34,10 +34,12 @@ export default function AppointmentModal({
   const infiniteMinutes = [...minutes, ...minutes, ...minutes];
 
   const handleConfirm = () => {
-    const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][new Date(2024, selectedMonth - 1, selectedDay).getDay()];
+    const year = new Date().getFullYear();
+    const rawDate = `${year}-${String(selectedMonth).padStart(2, '0')}-${String(selectedDay).padStart(2, '0')}`;
+    const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][new Date(year, selectedMonth - 1, selectedDay).getDay()];
     const formattedDate = `${selectedMonth}월 ${selectedDay}일 (${dayOfWeek})`;
     const formattedTime = `${String(selectedHour).padStart(2, '0')}:${String(selectedMinute).padStart(2, '0')}`;
-    onConfirm(formattedDate, formattedTime);
+    onConfirm(formattedDate, formattedTime, rawDate);
   };
 
   const handleScroll = (

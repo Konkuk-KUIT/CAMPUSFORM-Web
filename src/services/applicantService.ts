@@ -37,6 +37,20 @@ class ApplicantService {
   async toggleBookmark(projectId: number, applicantId: number, stage: Stage): Promise<void> {
     await apiClient.patch(`/projects/${projectId}/applicants/${applicantId}/bookmark`, null, { params: { stage } });
   }
+
+  // POST : 지원자 면접 시간 수동 배정
+  async manualAssignInterview(
+    projectId: number,
+    applicantId: number,
+    interviewDate: string,
+    startTime: string
+  ): Promise<void> {
+    await apiClient.post(`/projects/${projectId}/interview/manual-assignments`, {
+      applicantId,
+      interviewDate,
+      startTime,
+    });
+  }
 }
 
 export const applicantService = new ApplicantService();

@@ -9,11 +9,13 @@ import BottomSheet from '@/components/ui/BottomSheet';
 import BtnRound from '@/components/ui/BtnRound';
 import CommentSection from '@/components/sections/CommentSection';
 import Loading from '@/components/ui/Loading';
+import AppointmentModal from '@/components/interview/AppointmentModal';
 import { toast } from '@/components/Toast';
 import { applicantService } from '@/services/applicantService';
 import { authService } from '@/services/authService';
 import type { ApplicantRaw } from '@/types/applicant';
 import type { InterviewApplicant } from '@/types/interview';
+
 
 const statusMap: Record<string, '보류' | '합격' | '불합격'> = {
   HOLD: '보류',
@@ -55,6 +57,9 @@ export default function InterviewContent({ projectId }: { projectId: number }) {
   const [applicants, setApplicants] = useState<InterviewApplicant[]>([]);
   const [currentUserId, setCurrentUserId] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAppointmentOpen, setIsAppointmentOpen] = useState(false);
+  const [selectedAppointmentId, setSelectedAppointmentId] = useState<number | null>(null);
+  const [selectedAppointmentApplicantId, setSelectedAppointmentApplicantId] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -182,7 +187,7 @@ export default function InterviewContent({ projectId }: { projectId: number }) {
               <ApplicantFileCard
                 key={applicant.applicantId}
                 id={applicant.applicantId}
-                projectId={projectId}            // ← 추가
+                projectId={projectId}
                 name={applicant.name}
                 info={`${applicant.university} / ${applicant.major} / ${applicant.position}`}
                 initialStatus={applicant.interviewStatus}
@@ -195,8 +200,11 @@ export default function InterviewContent({ projectId }: { projectId: number }) {
                 }}
                 appointmentDate={applicant.appointmentDate}
                 appointmentTime={applicant.appointmentTime}
-                onAppointmentClick={() => console.log(`면접 일정 클릭: ${applicant.applicantId}`)}
-                onStatusChange={handleStatusChange}   // ← 추가
+                onAppointmentClick={() => {
+                  setSelectedAppointmentApplicantId(applicant.applicantId);
+                  setIsAppointmentOpen(true);
+                }}  
+                onStatusChange={handleStatusChange}
               />
             ))
           )}
@@ -218,6 +226,27 @@ export default function InterviewContent({ projectId }: { projectId: number }) {
           ))}
         </div>
       </BottomSheet>
+
+      <AppointmentModal
+        isOpen={isAppointmentOpen}
+        onClose={() => setIsAppointmentOpen(false)}
+        onConfirm={async (date, time, rawDate) => {
+          if (!selectedAppointmentApplicantId) return;
+          try {
+            await applicantService.manualAssignInterview(projectId, selectedAppointmentApplicantId, rawDate, time);
+            setApplicants(prev =>
+              prev.map(a =>
+                a.applicantId === selectedAppointmentApplicantId
+                  ? { ...a, appointmentDate: date, appointmentTime: time }
+                  : a
+              )
+            );
+            setIsAppointmentOpen(false);
+          } catch (e) {
+            toast.error('면접 일정 저장에 실패했습니다.');
+          }
+        }}
+      />
 
       <CommentSection
         isOpen={isCommentOpen}
