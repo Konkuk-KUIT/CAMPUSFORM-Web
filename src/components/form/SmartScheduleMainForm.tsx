@@ -214,25 +214,40 @@ export default function SmartScheduleMainForm() {
           let ownerParticipated = false;
           try {
             const availability = await projectService.getInterviewerAvailability(projectId, auth.user.userId);
-            ownerParticipated = availability && (availability.availableSlots?.length > 0 || availability.hasRegistered === true);
             
             // availability를 cellActive 형태로 변환
-            if (availability && availability.availableSlots) {
+            if (availability && availability.availabilities && interviewSetting) {
+              console.log(`[SmartSchedule] OWNER ${auth.user.userId} API 원본 데이터:`, availability.availabilities);
               const cellActive: { [key: string]: { top: boolean; bottom: boolean } } = {};
-              availability.availableSlots.forEach((slot: any) => {
-                const cellKey = `${slot.date}-${slot.timeIndex}`;
-                if (!cellActive[cellKey]) {
-                  cellActive[cellKey] = { top: false, bottom: false };
-                }
-                if (slot.half === 'top' || slot.isFullTime) {
-                  cellActive[cellKey].top = true;
-                }
-                if (slot.half === 'bottom' || slot.isFullTime) {
-                  cellActive[cellKey].bottom = true;
-                }
+              const [startHour] = interviewSetting.startTime.split(':').map(Number);
+              
+              availability.availabilities.forEach((dayAvail: any) => {
+                const date = dayAvail.date; // "2026-02-14"
+                dayAvail.startTimes.forEach((startTime: string) => {
+                  // startTime: "09:00" 또는 "09:30"
+                  const [hour, min] = startTime.split(':').map(Number);
+                  const timeIndex = hour - startHour; // 시작 시간으로부터의 시간 차이
+                  const cellKey = `${date}-${timeIndex}`;
+                  
+                  if (!cellActive[cellKey]) {
+                    cellActive[cellKey] = { top: false, bottom: false };
+                  }
+                  
+                  // :00 이면 top, :30 이면 bottom
+                  if (min === 0) {
+                    cellActive[cellKey].top = true;
+                  } else if (min === 30) {
+                    cellActive[cellKey].bottom = true;
+                  }
+                });
               });
-              newInterviewersCellActive[auth.user.userId] = cellActive;
-              console.log(`[SmartSchedule] OWNER ${auth.user.userId} availability 로드:`, cellActive);
+              
+              // cellActive에 데이터가 있으면 참여로 표시
+              if (Object.keys(cellActive).length > 0) {
+                ownerParticipated = true;
+                newInterviewersCellActive[auth.user.userId] = cellActive;
+              }
+              console.log(`[SmartSchedule] OWNER ${auth.user.userId} 변환된 cellActive:`, cellActive);
             }
           } catch (error) {
             console.log('OWNER availability 조회 실패 (미등록일 수 있음)');
@@ -253,25 +268,40 @@ export default function SmartScheduleMainForm() {
           let adminParticipated = false;
           try {
             const availability = await projectService.getInterviewerAvailability(projectId, admin.adminId);
-            adminParticipated = availability && (availability.availableSlots?.length > 0 || availability.hasRegistered === true);
             
             // availability를 cellActive 형태로 변환
-            if (availability && availability.availableSlots) {
+            if (availability && availability.availabilities && interviewSetting) {
+              console.log(`[SmartSchedule] ADMIN ${admin.adminId} API 원본 데이터:`, availability.availabilities);
               const cellActive: { [key: string]: { top: boolean; bottom: boolean } } = {};
-              availability.availableSlots.forEach((slot: any) => {
-                const cellKey = `${slot.date}-${slot.timeIndex}`;
-                if (!cellActive[cellKey]) {
-                  cellActive[cellKey] = { top: false, bottom: false };
-                }
-                if (slot.half === 'top' || slot.isFullTime) {
-                  cellActive[cellKey].top = true;
-                }
-                if (slot.half === 'bottom' || slot.isFullTime) {
-                  cellActive[cellKey].bottom = true;
-                }
+              const [startHour] = interviewSetting.startTime.split(':').map(Number);
+              
+              availability.availabilities.forEach((dayAvail: any) => {
+                const date = dayAvail.date; // "2026-02-14"
+                dayAvail.startTimes.forEach((startTime: string) => {
+                  // startTime: "09:00" 또는 "09:30"
+                  const [hour, min] = startTime.split(':').map(Number);
+                  const timeIndex = hour - startHour; // 시작 시간으로부터의 시간 차이
+                  const cellKey = `${date}-${timeIndex}`;
+                  
+                  if (!cellActive[cellKey]) {
+                    cellActive[cellKey] = { top: false, bottom: false };
+                  }
+                  
+                  // :00 이면 top, :30 이면 bottom
+                  if (min === 0) {
+                    cellActive[cellKey].top = true;
+                  } else if (min === 30) {
+                    cellActive[cellKey].bottom = true;
+                  }
+                });
               });
-              newInterviewersCellActive[admin.adminId] = cellActive;
-              console.log(`[SmartSchedule] ADMIN ${admin.adminId} (${admin.adminName}) availability 로드:`, cellActive);
+              
+              // cellActive에 데이터가 있으면 참여로 표시
+              if (Object.keys(cellActive).length > 0) {
+                adminParticipated = true;
+                newInterviewersCellActive[admin.adminId] = cellActive;
+              }
+              console.log(`[SmartSchedule] ADMIN ${admin.adminId} (${admin.adminName}) 변환된 cellActive:`, cellActive);
             }
           } catch (error) {
             console.log(`ADMIN ${admin.adminName} availability 조회 실패 (미등록일 수 있음)`);
@@ -300,6 +330,7 @@ export default function SmartScheduleMainForm() {
     fetchInterviewers();
   }, [projectId]);
 
+
   const showOverlay = !isConfigured;
 
   // TODO: 실제 API에서 스마트 시간표 생성 여부와 대표자 여부를 가져와야 함
@@ -320,22 +351,25 @@ export default function SmartScheduleMainForm() {
   }, [interviewSetting]);
 
   // 시간대 배열 생성 (API에서 가져온 startTime ~ endTime)
+  // 각 시간대는 상반부(30분) + 하반부(30분) = 1시간으로 구성
   const timeSlots = useMemo(() => {
     if (!interviewSetting || !interviewSetting.startTime || !interviewSetting.endTime) return [];
     
     const [startHour, startMin] = interviewSetting.startTime.split(':').map(Number);
     const [endHour, endMin] = interviewSetting.endTime.split(':').map(Number);
-    const slotDuration = interviewSetting.slotDurationMin;
+    
+    // 시작 시간: 항상 해당 시간의 00분으로 내림 (예: 10:15 → 10:00)
+    const actualStartHour = startHour;
+    
+    // 끝 시간: 분이 00이 아니면 다음 시간의 00분으로 올림 (예: 17:25 → 18:00)
+    const actualEndHour = endMin > 0 ? endHour + 1 : endHour;
     
     const slots: string[] = [];
-    let currentMin = startHour * 60 + startMin;
-    const endTotalMin = endHour * 60 + endMin;
     
-    while (currentMin < endTotalMin) {
-      const hour = Math.floor(currentMin / 60);
-      const min = currentMin % 60;
-      slots.push(`${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`);
-      currentMin += slotDuration;
+    // 1시간 단위로 슬롯 생성 (각 슬롯은 상/하반부로 나뉘어 30분씩 표현)
+    // actualEndHour까지 포함 (예: 11:25까지면 12:00 행까지 표시)
+    for (let hour = actualStartHour; hour <= actualEndHour; hour++) {
+      slots.push(`${hour.toString().padStart(2, '0')}:00`);
     }
     
     return slots;
@@ -414,7 +448,7 @@ export default function SmartScheduleMainForm() {
                   timeSlots={timeSlots}
                   showInterviewerView={showInterviewerView}
                   onShowInterviewerViewChange={setShowInterviewerView}
-                  cellActive={combinedCellActive}
+                  interviewersCellActive={interviewersCellActive}
                 />
               </AllAccordion>
             </div>
@@ -484,6 +518,9 @@ export default function SmartScheduleMainForm() {
                         cellActive={interviewersCellActive[interviewer.userId] || {}}
                         onCellActiveChange={(newCellActive) => {
                           console.log(`[SmartSchedule] 면접관 ${interviewer.userId} (${interviewer.name}) 시간 변경:`, newCellActive);
+                          console.log(`[SmartSchedule] 전달받은 cellActive:`, interviewersCellActive[interviewer.userId]);
+                          
+                          // cellActive 상태 업데이트
                           setInterviewersCellActive(prev => {
                             const updated = {
                               ...prev,
@@ -492,19 +529,18 @@ export default function SmartScheduleMainForm() {
                             console.log('[SmartSchedule] 업데이트된 interviewersCellActive:', updated);
                             return updated;
                           });
+                          
+                          // participated 상태 업데이트
+                          const hasData = Object.keys(newCellActive).length > 0;
+                          setInterviewers(prev => 
+                            prev.map(int => 
+                              int.userId === interviewer.userId 
+                                ? { ...int, participated: hasData }
+                                : int
+                            )
+                          );
                         }}
                       />
-                      {/* 저장 버튼 */}
-                      <div className="px-3 pt-3">
-                        <Btn
-                          variant="primary"
-                          size="md"
-                          className="w-full"
-                          onClick={() => handleSaveInterviewerTime(interviewer.userId, interviewer.name)}
-                        >
-                          저장
-                        </Btn>
-                      </div>
                     </div>
                   )}
                 </div>

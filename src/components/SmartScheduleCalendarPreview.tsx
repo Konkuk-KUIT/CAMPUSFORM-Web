@@ -307,7 +307,10 @@ export default function SmartScheduleCalendarPreview({
                       />
                       
                       {/* Hover tooltip - 전체 캘린더에서만 표시 */}
-                      {!interviewerName && hoveredCell?.day === dayIdx && hoveredCell?.time === timeIdx && (
+                      {!interviewerName && 
+                        hoveredCell?.day === dayIdx && 
+                        hoveredCell?.time === timeIdx && 
+                        getAvailableInterviewers(hoveredCell.half).length > 0 && (
                         <div 
                           className={`absolute ${dayIdx === dayCols.length - 1 ? 'right-full mr-2' : 'left-full ml-2'} bg-white rounded-[10px] px-[23px] py-[15px] w-[150px] z-50 flex flex-col gap-[10px] ${hoveredCell.half === 'top' ? 'top-0' : 'top-1/2'}`}
                         >
@@ -319,9 +322,6 @@ export default function SmartScheduleCalendarPreview({
                               )}
                             </div>
                           ))}
-                          {getAvailableInterviewers(hoveredCell.half).length === 0 && (
-                            <div className="text-[14px] text-gray-400 leading-[20px]">가능한 면접관 없음</div>
-                          )}
                         </div>
                       )}
                     </div>

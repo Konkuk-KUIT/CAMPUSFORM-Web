@@ -84,6 +84,7 @@ export default function SmartScheduleCalendarPreview({
   onShowInterviewerViewChange,
   cellActive: externalCellActive,
   onCellActiveChange,
+  interviewersCellActive,
 }: {
   interviewerName?: string | null;
   seed?: number;
@@ -99,6 +100,7 @@ export default function SmartScheduleCalendarPreview({
   onShowInterviewerViewChange?: (value: boolean) => void;
   cellActive?: { [key: string]: { top: boolean; bottom: boolean } };
   onCellActiveChange?: (cellActive: { [key: string]: { top: boolean; bottom: boolean } }) => void;
+  interviewersCellActive?: { [interviewerId: number]: { [key: string]: { top: boolean; bottom: boolean } } };
 }) {
   const [internalCellActive, setInternalCellActive] = useState<{ [key: string]: { top: boolean; bottom: boolean } }>({});
   const [currentStartDate, setCurrentStartDate] = useState(new Date());
@@ -133,33 +135,20 @@ export default function SmartScheduleCalendarPreview({
 
   // seeds가 있으면 모든 seed의 가용도를 합산, 아니면 단일 seed 사용
   const dayCols = useMemo(() => {
-    if (seeds && seeds.length > 0) {
-      // 모든 seed의 데이터를 생성하고 가용도 합산
-      const allData = seeds.map(s => generateSampleData(currentStartDate, s, timeSlots));
-      const daysToShow = 3;
-      const mergedDays: DayData[] = [];
-
-      for (let i = 0; i < daysToShow; i++) {
-        const date = new Date(currentStartDate);
-        date.setDate(date.getDate() + i);
-
-        // 각 타임별로 모든 면접관의 가용도를 합산 (가능한 면접관 수)
-        const combinedAvailability = timeSlots.map((_, hourIdx) => [
-          allData.reduce((sum, data) => sum + data[i].availability[hourIdx][0], 0), // 상반부
-          allData.reduce((sum, data) => sum + data[i].availability[hourIdx][1], 0), // 하반부
-        ]);
-
-        mergedDays.push({
-          dayOfWeek: dayOfWeekLabels[date.getDay()],
-          date: date.getDate(),
-          availability: combinedAvailability as [number, number][],
-        });
-      }
-      return mergedDays;
-    } else {
-      return generateSampleData(currentStartDate, seed, timeSlots);
+    const daysToShow = 3;
+    const emptyDays: DayData[] = [];
+    
+    for (let i = 0; i < daysToShow; i++) {
+      const date = new Date(currentStartDate);
+      date.setDate(date.getDate() + i);
+      emptyDays.push({
+        dayOfWeek: dayOfWeekLabels[date.getDay()],
+        date: date.getDate(),
+        availability: timeSlots.map(() => [0, 0]) as [number, number][],
+      });
     }
-  }, [currentStartDate, seed, seeds, timeSlots]);
+    return emptyDays;
+  }, [currentStartDate, timeSlots]);
 
   // 현재 년월
   const currentMonthYear = useMemo(() => {
@@ -325,52 +314,73 @@ export default function SmartScheduleCalendarPreview({
                   
                   // cellKey를 날짜와 시간 인덱스로 생성
                   const cellKey = `${dateKey}-${timeIdx}`;
-                  const isTopActive = interviewerName ? (cellActive[cellKey]?.top ?? (topCount >= 1)) : undefined;
-                  const isBottomActive = interviewerName ? (cellActive[cellKey]?.bottom ?? (bottomCount >= 1)) : undefined;
+                  
+                  // 디버깅: 첫 번째 셀에서만 로그 출력
+                  if (dayIdx === 0 && timeIdx === 0 && interviewerName) {
+                    console.log(`[CalendarPreview] ${interviewerName} - cellKey 생성:`, cellKey);
+                    console.log(`[CalendarPreview] ${interviewerName} - cellActive 전체:`, cellActive);
+                    console.log(`[CalendarPreview] ${interviewerName} - cellActive[${cellKey}]:`, cellActive[cellKey]);
+                  }
+                  
+                  const isTopActive = interviewerName ? (cellActive[cellKey]?.top ?? false) : undefined;
+                  const isBottomActive = interviewerName ? (cellActive[cellKey]?.bottom ?? false) : undefined;
 
                   if (interviewerName) {
                     // 개별 면접관: 선택된 셀만 파란색
                     topColor = isTopActive ? BLUE2 : GRAY1;
                     bottomColor = isBottomActive ? BLUE2 : GRAY1;
                   } else {
-                    // 전체 뷰: cellActive가 전달되고 데이터가 있는 경우 이를 우선 반영
-                    if (externalCellActive && Object.keys(externalCellActive).length > 0) {
-                      const hasTopActive = cellActive[cellKey]?.top ?? false;
-                      const hasBottomActive = cellActive[cellKey]?.bottom ?? false;
+                    // 전체 뷰: interviewersCellActive로 실제 면접관 수 계산
+                    if (interviewersCellActive && Object.keys(interviewersCellActive).length > 0) {
+                      let topInterviewerCount = 0;
+                      let bottomInterviewerCount = 0;
+                      
+                      // 각 면접관의 cellActive를 확인하여 카운트
+                      Object.values(interviewersCellActive).forEach(cellActiveData => {
+                        if (cellActiveData[cellKey]?.top) topInterviewerCount++;
+                        if (cellActiveData[cellKey]?.bottom) bottomInterviewerCount++;
+                      });
                       
                       // 디버깅 로그 (첫 번째 셀만)
                       if (dayIdx === 0 && timeIdx === 0) {
-                        console.log('[CalendarPreview] 전체 뷰 - dateKey:', dateKey, 'cellKey:', cellKey);
-                        console.log('[CalendarPreview] 전체 뷰 - cellActive:', cellActive);
-                        console.log('[CalendarPreview] cellKey:', cellKey, 'top:', hasTopActive, 'bottom:', hasBottomActive);
+                        console.log('[CalendarPreview] 전체 뷰 - cellKey:', cellKey);
+                        console.log('[CalendarPreview] top 면접관 수:', topInterviewerCount, 'bottom 면접관 수:', bottomInterviewerCount);
                       }
                       
-                      topColor = hasTopActive ? BLUE2 : GRAY1;
-                      bottomColor = hasBottomActive ? BLUE2 : GRAY1;
+                      // 면접관 수에 따라 색상 결정
+                      topColor = BLUE_COLORS[Math.min(topInterviewerCount, 10)];
+                      bottomColor = BLUE_COLORS[Math.min(bottomInterviewerCount, 10)];
                     } else {
-                      // cellActive가 비어있으면 기존 로직 (샘플 데이터 기반)
+                      // 데이터가 없으면 샘플 데이터 기반
                       topColor = BLUE_COLORS[Math.min(topCount, 10)];
                       bottomColor = BLUE_COLORS[Math.min(bottomCount, 10)];
                     }
                   }
 
                   const getAvailableInterviewers = (half: 'top' | 'bottom') => {
-                    if (!seeds || !interviewers) return [];
-                    const count = half === 'top' ? topCount : bottomCount;
-                    if (count === 0) return [];
-
-                    const available: Interviewer[] = [];
-                    seeds.forEach((s, idx) => {
-                      const data = generateSampleData(currentStartDate, s, timeSlots);
-                      const isAvailable =
-                        half === 'top'
-                          ? data[dayIdx].availability[timeIdx][0] >= 1
-                          : data[dayIdx].availability[timeIdx][1] >= 1;
-                      if (isAvailable && interviewers[idx]) {
-                        available.push(interviewers[idx]);
-                      }
-                    });
-                    return available;
+                    if (!interviewers) return [];
+                    
+                    // interviewersCellActive가 있으면 실제 데이터 사용
+                    if (interviewersCellActive && Object.keys(interviewersCellActive).length > 0) {
+                      const available: Interviewer[] = [];
+                      interviewers.forEach((interviewer) => {
+                        if (!interviewer.userId) return;
+                        const cellActiveData = interviewersCellActive[interviewer.userId];
+                        if (!cellActiveData) return;
+                        
+                        const isAvailable = half === 'top' 
+                          ? cellActiveData[cellKey]?.top 
+                          : cellActiveData[cellKey]?.bottom;
+                        
+                        if (isAvailable) {
+                          available.push(interviewer);
+                        }
+                      });
+                      return available;
+                    }
+                    
+                    // 데이터가 없으면 빈 배열 반환
+                    return [];
                   };
 
                   return (
@@ -381,14 +391,14 @@ export default function SmartScheduleCalendarPreview({
                         style={{ backgroundColor: topColor, cursor: interviewerName ? 'pointer' : 'default' }}
                         onClick={() => {
                           if (interviewerName) {
-                            const newTop = !(cellActive[cellKey]?.top ?? (topCount >= 1));
+                            const newTop = !(cellActive[cellKey]?.top ?? false);
                             console.log(`[CalendarPreview] ${interviewerName} - 클릭 dateKey: ${dateKey}, cellKey: ${cellKey}, 현재 top: ${cellActive[cellKey]?.top}, 새 top: ${newTop}`);
                             setCellActive(prev => {
                               const updated = {
                                 ...prev,
                                 [cellKey]: {
                                   top: newTop,
-                                  bottom: prev[cellKey]?.bottom ?? (bottomCount >= 1),
+                                  bottom: prev[cellKey]?.bottom ?? false,
                                 },
                               };
                               console.log(`[CalendarPreview] ${interviewerName} - 업데이트된 cellActive:`, updated);
@@ -407,13 +417,13 @@ export default function SmartScheduleCalendarPreview({
                         style={{ backgroundColor: bottomColor, borderStyle: 'dashed', cursor: interviewerName ? 'pointer' : 'default' }}
                         onClick={() => {
                           if (interviewerName) {
-                            const newBottom = !(cellActive[cellKey]?.bottom ?? (bottomCount >= 1));
+                            const newBottom = !(cellActive[cellKey]?.bottom ?? false);
                             console.log(`[CalendarPreview] ${interviewerName} - 클릭 dateKey: ${dateKey}, cellKey: ${cellKey}, 현재 bottom: ${cellActive[cellKey]?.bottom}, 새 bottom: ${newBottom}`);
                             setCellActive(prev => {
                               const updated = {
                                 ...prev,
                                 [cellKey]: {
-                                  top: prev[cellKey]?.top ?? (topCount >= 1),
+                                  top: prev[cellKey]?.top ?? false,
                                   bottom: newBottom,
                                 },
                               };
@@ -429,7 +439,10 @@ export default function SmartScheduleCalendarPreview({
                       />
 
                       {/* Hover tooltip */}
-                      {!interviewerName && hoveredCell?.day === dayIdx && hoveredCell?.time === timeIdx && (
+                      {!interviewerName && 
+                        hoveredCell?.day === dayIdx && 
+                        hoveredCell?.time === timeIdx && 
+                        getAvailableInterviewers(hoveredCell.half).length > 0 && (
                         <div
                           className={`absolute ${dayIdx === dayCols.length - 1 ? 'right-full mr-2' : 'left-full ml-2'} bg-white rounded-[10px] px-[23px] py-[15px] w-[150px] z-50 flex flex-col gap-[10px] ${hoveredCell.half === 'top' ? 'top-0' : 'top-1/2'}`}
                         >
@@ -439,9 +452,6 @@ export default function SmartScheduleCalendarPreview({
                               {interviewer.isRequired && <span className="text-[14px]">(필수)</span>}
                             </div>
                           ))}
-                          {getAvailableInterviewers(hoveredCell.half).length === 0 && (
-                            <div className="text-[14px] text-gray-400 leading-[20px]">가능한 면접관 없음</div>
-                          )}
                         </div>
                       )}
                     </div>
