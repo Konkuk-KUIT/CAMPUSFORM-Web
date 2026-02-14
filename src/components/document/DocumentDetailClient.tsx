@@ -33,7 +33,7 @@ const mapApplicant = (data: ApplicantDetail): Applicant => ({
   email: data.email ?? '',
   favorite: data.favorite,
   status: statusMap[data.status] ?? '보류',
-  commentCount: 0, //TODO 서버
+  commentCount: data.commentCount ?? 0,
   answers: data.answers ?? [],
 });
 
