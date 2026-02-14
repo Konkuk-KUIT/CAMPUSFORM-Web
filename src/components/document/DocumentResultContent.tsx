@@ -20,6 +20,10 @@ export default function DocumentResultContent({ projectId }: DocumentResultConte
   const [failedList, setFailedList] = useState<DocumentApplicantResult[]>([]);
   const [passedTemplate, setPassedTemplate] = useState<string>('');
   const [failedTemplate, setFailedTemplate] = useState<string>('');
+  const [passedAppliedTemplate, setPassedAppliedTemplate] = useState<string>('');
+  const [failedAppliedTemplate, setFailedAppliedTemplate] = useState<string>('');
+  const [passedIsVariableEnabled, setPassedIsVariableEnabled] = useState(false);
+  const [failedIsVariableEnabled, setFailedIsVariableEnabled] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -59,6 +63,12 @@ export default function DocumentResultContent({ projectId }: DocumentResultConte
               projectId={projectId}
               initialTemplate={passedTemplate}
               onTemplateChange={setPassedTemplate}
+              appliedTemplate={passedAppliedTemplate}
+              isVariableEnabled={passedIsVariableEnabled}
+              onTemplateApply={(template, isVariable) => {
+                setPassedAppliedTemplate(template);
+                setPassedIsVariableEnabled(isVariable);
+              }}
             />
           ) : (
             <DocumentFailedList
@@ -66,6 +76,12 @@ export default function DocumentResultContent({ projectId }: DocumentResultConte
               projectId={projectId}
               initialTemplate={failedTemplate}
               onTemplateChange={setFailedTemplate}
+              appliedTemplate={failedAppliedTemplate}
+              isVariableEnabled={failedIsVariableEnabled}
+              onTemplateApply={(template, isVariable) => {
+                setFailedAppliedTemplate(template);
+                setFailedIsVariableEnabled(isVariable);
+              }}
             />
           ))}
       </div>

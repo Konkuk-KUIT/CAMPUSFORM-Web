@@ -56,7 +56,6 @@ export default function NotificationMessageForm({
 
   const handleApplyVariables = () => {
     setIsVariableEnabled(true);
-    if (onTemplateApply) onTemplateApply(template, true);
   };
 
   const handleApplyTemplate = () => {

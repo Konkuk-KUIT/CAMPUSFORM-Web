@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import ApplicantCountHeader from '@/components/ui/ApplicantCountHeader';
 import Button from '@/components/ui/Btn';
 import NotificationMessageForm from '@/components/ui/NotificationMessageForm';
@@ -13,6 +12,9 @@ interface DocumentFailedListProps {
   projectId: number;
   initialTemplate: string;
   onTemplateChange: (template: string) => void;
+  appliedTemplate: string;
+  isVariableEnabled: boolean;
+  onTemplateApply: (template: string, isVariable: boolean) => void;
 }
 
 export default function DocumentFailedList({
@@ -20,27 +22,27 @@ export default function DocumentFailedList({
   projectId,
   initialTemplate,
   onTemplateChange,
+  appliedTemplate,
+  isVariableEnabled,
+  onTemplateApply,
 }: DocumentFailedListProps) {
-  const [template, setTemplate] = useState('');
-  const [isVariableEnabled, setIsVariableEnabled] = useState(false);
-
-  const handleTemplateApply = (appliedTemplate: string, variableEnabled: boolean) => {
-    setTemplate(appliedTemplate);
-    setIsVariableEnabled(variableEnabled);
-  };
-
   return (
     <>
       <ApplicantCountHeader type="불합격자" list={list} />
       <NotificationMessageForm
         type="불합격자"
-        onTemplateApply={handleTemplateApply}
+        onTemplateApply={onTemplateApply}
         onTemplateChange={onTemplateChange}
         projectId={projectId}
         status="FAIL"
         initialTemplate={initialTemplate}
       />
-      <ApplicantMessageCard type="불합격자" template={template} isVariableEnabled={isVariableEnabled} list={list} />
+      <ApplicantMessageCard
+        type="불합격자"
+        template={appliedTemplate}
+        isVariableEnabled={isVariableEnabled}
+        list={list}
+      />
       <Link href={`/document/${projectId}/complete`}>
         <Button variant="primary" size="lg" className="fixed bottom-20">
           서류 마감하기

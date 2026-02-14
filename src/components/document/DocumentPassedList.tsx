@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import ApplicantCountHeader from '@/components/ui/ApplicantCountHeader';
 import Button from '@/components/ui/Btn';
 import NotificationMessageForm from '@/components/ui/NotificationMessageForm';
@@ -13,6 +12,9 @@ interface DocumentPassedListProps {
   projectId: number;
   initialTemplate: string;
   onTemplateChange: (template: string) => void;
+  appliedTemplate: string;
+  isVariableEnabled: boolean;
+  onTemplateApply: (template: string, isVariable: boolean) => void;
 }
 
 export default function DocumentPassedList({
@@ -20,27 +22,27 @@ export default function DocumentPassedList({
   projectId,
   initialTemplate,
   onTemplateChange,
+  appliedTemplate,
+  isVariableEnabled,
+  onTemplateApply,
 }: DocumentPassedListProps) {
-  const [template, setTemplate] = useState('');
-  const [isVariableEnabled, setIsVariableEnabled] = useState(false);
-
-  const handleTemplateApply = (appliedTemplate: string, variableEnabled: boolean) => {
-    setTemplate(appliedTemplate);
-    setIsVariableEnabled(variableEnabled);
-  };
-
   return (
     <>
       <ApplicantCountHeader type="합격자" list={list} />
       <NotificationMessageForm
         type="합격자"
-        onTemplateApply={handleTemplateApply}
+        onTemplateApply={onTemplateApply}
         onTemplateChange={onTemplateChange}
         projectId={projectId}
         status="PASS"
         initialTemplate={initialTemplate}
       />
-      <ApplicantMessageCard type="합격자" template={template} isVariableEnabled={isVariableEnabled} list={list} />
+      <ApplicantMessageCard
+        type="합격자"
+        template={appliedTemplate}
+        isVariableEnabled={isVariableEnabled}
+        list={list}
+      />
       <Link href={`/document/${projectId}/complete`}>
         <Button variant="primary" size="lg" className="fixed bottom-20">
           서류 마감하기
