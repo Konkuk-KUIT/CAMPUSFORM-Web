@@ -6,16 +6,15 @@ import TopTab from '@/components/ui/TopTab';
 import SearchBar from '@/components/form/SearchBar';
 import ApplicantFileCard from '@/components/interview/ApplicantFileCard';
 import BottomSheet from '@/components/ui/BottomSheet';
+import AppointmentModal from '@/components/interview/AppointmentModal';
 import BtnRound from '@/components/ui/BtnRound';
 import CommentSection from '@/components/sections/CommentSection';
 import Loading from '@/components/ui/Loading';
-import AppointmentModal from '@/components/interview/AppointmentModal';
 import { toast } from '@/components/Toast';
 import { applicantService } from '@/services/applicantService';
 import { authService } from '@/services/authService';
 import type { ApplicantRaw } from '@/types/applicant';
 import type { InterviewApplicant } from '@/types/interview';
-
 
 const statusMap: Record<string, '보류' | '합격' | '불합격'> = {
   HOLD: '보류',
@@ -58,7 +57,6 @@ export default function InterviewContent({ projectId }: { projectId: number }) {
   const [currentUserId, setCurrentUserId] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isAppointmentOpen, setIsAppointmentOpen] = useState(false);
-  const [selectedAppointmentId, setSelectedAppointmentId] = useState<number | null>(null);
   const [selectedAppointmentApplicantId, setSelectedAppointmentApplicantId] = useState<number | null>(null);
 
   useEffect(() => {
@@ -78,7 +76,7 @@ export default function InterviewContent({ projectId }: { projectId: number }) {
         const res = await applicantService.getApplicants(projectId, 'INTERVIEW');
         const mapped = res.applicants.map(mapApplicant);
         setApplicants(mapped);
-        setFavorites(new Set(mapped.filter(a => a.commentCount > 0).map(a => a.applicantId))); // bookmarked 필드 있으면 교체
+        setFavorites(new Set(res.applicants.filter(a => a.bookmarked).map(a => a.id)));
       } catch (e) {
         console.error('면접 지원자 목록 조회 실패:', e);
         toast.error('지원자 목록을 불러오지 못했습니다.');
@@ -148,6 +146,23 @@ export default function InterviewContent({ projectId }: { projectId: number }) {
     }
   };
 
+  const handleAppointmentConfirm = async (date: string, time: string, rawDate: string) => {
+    if (!selectedAppointmentApplicantId) return;
+    try {
+      await applicantService.manualAssignInterview(projectId, selectedAppointmentApplicantId, rawDate, time);
+      setApplicants(prev =>
+        prev.map(a =>
+          a.applicantId === selectedAppointmentApplicantId
+            ? { ...a, appointmentDate: date, appointmentTime: time }
+            : a
+        )
+      );
+      setIsAppointmentOpen(false);
+    } catch (e) {
+      toast.error('면접 일정 저장에 실패했습니다.');
+    }
+  };
+
   if (!isLoading && applicants.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)] px-5">
@@ -203,7 +218,7 @@ export default function InterviewContent({ projectId }: { projectId: number }) {
                 onAppointmentClick={() => {
                   setSelectedAppointmentApplicantId(applicant.applicantId);
                   setIsAppointmentOpen(true);
-                }}  
+                }}
                 onStatusChange={handleStatusChange}
               />
             ))
@@ -227,27 +242,6 @@ export default function InterviewContent({ projectId }: { projectId: number }) {
         </div>
       </BottomSheet>
 
-      <AppointmentModal
-        isOpen={isAppointmentOpen}
-        onClose={() => setIsAppointmentOpen(false)}
-        onConfirm={async (date, time, rawDate) => {
-          if (!selectedAppointmentApplicantId) return;
-          try {
-            await applicantService.manualAssignInterview(projectId, selectedAppointmentApplicantId, rawDate, time);
-            setApplicants(prev =>
-              prev.map(a =>
-                a.applicantId === selectedAppointmentApplicantId
-                  ? { ...a, appointmentDate: date, appointmentTime: time }
-                  : a
-              )
-            );
-            setIsAppointmentOpen(false);
-          } catch (e) {
-            toast.error('면접 일정 저장에 실패했습니다.');
-          }
-        }}
-      />
-
       <CommentSection
         isOpen={isCommentOpen}
         onClose={() => setCommentOpen(false)}
@@ -255,6 +249,12 @@ export default function InterviewContent({ projectId }: { projectId: number }) {
         applicantId={selectedApplicantId}
         stage="INTERVIEW"
         currentUserId={currentUserId}
+      />
+
+      <AppointmentModal
+        isOpen={isAppointmentOpen}
+        onClose={() => setIsAppointmentOpen(false)}
+        onConfirm={handleAppointmentConfirm}
       />
     </div>
   );

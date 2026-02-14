@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 
 interface AppointmentModalProps {
   isOpen: boolean;
@@ -49,7 +49,7 @@ export default function AppointmentModal({
   ) => {
     const container = e.currentTarget;
     const scrollTop = container.scrollTop;
-    const itemHeight = 32; // py-1 기준 대략적인 높이
+    const itemHeight = 32;
     const centerIndex = Math.round(scrollTop / itemHeight);
     const actualIndex = centerIndex % items.length;
     setSelected(items[actualIndex]);

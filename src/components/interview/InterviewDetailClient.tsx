@@ -36,7 +36,7 @@ export default function InterviewDetailClient({ applicantId }: InterviewDetailCl
 
   const handleAppointmentClick = () => setIsModalOpen(true);
 
-  const handleConfirm = (date: string, time: string) => {
+  const handleConfirm = (date: string, time: string, _rawDate: string) => {
     setAppointmentDate(date);
     setAppointmentTime(time);
     setIsModalOpen(false);

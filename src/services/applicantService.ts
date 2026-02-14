@@ -38,7 +38,7 @@ class ApplicantService {
     await apiClient.patch(`/projects/${projectId}/applicants/${applicantId}/bookmark`, null, { params: { stage } });
   }
 
-  // POST : 지원자 면접 시간 수동 배정
+  // POST : 면접 시간 수동 배정
   async manualAssignInterview(
     projectId: number,
     applicantId: number,
