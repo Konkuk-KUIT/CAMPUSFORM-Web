@@ -33,8 +33,8 @@ const mapApplicant = (data: ApplicantDetail): Applicant => ({
   email: data.email ?? '',
   favorite: data.favorite,
   status: statusMap[data.status] ?? '보류',
-  commentCount: 0, //TODO 서버
-  answers: data.answers ?? [],
+  commentCount: data.commentCount ?? 0,
+  answers: (data.answers ?? []).filter(a => a.question !== '타임스탬프'),
 });
 
 export default function DocumentDetailClient({ applicantId, projectId, stage }: DocumentDetailClientProps) {
