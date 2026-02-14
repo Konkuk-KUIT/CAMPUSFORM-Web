@@ -7,8 +7,13 @@ import NotificationMessageForm from '@/components/ui/NotificationMessageForm';
 import ApplicantMessageCard from '@/components/document/ApplicantMessageCard';
 import Link from 'next/link';
 import { useCurrentProjectStore } from '@/store/currentProjectStore';
+import type { DocumentApplicantResult } from '@/types/document';
 
-export default function DocumentPassedList() {
+interface DocumentPassedListProps {
+  list: DocumentApplicantResult[];
+}
+
+export default function DocumentPassedList({ list }: DocumentPassedListProps) {
   const [template, setTemplate] = useState('');
   const [isVariableEnabled, setIsVariableEnabled] = useState(false);
   const projectId = useCurrentProjectStore(s => s.projectId);
@@ -20,16 +25,9 @@ export default function DocumentPassedList() {
 
   return (
     <>
-      <ApplicantCountHeader type="합격자" />
-      <NotificationMessageForm
-        type="합격자"
-        onTemplateApply={handleTemplateApply}
-      />
-      <ApplicantMessageCard
-        type="합격자"
-        template={template}
-        isVariableEnabled={isVariableEnabled}
-      />
+      <ApplicantCountHeader type="합격자" list={list} />
+      <NotificationMessageForm type="합격자" onTemplateApply={handleTemplateApply} />
+      <ApplicantMessageCard type="합격자" template={template} isVariableEnabled={isVariableEnabled} list={list} />
       <Link href={`/document/${projectId}/complete`}>
         <Button variant="primary" size="lg" className="fixed bottom-20">
           서류 마감하기
