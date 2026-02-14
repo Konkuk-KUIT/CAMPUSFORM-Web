@@ -4,29 +4,28 @@ import { useState } from 'react';
 import BottomSheet from '@/components/ui/BottomSheet';
 import Image from 'next/image';
 import Button from '@/components/ui/Btn';
-import { getPassedInterviewApplicants, getFailedInterviewApplicants } from '@/data/interviews';
+import type { DocumentApplicantResult } from '@/types/document';
 
 interface ApplicantCountHeaderProps {
   type: '합격자' | '불합격자';
+  list: DocumentApplicantResult[];
 }
 
-export default function ApplicantCountHeader({ type }: ApplicantCountHeaderProps) {
+export default function ApplicantCountHeader({ type, list }: ApplicantCountHeaderProps) {
   const [isApplicantListOpen, setIsApplicantListOpen] = useState(false);
 
-  const applicants = type === '합격자' ? getPassedInterviewApplicants() : getFailedInterviewApplicants();
-  const count = applicants.length;
-
+  const count = list.length;
   const title = type === '합격자' ? '면접 합격자 명단' : '면접 불합격자 명단';
 
   const handleCopyList = () => {
-    const text = applicants
-      .map(a => `${a.name} (${a.university} / ${a.major} / ${a.position})`)
+    const text = list
+      .map(a => `${a.name} (${a.school} / ${a.major} / ${a.position})`)
       .join('\n');
     navigator.clipboard.writeText(text);
   };
 
   const handleCopyPhones = () => {
-    const text = applicants
+    const text = list
       .map(a => a.phoneNumber)
       .filter(Boolean)
       .join('\n');
@@ -48,13 +47,11 @@ export default function ApplicantCountHeader({ type }: ApplicantCountHeaderProps
         </button>
       </div>
 
-      {/* 바텀시트 - 면접 합격자/불합격자 명단 */}
       <BottomSheet isOpen={isApplicantListOpen} onClose={() => setIsApplicantListOpen(false)}>
         <h2 className="text-subtitle-sm-md text-gray-800 pt-3">
           {title} <span className="text-gray-600">({count}명)</span>
         </h2>
 
-        {/* 버튼 */}
         <div className="flex gap-2 justify-center items-center pt-3">
           <Button
             variant="outline"
@@ -76,14 +73,13 @@ export default function ApplicantCountHeader({ type }: ApplicantCountHeaderProps
           </Button>
         </div>
 
-        {/* 합격자/불합격자 리스트 */}
         <div className="flex flex-col font-normal text-[13px] leading-6.5 py-3">
-          {applicants.length === 0 ? (
+          {list.length === 0 ? (
             <p className="text-center text-gray-400 py-4">명단이 없습니다.</p>
           ) : (
-            applicants.map(applicant => (
+            list.map(applicant => (
               <p key={applicant.applicantId}>
-                {applicant.name} ({applicant.university} / {applicant.major} / {applicant.position})
+                {applicant.name} ({applicant.school} / {applicant.major} / {applicant.position})
               </p>
             ))
           )}

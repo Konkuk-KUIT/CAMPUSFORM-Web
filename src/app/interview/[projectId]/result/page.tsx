@@ -24,7 +24,7 @@ export default async function InterviewResultPage({ params }: { params: Promise<
       <div className="bg-blue-50 h-10.75 flex items-center justify-center">
         <span className="text-subtitle-sm-md">요리퐁 6기 신입부원 모집</span>
       </div>
-      <InterviewResultContent />
+      <InterviewResultContent projectId={Number(projectId)} />
     </div>
   );
 }

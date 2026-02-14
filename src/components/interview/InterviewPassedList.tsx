@@ -1,34 +1,49 @@
 'use client';
 
-import { useState } from 'react';
 import Button from '@/components/ui/Btn';
 import NotificationMessageForm from '@/components/ui/NotificationMessageForm';
 import ApplicantCountHeader from '@/components/interview/ApplicantCountHeader';
 import ApplicantMessageCard from '@/components/interview/ApplicantMessageCard';
-import { useCurrentProjectStore } from '@/store/currentProjectStore';
 import Link from 'next/link';
+import type { DocumentApplicantResult } from '@/types/document';
 
-export default function InterviewPassedList() {
-  const [template, setTemplate] = useState('');
-  const [isVariableEnabled, setIsVariableEnabled] = useState(false);
-  const projectId = useCurrentProjectStore(s => s.projectId);
+interface InterviewPassedListProps {
+  list: DocumentApplicantResult[];
+  projectId: number;
+  initialTemplate: string;
+  onTemplateChange: (template: string) => void;
+  appliedTemplate: string;
+  isVariableEnabled: boolean;
+  onTemplateApply: (template: string, isVariable: boolean) => void;
+}
 
-  const handleTemplateApply = (appliedTemplate: string, variableEnabled: boolean) => {
-    setTemplate(appliedTemplate);
-    setIsVariableEnabled(variableEnabled);
-  };
-
+export default function InterviewPassedList({
+  list,
+  projectId,
+  initialTemplate,
+  onTemplateChange,
+  appliedTemplate,
+  isVariableEnabled,
+  onTemplateApply,
+}: InterviewPassedListProps) {
   return (
     <>
-      <ApplicantCountHeader type="합격자" />
+      <ApplicantCountHeader type="합격자" list={list} />
       <NotificationMessageForm
         type="합격자"
-        onTemplateApply={handleTemplateApply}
-        projectId={projectId!}
+        onTemplateApply={onTemplateApply}
+        onTemplateChange={onTemplateChange}
+        projectId={projectId}
         status="PASS"
         stage="INTERVIEW"
+        initialTemplate={initialTemplate}
       />
-      <ApplicantMessageCard type="합격자" template={template} isVariableEnabled={isVariableEnabled} />
+      <ApplicantMessageCard
+        type="합격자"
+        template={appliedTemplate}
+        isVariableEnabled={isVariableEnabled}
+        list={list}
+      />
       <Link href={`/interview/${projectId}/complete`}>
         <Button variant="primary" size="lg" className="fixed bottom-20">
           면접 마감하기
