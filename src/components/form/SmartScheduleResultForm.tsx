@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { getSmartSchedulePreview } from '@/services/smartScheduleService';
-import { mockProjects } from '@/data/projects';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Header from '@/components/ui/Header';
 import Navbar from '@/components/Navbar';
 import Btn from '@/components/ui/Btn';
+import { useCurrentProjectStore } from '@/store/currentProjectStore';
 
 interface Applicant {
   id: number;
@@ -39,6 +39,7 @@ interface UnassignedApplicant extends Applicant {
 
 export default function SmartScheduleResultForm() {
   const router = useRouter();
+  const projectId = useCurrentProjectStore(s => s.projectId);
   const [showInfo, setShowInfo] = useState(false);
   // selectedDate는 useEffect에서 최초 세팅됨
 
@@ -49,8 +50,8 @@ export default function SmartScheduleResultForm() {
   const [selectedDate, setSelectedDate] = useState<string>('');
   useEffect(() => {
     const fetchData = async () => {
+      if (!projectId) return;
       try {
-        const projectId = mockProjects[0].id; // 실제 프로젝트에서는 동적으로 받아와야 함
         const res = await getSmartSchedulePreview(projectId);
         const data = res.data;
         setScheduleData(data.days || []);
@@ -63,6 +64,7 @@ export default function SmartScheduleResultForm() {
       }
     };
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 날짜 YYYY-MM-DD → 'M월 D일 (요일)' 변환

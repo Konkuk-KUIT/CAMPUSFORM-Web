@@ -20,9 +20,25 @@ import type { ProjectAdminRaw } from '@/types/project';
 
 export default function SmartScheduleMainForm() {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const handleConfirm = () => {
+  const [isGenerating, setIsGenerating] = useState(false);
+  const handleConfirm = async () => {
+    if (!projectId) {
+      toast.error('프로젝트를 선택해주세요');
+      return;
+    }
+    
     setShowConfirmDialog(false);
-    router.push('/smart-schedule/result');
+    setIsGenerating(true);
+    
+    try {
+      await projectService.generateSmartSchedule(projectId);
+      toast.success('스마트 시간표가 생성되었습니다');
+      router.push('/smart-schedule/result');
+    } catch (error) {
+      console.error('스마트 시간표 생성 실패:', error);
+      toast.error('스마트 시간표 생성에 실패했습니다');
+      setIsGenerating(false);
+    }
   };
   const [mounted, setMounted] = useState(false);
   const [isConfigured, setIsConfigured] = useState<boolean>(false);
@@ -675,8 +691,9 @@ export default function SmartScheduleMainForm() {
               size="lg"
               className="w-full"
               onClick={() => setShowConfirmDialog(true)}
+              disabled={isGenerating}
             >
-              스마트 시간표 생성
+              {isGenerating ? '\uc0dd\uc131 \uc911...' : '\uc2a4\ub9c8\ud2b8 \uc2dc\uac04\ud45c \uc0dd\uc131'}
             </Btn>
           </div>
                     {/* Confirm Reset Dialog for 스마트 시간표 생성 */}
