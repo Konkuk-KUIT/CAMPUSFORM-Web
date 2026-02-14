@@ -1,23 +1,23 @@
-// Updated filename to PascalCase
-
 'use client';
 
 export interface ResultCardProps {
   type: '서류결과' | '면접결과';
-  totalApplicants: number;
-  passed: number;
-  ratio: string;
-  malePercent: number;
-  femalePercent: number;
+  totalApplicantCount: number;
+  currentStagePassCount: number;
+  competitionRate: string;
+  genderRatio: {
+    malePercent: number;
+    femalePercent: number;
+    otherPercent: number;
+  };
 }
 
 export default function ResultCard({
   type,
-  totalApplicants,
-  passed,
-  ratio,
-  malePercent,
-  femalePercent,
+  totalApplicantCount,
+  currentStagePassCount,
+  competitionRate,
+  genderRatio,
 }: ResultCardProps) {
   const getLabels = () => {
     switch (type) {
@@ -35,31 +35,37 @@ export default function ResultCard({
       {/* 상단 정보 */}
       <div className="flex justify-between items-stretch mb-3">
         <div className="flex flex-col items-center">
-          <p className="text-body-sm-rg text-black  mb-2">{labels.total}</p>
-          <p className="text-body text-black">{totalApplicants}명</p>
+          <p className="text-body-sm-rg text-black mb-2">{labels.total}</p>
+          <p className="text-body text-black">{totalApplicantCount}명</p>
         </div>
         <div className="w-px bg-gray-100 self-stretch"></div>
         <div className="flex flex-col items-center">
           <p className="text-body-sm-rg text-black mb-2">{labels.passed}</p>
-          <p className="text-body text-black">{passed}명</p>
+          <p className="text-body text-black">{currentStagePassCount}명</p>
         </div>
         <div className="w-px bg-gray-100 self-stretch"></div>
         <div className="flex flex-col items-center">
           <p className="text-body-sm-rg text-black mb-2">{labels.ratio}</p>
-          <p className="text-body text-black">{ratio}</p>
+          <p className="text-body text-black">{competitionRate}</p>
         </div>
       </div>
 
       {/* 막대 바 */}
       <div className="relative w-full h-3.75 bg-gray-200 rounded-full overflow-hidden mb-2">
-        <div className="absolute left-0 top-0 h-full bg-blue-200" style={{ width: `${malePercent}%` }}></div>
-        <div className="absolute right-0 top-0 h-full bg-blue-300" style={{ width: `${femalePercent}%` }}></div>
+        <div
+          className="absolute left-0 top-0 h-full bg-blue-200"
+          style={{ width: `${genderRatio.malePercent}%` }}
+        ></div>
+        <div
+          className="absolute right-0 top-0 h-full bg-blue-300"
+          style={{ width: `${genderRatio.femalePercent}%` }}
+        ></div>
       </div>
 
       {/* 성비 */}
       <div className="flex justify-between text-body-xs-rg text-black">
-        <span>남 {malePercent}%</span>
-        <span>여 {femalePercent}%</span>
+        <span>남 {genderRatio.malePercent}%</span>
+        <span>여 {genderRatio.femalePercent}%</span>
       </div>
     </div>
   );
