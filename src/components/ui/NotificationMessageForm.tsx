@@ -16,6 +16,7 @@ interface NotificationMessageFormProps {
   projectId: number;
   status: ScreeningResult;
   initialTemplate?: string;
+  stage?: 'DOCUMENT' | 'INTERVIEW';
 }
 
 export default function NotificationMessageForm({
@@ -25,6 +26,7 @@ export default function NotificationMessageForm({
   projectId,
   status,
   initialTemplate = '',
+  stage = 'DOCUMENT',
 }: NotificationMessageFormProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [template, setTemplate] = useState(initialTemplate);
@@ -40,7 +42,7 @@ export default function NotificationMessageForm({
     if (!template) return;
     const timer = setTimeout(async () => {
       try {
-        await documentResultService.saveSmsTemplate(projectId, { stage: 'DOCUMENT', status, content: template });
+        await documentResultService.saveSmsTemplate(projectId, { stage, status, content: template });
       } catch {
         toast.error('템플릿 저장에 실패했습니다.');
       }

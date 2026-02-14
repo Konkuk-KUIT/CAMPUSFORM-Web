@@ -1,48 +1,93 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import PullToRefresh from '@/components/PullToRefresh';
 import ApplicantCardBasic from '@/components/interview/ApplicantCardBasic';
 import AppointmentModal from '@/components/interview/AppointmentModal';
 import CommentSection from '@/components/sections/CommentSection';
 import QuestionSection from '@/components/document/QuestionSection';
-import { mockInterviewApplicants } from '@/data/interviews';
+import Loading from '@/components/ui/Loading';
+import { toast } from '@/components/Toast';
+import { applicantService } from '@/services/applicantService';
+import { authService } from '@/services/authService';
+import type { ApplicantDetail } from '@/types/applicant';
+
+const genderMap: Record<string, '남' | '여'> = {
+  MALE: '남',
+  FEMALE: '여',
+};
+
+const statusMap: Record<string, '보류' | '합격' | '불합격'> = {
+  HOLD: '보류',
+  PASS: '합격',
+  FAIL: '불합격',
+};
 
 interface InterviewDetailClientProps {
+  projectId: number;
   applicantId: number;
 }
 
-export default function InterviewDetailClient({ applicantId }: InterviewDetailClientProps) {
-  const [applicant, setApplicant] = useState(mockInterviewApplicants.find(a => a.applicantId === applicantId));
-
+export default function InterviewDetailClient({ projectId, applicantId }: InterviewDetailClientProps) {
+  const [applicant, setApplicant] = useState<ApplicantDetail | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCommentOpen, setCommentOpen] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [appointmentDate, setAppointmentDate] = useState(applicant?.appointmentDate || '');
-  const [appointmentTime, setAppointmentTime] = useState(applicant?.appointmentTime || '');
+  const [appointmentDate, setAppointmentDate] = useState('');
+  const [appointmentTime, setAppointmentTime] = useState('');
+  const [currentUserId, setCurrentUserId] = useState<number>(0);
 
-  const projectId = 1;
-  const currentUserId = 1;
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      const auth = await authService.getCurrentUser();
+      if (auth.isAuthenticated && auth.user) {
+        setCurrentUserId(auth.user.userId);
+      }
+    };
+    fetchCurrentUser();
+  }, []);
 
-  const handleRefresh = async () => {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    const refreshedApplicant = mockInterviewApplicants.find(a => a.applicantId === applicantId);
-    setApplicant(refreshedApplicant);
-    if (refreshedApplicant) {
-      setAppointmentDate(refreshedApplicant.appointmentDate || '');
-      setAppointmentTime(refreshedApplicant.appointmentTime || '');
+  const fetchApplicant = async () => {
+    try {
+      setIsLoading(true);
+      const data = await applicantService.getApplicant(projectId, applicantId, 'INTERVIEW');
+      setApplicant(data);
+      setIsFavorite(data.favorite);
+    } catch (e) {
+      console.error('지원자 상세 조회 실패:', e);
+      toast.error('지원자 정보를 불러오지 못했습니다.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleAppointmentClick = () => setIsModalOpen(true);
+  useEffect(() => {
+    fetchApplicant();
+  }, [projectId, applicantId]);
 
-  const handleConfirm = (date: string, time: string) => {
+  const handleRefresh = async () => {
+    await fetchApplicant();
+  };
+
+  const handleConfirm = (date: string, time: string, _rawDate: string) => {
     setAppointmentDate(date);
     setAppointmentTime(time);
     setIsModalOpen(false);
   };
 
-  const handleToggleFavorite = () => setIsFavorite(prev => !prev);
+  const handleToggleFavorite = async () => {
+    try {
+      await applicantService.toggleBookmark(projectId, applicantId, 'INTERVIEW');
+      setIsFavorite(prev => !prev);
+    } catch (e) {
+      toast.error('즐겨찾기 변경에 실패했습니다.');
+    }
+  };
+
+  if (isLoading) {
+    return <Loading fullScreen={false} />;
+  }
 
   if (!applicant) {
     return (
@@ -59,32 +104,28 @@ export default function InterviewDetailClient({ applicantId }: InterviewDetailCl
           <div className="p-4">
             <ApplicantCardBasic
               name={applicant.name}
-              gender={applicant.gender}
-              status={applicant.interviewStatus}
-              university={`${applicant.university}/${applicant.major}/${applicant.position}`}
+              gender={genderMap[applicant.gender] ?? '남'}
+              status={statusMap[applicant.status] ?? '보류'}
+              university={`${applicant.school}/${applicant.major}/${applicant.position}`}
               phone={applicant.phoneNumber}
               email={applicant.email}
-              commentCount={applicant.commentCount}
               isFavorite={isFavorite}
               onToggleFavorite={handleToggleFavorite}
               onCommentClick={() => setCommentOpen(true)}
               appointmentDate={appointmentDate}
               appointmentTime={appointmentTime}
-              onAppointmentClick={handleAppointmentClick}
+              onAppointmentClick={() => setIsModalOpen(true)}
             />
           </div>
 
           <div className="p-4 mx-4 bg-white rounded-10">
-            <QuestionSection
-              title="지원동기"
-              content="요리에 대한 관심을 꾸준히 가져왔고, 기본기를 제대로 배우고 싶어 지원했습니다. 혼자 할 때보다 함께 조리하며 배우는 과정이 더 큰 동기부여가 된다고 생각합니다. 다양한 레시피를 시도해 보고 서로의 노하우를 나누며 실력을 키우고 싶습니다. 동아리 활동을 통해 배운 내용을 일상에서도 활용할 수 있을 것이라 기대합니다."
-            />
-            <QuestionSection
-              title="이 동아리에 참여하고 싶은 이유를 서술해주세요."
-              content="요리에 대한 관심을 꾸준히 가져왔고, 기본기를 제대로 배우고 싶어 지원했습니다. 혼자 할 때보다 함께 조리하며 배우는 과정이 더 큰 동기부여가 된다고 생각합니다. 다양한 레시피를 시도해 보고 서로의 노하우를 나누며 실력을 키우고 싶습니다. 동아리 활동을 통해 배운 내용을 일상에서도 활용할 수 있을 것이라 기대합니다."
-              maxLength={700}
-            />
-            <QuestionSection title="질문내용" content="질문답변" />
+            {applicant.answers.map((item, idx) => (
+              <QuestionSection
+                key={idx}
+                title={item.question}
+                content={item.answer}
+              />
+            ))}
           </div>
         </div>
       </PullToRefresh>

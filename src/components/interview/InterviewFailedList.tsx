@@ -26,6 +26,7 @@ export default function InterviewFailedList() {
         onTemplateApply={handleTemplateApply}
         projectId={projectId!}
         status="FAIL"
+        stage="INTERVIEW"
       />
       <ApplicantMessageCard type="불합격자" template={template} isVariableEnabled={isVariableEnabled} />
       <Link href={`/interview/${projectId}/complete`}>

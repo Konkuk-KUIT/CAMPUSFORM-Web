@@ -12,7 +12,7 @@ export default async function InterviewCompletePage({ params }: { params: Promis
     <>
       <div className="min-h-screen flex flex-col">
         <header className="flex items-center justify-between h-12 px-4 bg-white">
-          <Link href="/interview/result" className="w-6 h-6">
+          <Link href={`/interview/${projectId}/result`} className="w-6 h-6">
             <Image src="/icons/back.svg" alt="뒤로가기" width={24} height={24} />
           </Link>
           <span className="text-title">면접 결과</span>
