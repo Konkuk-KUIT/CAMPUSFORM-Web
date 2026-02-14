@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+import { projectService } from '@/services/projectService';
+import { useCurrentProjectStore } from '@/store/currentProjectStore';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/ui/Header';
@@ -8,16 +10,16 @@ import Navbar from '@/components/Navbar';
 import Btn from '@/components/ui/Btn';
 import SmartScheduleDropdown from '@/components/ui/SmartScheduleDropdown';
 import TimePicker from '@/components/ui/TimePicker';
+import DateRangePickerModal from '@/components/home/addproject/DateRangePickerModal';
 
 type TimeOption = { label: string; value: string };
 
 export default function InterviewInfoSettingForm() {
   const router = useRouter();
   // Date state
-  const today = new Date();
-  const [year, setYear] = useState<number>(today.getFullYear());
-  const [month, setMonth] = useState<number>(today.getMonth()); // 0-indexed
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
   // Time state
   const hourOptions = useMemo<TimeOption[]>(() => {
@@ -75,53 +77,38 @@ export default function InterviewInfoSettingForm() {
   const [estimatedDuration, setEstimatedDuration] = useState<string>('');
   const [restDuration, setRestDuration] = useState<string>('');
 
-  // Calendar helpers
-  const firstDayOfMonth = useMemo(() => new Date(year, month, 1), [year, month]);
-  const startWeekday = firstDayOfMonth.getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const prevMonthDays = new Date(year, month, 0).getDate();
-  const calendarCells = useMemo(() => {
-    const cells: { d: number; current: boolean }[] = [];
-    // leading days from prev month
-    for (let i = 0; i < startWeekday; i++) {
-      cells.push({ d: prevMonthDays - startWeekday + 1 + i, current: false });
-    }
-    // current month days
-    for (let d = 1; d <= daysInMonth; d++) cells.push({ d, current: true });
-    // trailing to fill 6 rows * 7 cols = 42
-    const trailing = 42 - cells.length;
-    for (let i = 1; i <= trailing; i++) cells.push({ d: i, current: false });
-    return cells;
-  }, [startWeekday, prevMonthDays, daysInMonth]);
-
-  const handlePrevMonth = () => {
-    setMonth(m => {
-      if (m === 0) {
-        setYear(y => y - 1);
-        return 11;
-      }
-      return m - 1;
-    });
-  };
-  const handleNextMonth = () => {
-    setMonth(m => {
-      if (m === 11) {
-        setYear(y => y + 1);
-        return 0;
-      }
-      return m + 1;
-    });
-  };
-
   const isTimeValid = () => {
     const startTotalMin = parseInt(startHour) * 60 + parseInt(startMinute);
     const endTotalMin = parseInt(endHour) * 60 + parseInt(endMinute);
     return startTotalMin < endTotalMin;
   };
 
-  const handleSubmit = () => {
-    if (!selectedDate) {
-      alert('면접 날짜를 선택해주세요');
+  const handleDateConfirm = (start: Date | null, end: Date | null) => {
+    setStartDate(start);
+    setEndDate(end);
+  };
+
+  const formatDateRange = () => {
+    if (!startDate || !endDate) return '날짜를 선택해주세요';
+    const formatDate = (date: Date) => {
+      const year = date.getFullYear();
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const day = date.getDate().toString().padStart(2, '0');
+      return `${year}.${month}.${day}`;
+    };
+    return `${formatDate(startDate)} ~ ${formatDate(endDate)}`;
+  };
+
+  // zustand store에서 현재 projectId 받아오기
+  const projectId = useCurrentProjectStore(state => state.projectId);
+
+  const handleSubmit = async () => {
+    if (!startDate) {
+      alert('면접 시작 날짜를 선택해주세요');
+      return;
+    }
+    if (!endDate) {
+      alert('면접 종료 날짜를 선택해주세요');
       return;
     }
     if (!isTimeValid()) {
@@ -134,23 +121,28 @@ export default function InterviewInfoSettingForm() {
     }
 
     const payload = {
-      date: selectedDate.toISOString().slice(0, 10),
-      start: `${startHour}:${startMinute}`,
-      end: `${endHour}:${endMinute}`,
+      startDate: startDate.toISOString().slice(0, 10),
+      endDate: endDate.toISOString().slice(0, 10),
+      startTime: `${startHour}:${startMinute}`,
+      endTime: `${endHour}:${endMinute}`,
       maxApplicantsPerSlot,
       minInterviewersPerSlot,
       maxInterviewersPerSlot,
-      estimatedDuration: `${estimatedDuration}분`,
-      restDuration: restDuration ? `${restDuration}분` : '없음',
+      slotDurationMin: estimatedDuration ? parseInt(estimatedDuration) : 0,
+      slotBreakMin: restDuration ? parseInt(restDuration) : 0,
     };
-    console.log('면접 정보 설정', payload);
-
-    // 설정 완료 상태 저장
-    localStorage.setItem('interviewInfoConfigured', 'true');
-
-    alert('면접 정보가 설정되었습니다');
-    // TODO: API call to save data
-    router.push('/smart-schedule');
+    if (!projectId) {
+      alert('프로젝트가 선택되지 않았습니다.');
+      return;
+    }
+    try {
+      await projectService.updateInterviewSetting(projectId, payload);
+      localStorage.setItem('interviewInfoConfigured', 'true');
+      alert('면접 정보가 설정되었습니다');
+      router.push('/smart-schedule');
+    } catch (e) {
+      alert('면접 정보 설정에 실패했습니다.');
+    }
   };
 
   return (
@@ -163,74 +155,22 @@ export default function InterviewInfoSettingForm() {
         <div className="flex-1 px-4 pb-24 overflow-y-auto">
           {/* 면접 날짜 */}
           <div className="mt-2">
-            <div className="flex items-center gap-2 py-1">
+            <div className="flex items-center gap-2 py-1 mb-2">
               <Image src="/icons/calendar-black.svg" alt="calendar" width={15.75} height={15.75} />
               <span className="text-[15px] font-medium text-gray-950">면접 날짜</span>
             </div>
 
-            <div className="flex items-center justify-center px-6 py-2">
-              <div className="w-[303px] rounded-radius-10 bg-white px-2.5 py-2">
-                {/* Month label */}
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <button
-                    aria-label="prev"
-                    className="w-[33px] h-[33px] flex items-center justify-center rotate-180"
-                    onClick={handlePrevMonth}
-                  >
-                    <Image src="/icons/chevron-right.svg" alt="prev" width={24} height={7} />
-                  </button>
-                  <span className="text-[14px] font-medium text-gray-950 w-[184px] text-center">
-                    {year}년 {month + 1}월
-                  </span>
-                  <button
-                    aria-label="next"
-                    className="w-[33px] h-[33px] flex items-center justify-center"
-                    onClick={handleNextMonth}
-                  >
-                    <Image src="/icons/chevron-right.svg" alt="next" width={24} height={7} />
-                  </button>
-                </div>
-
-                {/* Week labels */}
-                <div className="grid grid-cols-7 h-[18px] mb-1">
-                  {['일', '월', '화', '수', '목', '금', '토'].map(w => (
-                    <div key={w} className="flex items-center justify-center text-[12px] text-gray-400">
-                      {w}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Calendar grid */}
-                <div className="grid grid-cols-7 gap-y-[2px]">
-                  {calendarCells.map((cell, idx) => {
-                    const isSelected =
-                      selectedDate &&
-                      cell.current &&
-                      selectedDate.getDate() === cell.d &&
-                      selectedDate.getMonth() === month &&
-                      selectedDate.getFullYear() === year;
-                    return (
-                      <button
-                        key={idx}
-                        className="h-[30px] flex items-center justify-center"
-                        onClick={() => cell.current && setSelectedDate(new Date(year, month, cell.d))}
-                      >
-                        <div className="relative w-6 h-6 flex items-center justify-center">
-                          <span
-                            className={`text-[14px] z-10 ${
-                              isSelected ? 'text-white font-semibold' : cell.current ? 'text-gray-950' : 'text-gray-300'
-                            }`}
-                          >
-                            {cell.d}
-                          </span>
-                          {isSelected && <div className="absolute inset-0 rounded-full bg-blue-600" />}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
+            <button
+              onClick={() => setIsDatePickerOpen(true)}
+              className="w-full px-4 py-3 bg-gray-50 rounded-lg border border-gray-200 text-left hover:bg-gray-100 transition-colors"
+            >
+              <div className="flex items-center justify-between">
+                <span className={startDate && endDate ? 'text-gray-950' : 'text-gray-400'}>
+                  {formatDateRange()}
+                </span>
+                <Image src="/icons/calendar-black.svg" alt="calendar" width={16} height={16} />
               </div>
-            </div>
+            </button>
           </div>
 
           {/* 면접 시간대 */}
@@ -369,6 +309,16 @@ export default function InterviewInfoSettingForm() {
         {/* Bottom nav */}
         <Navbar />
       </div>
+
+      {/* Date Range Picker Modal */}
+      {isDatePickerOpen && (
+        <DateRangePickerModal
+          onClose={() => setIsDatePickerOpen(false)}
+          onConfirm={handleDateConfirm}
+          initialStartDate={startDate}
+          initialEndDate={endDate}
+        />
+      )}
     </main>
   );
 }

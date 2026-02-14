@@ -11,6 +11,8 @@ import ConfirmResetDialog from '@/components/ui/ConfirmResetDialog';
 import AllAccordion from '@/components/ui/AllAccordion';
 import SmartScheduleButton from '@/components/ui/SmartScheduleButton';
 import SmartScheduleCalendarPreview from '@/components/ui/SmartScheduleCalendarPreview';
+import { useCurrentProjectStore } from '@/store/currentProjectStore';
+import { projectService } from '@/services/projectService';
 
 export default function SmartScheduleMainForm() {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -18,23 +20,39 @@ export default function SmartScheduleMainForm() {
     setShowConfirmDialog(false);
     router.push('/smart-schedule/result');
   };
-    const [mounted, setMounted] = useState(false);
-    // useEffect to set mounted true after client hydration
-    useEffect(() => {
-      setMounted(true);
-    }, []);
+  const [mounted, setMounted] = useState(false);
+  const [isConfigured, setIsConfigured] = useState<boolean>(false);
   const router = useRouter();
+  const projectId = useCurrentProjectStore(s => s.projectId);
+  
+  // useEffect to set mounted true after client hydration
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // 면접 정보 설정 완료 여부 확인
+  useEffect(() => {
+    const checkInterviewSetting = async () => {
+      if (!projectId) return;
+      
+      try {
+        await projectService.getInterviewSetting(projectId);
+        setIsConfigured(true);
+      } catch (error) {
+        console.error('면접 정보 설정 조회 실패:', error);
+        setIsConfigured(false);
+      }
+    };
+    
+    checkInterviewSetting();
+  }, [projectId]);
+
   const [selectedInterviewer, setSelectedInterviewer] = useState<number | null>(null);
   const [requiredInterviewers, setRequiredInterviewers] = useState<{ [key: number]: boolean }>({ 0: true });
   const hasSchedule = true; // 스마트 시간표 생성 여부 (가정)
   const isRepresentative = true; // 대표자 여부 (가정)
   const [showInterviewerView, setShowInterviewerView] = useState(false);
 
-  // 면접 정보 설정 완료 여부 확인
-  let isConfigured = null;
-  if (typeof window !== 'undefined') {
-    isConfigured = localStorage.getItem('interviewInfoConfigured');
-  }
   const showOverlay = !isConfigured;
 
   // TODO: 실제 API에서 스마트 시간표 생성 여부와 대표자 여부를 가져와야 함

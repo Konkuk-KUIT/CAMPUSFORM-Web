@@ -1,3 +1,4 @@
+
 import apiClient from '@/lib/api';
 import type {
   Project,
@@ -8,6 +9,17 @@ import type {
 } from '@/types/project';
 
 class ProjectService {
+    // GET : 면접 정보 설정 조회
+    async getInterviewSetting(projectId: number): Promise<any> {
+      const response = await apiClient.get(`/recruiting/projects/${projectId}/interview-setting`);
+      return response.data;
+    }
+  
+    // PUT : 면접 정보 설정 저장/수정
+    async updateInterviewSetting(projectId: number, data: any): Promise<any> {
+      const response = await apiClient.put(`/recruiting/projects/${projectId}/interview-setting`, data);
+      return response.data;
+    }
   // GET : 구글 OAuth 동의 URL 조회
   async getGoogleAuthorizeUrl(): Promise<string> {
     const response = await apiClient.get('/projects/google-oauth/authorize-url', {
