@@ -9,7 +9,10 @@ import { useCurrentProjectStore } from '@/store/currentProjectStore';
 
 export default function Navbar() {
   const pathname = usePathname();
-  const projectId = useCurrentProjectStore(s => s.projectId);
+  const params = useParams();
+  const storeProjectId = useCurrentProjectStore(s => s.projectId);
+
+  const projectId = params?.projectId ? Number(params.projectId) : storeProjectId;
 
   const isManage = pathname.startsWith('/manage');
   const isDocument = pathname.startsWith('/document');
@@ -19,7 +22,6 @@ export default function Navbar() {
 
   const [isResultOpen, setIsResultOpen] = useState(false);
 
-  // ← 추가: projectId가 있으면 해당 경로로, 없으면 기본 경로로
   const documentHref = projectId ? `/document/${projectId}` : '/document';
   const interviewHref = projectId ? `/interview/${projectId}` : '/interview';
 
@@ -37,8 +39,6 @@ export default function Navbar() {
             </Link>
 
             <Link href={documentHref} className="flex flex-col items-center gap-2.25 px-6 py-2.25">
-              {' '}
-              {/* ← 수정 */}
               <Image
                 src={isDocument ? '/icons/document.svg' : '/icons/document-off.svg'}
                 alt="서류"
@@ -50,8 +50,6 @@ export default function Navbar() {
             <div />
 
             <Link href={interviewHref} className="flex flex-col items-center gap-2.25 px-6 py-2.25">
-              {' '}
-              {/* ← 수정 */}
               <Image
                 src={isInterview ? '/icons/interview.svg' : '/icons/interview-off.svg'}
                 alt="면접"

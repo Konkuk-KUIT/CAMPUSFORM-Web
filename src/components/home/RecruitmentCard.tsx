@@ -36,7 +36,7 @@ export default function RecruitmentCard({
   const handleMenuSelect = (value: string) => {
     setIsMenuOpen(false);
     if (value === 'settings') {
-      router.push('/home/manage');
+      router.push(`/manage/${id}`);
     } else if (value === 'delete') {
       onDelete(id);
     }
@@ -44,35 +44,32 @@ export default function RecruitmentCard({
 
   const isActive = status === 'on';
 
-  const cardClasses = clsx(
-    "relative w-[343px] h-[130px] rounded-10 overflow-hidden cursor-pointer transition-all duration-200",
-    {
-      'bg-white border border-gray-100 hover:bg-blue-100 active:bg-blue-200': isActive,
-      'group bg-gray-100 border border-gray-100 hover:bg-gray-200 active:bg-gray-300': !isActive,
-    }
-  );
+  const cardClasses = clsx('relative w-[343px] h-[130px] rounded-10 overflow-hidden', {
+    'bg-white border border-gray-100': isActive,
+    'bg-gray-100 border border-gray-100': !isActive,
+  });
 
   const titleClasses = clsx(
     'absolute top-[16px] left-[25px] w-[160px] h-[22px] text-subtitle-sb whitespace-nowrap truncate',
     {
       'text-gray-950': isActive,
-      'text-gray-200 group-hover:text-gray-300 group-active:text-gray-400': !isActive,
+      'text-gray-200': !isActive,
     }
   );
 
   const recruitmentStatusClasses = clsx('text-body-sm mb-[2px]', {
     'text-gray-600': isActive,
-    'text-gray-200 group-hover:text-gray-300 group-active:text-gray-400': !isActive,
+    'text-gray-200': !isActive,
   });
 
   const dateRangeClasses = clsx('text-subtitle-sm-rg mb-[16px]', {
     'text-gray-400': isActive,
-    'text-gray-200 group-hover:text-gray-300 group-active:text-gray-400': !isActive,
+    'text-gray-200': !isActive,
   });
 
   const applicantCountClasses = clsx('text-body-rg', {
     'text-gray-950': isActive,
-    'text-gray-200 group-hover:text-gray-300 group-active:text-gray-400': !isActive,
+    'text-gray-200': !isActive,
   });
 
   const applicantCountSpanClasses = clsx('font-semibold', {
@@ -98,7 +95,7 @@ export default function RecruitmentCard({
           e.stopPropagation();
           setIsMenuOpen(!isMenuOpen);
         }}
-        className="absolute top-[20px] right-[16px] w-[24px] h-[24px] flex flex-col items-center justify-center gap-[3px] rounded-full transition-colors text-gray-950 hover:bg-gray-50 z-10"
+        className="absolute top-[20px] right-[16px] w-[24px] h-[24px] flex flex-col items-center justify-center gap-[3px] rounded-full text-gray-950 z-10 cursor-pointer"
       >
         <span className="w-[3.5px] h-[3.5px] bg-current rounded-full" />
         <span className="w-[3.5px] h-[3.5px] bg-current rounded-full" />
