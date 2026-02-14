@@ -72,8 +72,16 @@ export default function ApplicantInterviewSchedule() {
         const setting = await projectService.getInterviewSetting(projectId);
         console.log('[ApplicantInterview] 면접 설정:', setting);
         
-        if (setting && setting.startDate && setting.endDate && setting.startTime && setting.endTime) {
-          setInterviewSetting(setting);
+        // 새로운 API 형식: interviewDates 배열
+        if (setting && setting.interviewDates && setting.interviewDates.length > 0 && setting.startTime && setting.endTime) {
+          // interviewDates 배열을 startDate, endDate로 변환
+          const dates = setting.interviewDates.map((d: string) => new Date(d)).sort((a: Date, b: Date) => a.getTime() - b.getTime());
+          const convertedSetting = {
+            ...setting,
+            startDate: dates[0].toISOString().slice(0, 10),
+            endDate: dates[dates.length - 1].toISOString().slice(0, 10),
+          };
+          setInterviewSetting(convertedSetting);
         }
       } catch (error) {
         console.error('면접 설정 조회 실패:', error);
@@ -115,22 +123,21 @@ export default function ApplicantInterviewSchedule() {
     }
   }, [selectedSlots]);
 
-  // 면접 시간 데이터 동적 생성
+  // 면접 시간 데이터 동적 생성 (interviewDates 기반)
   const timeSlotsByDate: Record<string, string[]> = useMemo(() => {
-    if (!interviewSetting) {
+    if (!interviewSetting || !interviewSetting.interviewDates) {
       return {};
     }
 
     const result: Record<string, string[]> = {};
-    const startDate = new Date(interviewSetting.startDate);
-    const endDate = new Date(interviewSetting.endDate);
     
     // 시작 시간과 종료 시간 파싱
     const [startHour, startMin] = interviewSetting.startTime.split(':').map(Number);
     const [endHour, endMin] = interviewSetting.endTime.split(':').map(Number);
     
-    // 날짜별로 순회
-    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+    // interviewDates 배열의 각 날짜에 대해 시간 슬롯 생성
+    interviewSetting.interviewDates.forEach((dateStr: string) => {
+      const d = new Date(dateStr);
       const dateKey = format(d, 'M월 d일 (E)', { locale: ko });
       const times: string[] = [];
       
@@ -151,7 +158,7 @@ export default function ApplicantInterviewSchedule() {
       }
       
       result[dateKey] = times;
-    }
+    });
     
     return result;
   }, [interviewSetting]);

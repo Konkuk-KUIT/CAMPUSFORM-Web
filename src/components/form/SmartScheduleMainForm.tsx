@@ -92,9 +92,11 @@ export default function SmartScheduleMainForm() {
         console.log('[SmartSchedule] 면접 설정 API 응답:', setting);
         
         // 실제로 면접 정보가 설정되어 있는지 검증
+        // 새로운 API: interviewDates 배열 사용
         const isValid = setting && 
-                       setting.startDate && 
-                       setting.endDate && 
+                       setting.interviewDates && 
+                       Array.isArray(setting.interviewDates) &&
+                       setting.interviewDates.length > 0 &&
                        setting.startTime && 
                        setting.endTime;
         
@@ -399,19 +401,14 @@ export default function SmartScheduleMainForm() {
 
   // TODO: 실제 API에서 스마트 시간표 생성 여부와 대표자 여부를 가져와야 함
 
-  // 면접 날짜 배열 생성 (API에서 가져온 startDate ~ endDate)
+  // 면접 날짜 배열 생성 (API에서 가져온 interviewDates 배열 사용)
   const interviewDates = useMemo(() => {
-    if (!interviewSetting) return [];
+    if (!interviewSetting || !interviewSetting.interviewDates) return [];
     
-    const dates: Date[] = [];
-    const start = new Date(interviewSetting.startDate);
-    const end = new Date(interviewSetting.endDate);
-    
-    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-      dates.push(new Date(d));
-    }
-    
-    return dates;
+    // interviewDates는 ["2024-08-16", "2024-08-18"] 형식의 문자열 배열
+    return interviewSetting.interviewDates
+      .map((dateStr: string) => new Date(dateStr))
+      .sort((a, b) => a.getTime() - b.getTime()); // 날짜순 정렬
   }, [interviewSetting]);
 
   // 시간대 배열 생성 (API에서 가져온 startTime ~ endTime)

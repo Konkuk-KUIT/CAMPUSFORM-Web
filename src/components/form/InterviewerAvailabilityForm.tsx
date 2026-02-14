@@ -17,28 +17,7 @@ interface InterviewerAvailability {
 }
 
 export default function InterviewerAvailabilityForm() {
-  const [availability, setAvailability] = useState<InterviewerAvailability[]>([
-    {
-      id: '1',
-      name: '김철수',
-      monday: ['09:00', '10:00', '14:00', '15:00', '16:00'],
-      tuesday: ['10:00', '11:00', '14:00', '15:00'],
-      wednesday: ['09:00', '10:00', '11:00', '13:00', '14:00'],
-      thursday: ['09:00', '10:00', '15:00', '16:00'],
-      friday: ['10:00', '11:00', '13:00', '14:00', '15:00'],
-      maxInterviewsPerDay: 3,
-    },
-    {
-      id: '2',
-      name: '이영희',
-      monday: ['10:00', '11:00', '14:00', '16:00'],
-      tuesday: ['09:00', '10:00', '11:00', '15:00', '16:00'],
-      wednesday: ['14:00', '15:00', '16:00'],
-      thursday: ['09:00', '10:00', '11:00', '14:00', '15:00'],
-      friday: ['09:00', '10:00', '14:00'],
-      maxInterviewsPerDay: 4,
-    },
-  ]);
+  const [availability, setAvailability] = useState<InterviewerAvailability[]>([]);
 
   const days = [
     { key: 'monday', label: '월요일' },

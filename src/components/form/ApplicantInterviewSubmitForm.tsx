@@ -69,33 +69,55 @@ export default function ApplicantInterviewSubmitForm() {
             console.error('[ApplicantSubmit] API 응답이 비어있음');
             return;
           }
+
+          console.log('[ApplicantSubmit] API 응답 키들:', Object.keys(slotsData));
+          console.log('[ApplicantSubmit] summaries 존재?', !!slotsData.summaries);
+          console.log('[ApplicantSubmit] summaries 타입:', Array.isArray(slotsData.summaries) ? 'array' : typeof slotsData.summaries);
+          console.log('[ApplicantSubmit] summaries 길이:', slotsData.summaries?.length);
           
           // API 응답에서 면접 설정 정보 추출
           if (slotsData.summaries && Array.isArray(slotsData.summaries) && slotsData.summaries.length > 0) {
+            console.log('[ApplicantSubmit] summaries[0]:', JSON.stringify(slotsData.summaries[0], null, 2));
+            
             // summaries에서 날짜와 시간 정보 추출
             const dates = slotsData.summaries.map((s: any) => s.date).filter(Boolean);
             const allSlots = slotsData.summaries.flatMap((s: any) => s.slots || []);
             
-            if (dates.length > 0 && allSlots.length > 0) {
-              const startDate = dates[0];
-              const endDate = dates[dates.length - 1];
+            console.log('[ApplicantSubmit] 추출된 dates:', dates);
+            console.log('[ApplicantSubmit] 추출된 allSlots 개수:', allSlots.length);
+            console.log('[ApplicantSubmit] allSlots[0]:', allSlots[0]);
+            
+            if (dates.length > 0) {
+              // 면접 설정 정보 추출 (API 응답에 포함되어 있으면 사용)
+              let startTime = '09:00';
+              let endTime = '18:00';
               
-              // 모든 시간대 추출
-              const times = allSlots.map((slot: any) => slot.startTime).filter(Boolean);
-              const startTime = times.length > 0 ? times[0] : '09:00';
-              const endTime = times.length > 0 ? times[times.length - 1] : '18:00';
+              // API 응답에 interviewSetting이 있으면 사용
+              if (slotsData.interviewSetting) {
+                startTime = slotsData.interviewSetting.startTime || startTime;
+                endTime = slotsData.interviewSetting.endTime || endTime;
+              } else if (allSlots.length > 0) {
+                // slots에서 시간 추출 시도
+                const times = allSlots.map((slot: any) => slot.startTime).filter(Boolean);
+                if (times.length > 0) {
+                  startTime = times[0];
+                  endTime = times[times.length - 1];
+                }
+              }
               
-              console.log('[ApplicantSubmit] 추출된 설정:', { startDate, endDate, startTime, endTime });
+              console.log('[ApplicantSubmit] 추출된 설정:', { dates, startTime, endTime });
               
-              setInterviewSetting({
-                startDate,
-                endDate,
+              const setting = {
+                interviewDates: dates,
                 startTime,
                 endTime,
-                slotDurationMin: 30 // 기본값
-              });
+                slotDurationMin: 30
+              };
+              
+              console.log('[ApplicantSubmit] 최종 설정:', setting);
+              setInterviewSetting(setting);
             } else {
-              console.warn('[ApplicantSubmit] 날짜 또는 슬롯 데이터가 없음:', { dates, allSlots });
+              console.warn('[ApplicantSubmit] 날짜 데이터가 없음');
             }
             
             // 안내 문구 (있다면)
@@ -114,8 +136,17 @@ export default function ApplicantInterviewSubmitForm() {
           const setting = await projectService.getInterviewSetting(projectId);
           console.log('[ApplicantSubmit] 면접 설정:', setting);
           
-          if (setting && setting.startDate && setting.endDate && setting.startTime && setting.endTime) {
-            setInterviewSetting(setting);
+          // 새로운 API 형식: interviewDates 배열
+          if (setting && setting.interviewDates && setting.interviewDates.length > 0 && setting.startTime && setting.endTime) {
+            // interviewDates 배열을 startDate, endDate로 변환
+            const dates = setting.interviewDates.map((d: string) => new Date(d)).sort((a: Date, b: Date) => a.getTime() - b.getTime());
+            const convertedSetting = {
+              ...setting,
+              startDate: dates[0].toISOString().slice(0, 10),
+              endDate: dates[dates.length - 1].toISOString().slice(0, 10),
+              slotDurationMin: setting.slotDurationMin || 30,
+            };
+            setInterviewSetting(convertedSetting);
           }
         } catch (error) {
           console.error('면접 설정 조회 실패:', error);
@@ -146,40 +177,65 @@ export default function ApplicantInterviewSubmitForm() {
     fetchApplicantConfig();
   }, [token, projectId]);
 
-  // 면접 시간 데이터 동적 생성
+  // 면접 시간 데이터 동적 생성 (interviewDates 기반)
   const timeSlotsByDate: Record<string, string[]> = useMemo(() => {
     if (!interviewSetting) {
       return {};
     }
 
     const result: Record<string, string[]> = {};
-    const startDate = new Date(interviewSetting.startDate);
-    const endDate = new Date(interviewSetting.endDate);
     
     // 시작 시간과 종료 시간 파싱
     const [startHour, startMin] = interviewSetting.startTime.split(':').map(Number);
     const [endHour, endMin] = interviewSetting.endTime.split(':').map(Number);
     
-    // 날짜별로 순회
-    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-      const dateKey = format(d, 'M월 d일 (E)', { locale: ko });
-      const times: string[] = [];
-      
-      // 30분 단위로 시간 생성
-      let currentHour = startHour;
-      let currentMin = startMin;
-      
-      while (currentHour < endHour || (currentHour === endHour && currentMin < endMin)) {
-        times.push(`${currentHour.toString().padStart(2, '0')}:${currentMin.toString().padStart(2, '0')}`);
+    // interviewDates 가 있으면 사용, 없으면 startDate~endDate 범위 사용 (호환성)
+    if (interviewSetting.interviewDates && Array.isArray(interviewSetting.interviewDates)) {
+      // interviewDates 배열의 각 날짜에 대해 시간 슬롯 생성
+      interviewSetting.interviewDates.forEach((dateStr: string) => {
+        const d = new Date(dateStr);
+        const dateKey = format(d, 'M월 d일 (E)', { locale: ko });
+        const times: string[] = [];
         
-        currentMin += 30;
-        if (currentMin >= 60) {
-          currentMin = 0;
-          currentHour += 1;
+        let currentHour = startHour;
+        let currentMin = startMin;
+        
+        while (currentHour < endHour || (currentHour === endHour && currentMin < endMin)) {
+          times.push(`${currentHour.toString().padStart(2, '0')}:${currentMin.toString().padStart(2, '0')}`);
+          
+          currentMin += 30;
+          if (currentMin >= 60) {
+            currentMin = 0;
+            currentHour += 1;
+          }
         }
-      }
+        
+        result[dateKey] = times;
+      });
+    } else {
+      // 호환성: startDate/endDate 방식
+      const startDate = new Date(interviewSetting.startDate);
+      const endDate = new Date(interviewSetting.endDate);
       
-      result[dateKey] = times;
+      for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+        const dateKey = format(d, 'M월 d일 (E)', { locale: ko });
+        const times: string[] = [];
+        
+        let currentHour = startHour;
+        let currentMin = startMin;
+        
+        while (currentHour < endHour || (currentHour === endHour && currentMin < endMin)) {
+          times.push(`${currentHour.toString().padStart(2, '0')}:${currentMin.toString().padStart(2, '0')}`);
+          
+          currentMin += 30;
+          if (currentMin >= 60) {
+            currentMin = 0;
+            currentHour += 1;
+          }
+        }
+        
+        result[dateKey] = times;
+      }
     }
     
     return result;
@@ -227,15 +283,27 @@ export default function ApplicantInterviewSubmitForm() {
     
     // 날짜별로 시간을 그룹화
     const groupedByDate: { [isoDate: string]: string[] } = {};
-    const startDate = new Date(interviewSetting.startDate);
-    const endDate = new Date(interviewSetting.endDate);
     
     // 날짜 매핑 생성 (한글 날짜 -> ISO 날짜)
     const dateMapping: { [koreanDate: string]: string } = {};
-    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-      const isoDate = format(d, 'yyyy-MM-dd');
-      const koreanDate = format(d, 'M월 d일 (E)', { locale: ko });
-      dateMapping[koreanDate] = isoDate;
+    
+    if (interviewSetting.interviewDates && Array.isArray(interviewSetting.interviewDates)) {
+      // interviewDates 배열 사용
+      interviewSetting.interviewDates.forEach((isoDate: string) => {
+        const d = new Date(isoDate);
+        const koreanDate = format(d, 'M월 d일 (E)', { locale: ko });
+        dateMapping[koreanDate] = isoDate;
+      });
+    } else if (interviewSetting.startDate && interviewSetting.endDate) {
+      // 호환성: startDate/endDate 사용
+      const startDate = new Date(interviewSetting.startDate);
+      const endDate = new Date(interviewSetting.endDate);
+      
+      for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+        const isoDate = format(d, 'yyyy-MM-dd');
+        const koreanDate = format(d, 'M월 d일 (E)', { locale: ko });
+        dateMapping[koreanDate] = isoDate;
+      }
     }
 
     selected.forEach(slot => {

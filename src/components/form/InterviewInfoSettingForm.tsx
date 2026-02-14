@@ -11,15 +11,14 @@ import Navbar from '@/components/Navbar';
 import Btn from '@/components/ui/Btn';
 import SmartScheduleDropdown from '@/components/ui/SmartScheduleDropdown';
 import TimePicker from '@/components/ui/TimePicker';
-import Calendar from '@/components/home/Calendar';
+import MultiSelectCalendar from '@/components/home/MultiSelectCalendar';
 
 type TimeOption = { label: string; value: string };
 
 export default function InterviewInfoSettingForm() {
   const router = useRouter();
-  // Date state
-  const [startDate, setStartDate] = useState<Date | null>(null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
+  // Date state - 여러 날짜를 선택할 수 있도록 배열로 변경
+  const [selectedDates, setSelectedDates] = useState<Date[]>([]);
 
   // Time state
   const hourOptions = useMemo<TimeOption[]>(() => {
@@ -83,28 +82,16 @@ export default function InterviewInfoSettingForm() {
     return startTotalMin < endTotalMin;
   };
 
-  const handleDateConfirm = (start: Date | null, end: Date | null) => {
-    setStartDate(start);
-    setEndDate(end);
+  // 멀티 날짜 선택 핸들러
+  const handleMultiDateChange = (dates: Date[]) => {
+    setSelectedDates(dates);
   };
 
-  const handleDateChange = (date: Date | [Date | null, Date | null] | null) => {
-    if (Array.isArray(date)) {
-      const [start, end] = date;
-      setStartDate(start);
-      setEndDate(end);
-    }
-  };
-
-  const formatDateRange = () => {
-    if (!startDate || !endDate) return '날짜를 선택해주세요';
-    const formatDate = (date: Date) => {
-      const year = date.getFullYear();
-      const month = (date.getMonth() + 1).toString().padStart(2, '0');
-      const day = date.getDate().toString().padStart(2, '0');
-      return `${year}.${month}.${day}`;
-    };
-    return `${formatDate(startDate)} ~ ${formatDate(endDate)}`;
+  // 날짜 배열을 YYYY-MM-DD 형식으로 변환 및 정렬
+  const getFormattedDates = (): string[] => {
+    return selectedDates
+      .map(date => date.toISOString().slice(0, 10))
+      .sort();
   };
 
   // zustand store에서 현재 projectId 받아오기
@@ -187,12 +174,8 @@ export default function InterviewInfoSettingForm() {
     
     console.log('[InterviewSetting] 최종 사용 projectId:', targetProjectId);
     
-    if (!startDate) {
-      alert('면접 시작 날짜를 선택해주세요');
-      return;
-    }
-    if (!endDate) {
-      alert('면접 종료 날짜를 선택해주세요');
+    if (selectedDates.length === 0) {
+      alert('면접 날짜를 선택해주세요');
       return;
     }
     if (!isTimeValid()) {
@@ -205,8 +188,7 @@ export default function InterviewInfoSettingForm() {
     }
 
     const payload = {
-      startDate: startDate.toISOString().slice(0, 10),
-      endDate: endDate.toISOString().slice(0, 10),
+      interviewDates: getFormattedDates(),
       startTime: `${startHour}:${startMinute}`,
       endTime: `${endHour}:${endMinute}`,
       maxApplicantsPerSlot,
@@ -245,14 +227,9 @@ export default function InterviewInfoSettingForm() {
               <span className="text-[15px] font-medium text-gray-950">면접 날짜</span>
             </div>
 
-            <Calendar
-              variant="modal"
-              selected={startDate}
-              onDateChange={handleDateChange}
-              startDate={startDate}
-              endDate={endDate}
-              selectsRange
-              disableTodayHighlight
+            <MultiSelectCalendar
+              selectedDates={selectedDates}
+              onDateChange={handleMultiDateChange}
             />
           </div>
 
