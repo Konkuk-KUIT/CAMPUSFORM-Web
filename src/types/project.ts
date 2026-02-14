@@ -23,6 +23,8 @@ export type ProjectRole = 'OWNER' | 'ADMIN';
 
 export type SheetSyncStatus = 'OK' | 'NOT_SYNCED' | 'FAIL';
 
+export type ScreeningResult = 'HOLD' | 'PASS' | 'FAIL';
+
 export interface RequiredMapping {
   nameIdx: number;
   schoolIdx: number;
