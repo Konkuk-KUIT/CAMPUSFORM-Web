@@ -238,7 +238,7 @@ export default function ManageApplicationForm({ projectId }: { projectId: number
                 </div>
               </div>
               <Link
-                href="/home/addproject/connect/edit-position"
+                href={`/home/addproject/connect/edit-position?from=manage&projectId=${projectId}`}
                 className="flex items-center gap-1 text-[13px] font-normal leading-[18px] tracking-[0.13px] text-[var(--color-primary)] underline decoration-solid"
               >
                 편집하기
