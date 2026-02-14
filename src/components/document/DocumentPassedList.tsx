@@ -6,17 +6,16 @@ import Button from '@/components/ui/Btn';
 import NotificationMessageForm from '@/components/ui/NotificationMessageForm';
 import ApplicantMessageCard from '@/components/document/ApplicantMessageCard';
 import Link from 'next/link';
-import { useCurrentProjectStore } from '@/store/currentProjectStore';
 import type { DocumentApplicantResult } from '@/types/document';
 
 interface DocumentPassedListProps {
   list: DocumentApplicantResult[];
+  projectId: number;
 }
 
-export default function DocumentPassedList({ list }: DocumentPassedListProps) {
+export default function DocumentPassedList({ list, projectId }: DocumentPassedListProps) {
   const [template, setTemplate] = useState('');
   const [isVariableEnabled, setIsVariableEnabled] = useState(false);
-  const projectId = useCurrentProjectStore(s => s.projectId);
 
   const handleTemplateApply = (appliedTemplate: string, variableEnabled: boolean) => {
     setTemplate(appliedTemplate);

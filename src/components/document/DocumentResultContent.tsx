@@ -46,7 +46,11 @@ export default function DocumentResultContent({ projectId }: DocumentResultConte
       )}
       <ResultTab onTabChange={setSelectedTab} />
       <div className="p-4 bg-gray-50 min-h-screen">
-        {selectedTab === '합격자' ? <DocumentPassedList list={passedList} /> : <DocumentFailedList list={failedList} />}
+        {selectedTab === '합격자' ? (
+          <DocumentPassedList list={passedList} projectId={projectId} />
+        ) : (
+          <DocumentFailedList list={failedList} projectId={projectId} />
+        )}
       </div>
       <Navbar />
     </>

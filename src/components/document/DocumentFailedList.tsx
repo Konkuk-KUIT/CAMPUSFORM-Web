@@ -5,18 +5,17 @@ import ApplicantCountHeader from '@/components/ui/ApplicantCountHeader';
 import Button from '@/components/ui/Btn';
 import NotificationMessageForm from '@/components/ui/NotificationMessageForm';
 import ApplicantMessageCard from '@/components/document/ApplicantMessageCard';
-import { useCurrentProjectStore } from '@/store/currentProjectStore';
 import Link from 'next/link';
 import type { DocumentApplicantResult } from '@/types/document';
 
 interface DocumentFailedListProps {
   list: DocumentApplicantResult[];
+  projectId: number;
 }
 
-export default function DocumentFailedList({ list }: DocumentFailedListProps) {
+export default function DocumentFailedList({ list, projectId }: DocumentFailedListProps) {
   const [template, setTemplate] = useState('');
   const [isVariableEnabled, setIsVariableEnabled] = useState(false);
-  const projectId = useCurrentProjectStore(s => s.projectId);
 
   const handleTemplateApply = (appliedTemplate: string, variableEnabled: boolean) => {
     setTemplate(appliedTemplate);
