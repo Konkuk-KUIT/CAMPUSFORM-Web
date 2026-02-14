@@ -21,15 +21,13 @@ export default function InterviewFailedList() {
   return (
     <>
       <ApplicantCountHeader type="불합격자" />
-      <NotificationMessageForm 
-        type="불합격자" 
+      <NotificationMessageForm
+        type="불합격자"
         onTemplateApply={handleTemplateApply}
+        projectId={projectId!}
+        status="FAIL"
       />
-      <ApplicantMessageCard 
-        type="불합격자" 
-        template={template}
-        isVariableEnabled={isVariableEnabled}
-      />
+      <ApplicantMessageCard type="불합격자" template={template} isVariableEnabled={isVariableEnabled} />
       <Link href={`/interview/${projectId}/complete`}>
         <Button variant="primary" size="lg" className="fixed bottom-20">
           면접 마감하기
