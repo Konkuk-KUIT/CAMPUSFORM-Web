@@ -38,6 +38,20 @@ export default function InterviewDetailClient({ projectId, applicantId }: Interv
   const [appointmentTime, setAppointmentTime] = useState('');
   const [currentUserId, setCurrentUserId] = useState<number>(0);
 
+  const formatPhoneNumber = (phone: string) => {
+  const cleaned = phone.replace(/\D/g, '');
+
+  if (cleaned.length === 11) {
+    return cleaned.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+  }
+
+  if (cleaned.length === 10) {
+    return cleaned.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+  }
+
+  return phone;
+};
+
   useEffect(() => {
     const fetchCurrentUser = async () => {
       const auth = await authService.getCurrentUser();
@@ -107,7 +121,7 @@ export default function InterviewDetailClient({ projectId, applicantId }: Interv
               gender={genderMap[applicant.gender] ?? '남'}
               status={statusMap[applicant.status] ?? '보류'}
               university={`${applicant.school}/${applicant.major}/${applicant.position}`}
-              phone={applicant.phoneNumber}
+              phone={formatPhoneNumber(applicant.phoneNumber)}
               email={applicant.email}
               isFavorite={isFavorite}
               onToggleFavorite={handleToggleFavorite}
@@ -120,8 +134,10 @@ export default function InterviewDetailClient({ projectId, applicantId }: Interv
           </div>
 
           <div className="p-4 mx-4 bg-white rounded-10">
-            {applicant.answers.map((item, idx) => (
-              <QuestionSection key={idx} title={item.question} content={item.answer} />
+            {applicant.answers
+              .filter(item => item.question !== '타임스탬프')
+              .map((item, idx) => (
+                <QuestionSection key={idx} title={item.question} content={item.answer} />
             ))}
           </div>
         </div>

@@ -1,6 +1,6 @@
 import DocumentCompleteButtons from '@/components/document/DocumentCompleteButtons';
 import DocumentCompleteContent from '@/components/document/DocumentCompleteContent';
-import DocumentPageHeader from '@/components/document/DocumentPageHeader';
+import ResultPageHeader from '@/components/ui/ResultPageHeader';
 import Navbar from '@/components/Navbar';
 
 export default async function DocumentCompletePage({ params }: { params: Promise<{ projectId: string }> }) {
@@ -9,7 +9,7 @@ export default async function DocumentCompletePage({ params }: { params: Promise
   return (
     <>
       <div className="min-h-screen flex flex-col">
-        <DocumentPageHeader
+        <ResultPageHeader
           projectId={Number(projectId)}
           title="서류 결과"
           backHref={`/document/${projectId}/result`}
