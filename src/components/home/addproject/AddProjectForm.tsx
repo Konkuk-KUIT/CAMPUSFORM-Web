@@ -31,11 +31,20 @@ export default function AddProjectForm() {
   const [showWarningModal, setShowWarningModal] = useState(true);
   const [isDateModalOpen, setIsDateModalOpen] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
-  const [title, setTitle] = useState('');
+  const [title, setTitle] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('pendingTitle') ?? '';
+    }
+    return '';
+  });
   const [isTitleError, setIsTitleError] = useState(false);
   const [url, setUrl] = useState(projectForm.sheetUrl ?? '');
-  const [startDate, setStartDate] = useState<Date | null>(null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [startDate, setStartDate] = useState<Date | null>(
+    projectForm.startAt ? new Date(projectForm.startAt) : null
+  );
+  const [endDate, setEndDate] = useState<Date | null>(
+    projectForm.endAt ? new Date(projectForm.endAt) : null
+  );
   const [adminInput, setAdminInput] = useState('');
   const [isAdminError, setIsAdminError] = useState(false);
   const [adminList, setAdminList] = useState<Admin[]>([]);
@@ -64,6 +73,7 @@ export default function AddProjectForm() {
     try {
       const authorizeUrl = await getGoogleAuthorizeUrl();
       sessionStorage.setItem('pendingSheetUrl', url);
+      sessionStorage.setItem('pendingTitle', title); // 추가
       window.location.href = authorizeUrl;
     } catch (e) {
       console.error('OAuth URL 오류:', e);
@@ -73,6 +83,7 @@ export default function AddProjectForm() {
 
   const handleTitleChange = (newValue: string) => {
     setTitle(newValue);
+    setProjectForm({ title: newValue });
     if (newValue === '') {
       setIsTitleError(false);
       return;
@@ -128,6 +139,7 @@ export default function AddProjectForm() {
   const handleDateConfirm = (start: Date | null, end: Date | null) => {
     setStartDate(start);
     setEndDate(end);
+    setProjectForm({ startAt: formatDate(start), endAt: formatDate(end) });
   };
 
   const formatDate = (date: Date | null) => {
@@ -157,6 +169,7 @@ export default function AddProjectForm() {
 
       setCreatedProjectId(createdProject.id);
       reset();
+      sessionStorage.removeItem('pendingTitle');
       router.push(`/document/${createdProject.id}`);
     } catch (e) {
       console.error('프로젝트 생성 오류:', e);
