@@ -44,6 +44,12 @@ class ProjectService {
     return response.data;
   }
 
+  // PATCH : 프로젝트 이름 수정
+  async updateProjectName(projectId: number, title: string): Promise<Project> {
+    const response = await apiClient.patch<Project>(`/projects/${projectId}/name`, { title });
+    return response.data;
+  }
+
   // DELETE : 프로젝트 삭제 (OWNER 전용)
   async deleteProject(projectId: number): Promise<void> {
     await apiClient.delete(`/projects/${projectId}`);
