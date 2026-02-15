@@ -262,11 +262,19 @@ export default function SmartScheduleMainForm() {
       }
     });
 
-    // availabilities 형식으로 변환
-    const availabilities = Object.entries(dateMap).map(([date, startTimes]) => ({
-      date,
-      startTimes: startTimes.sort() // 시간 순으로 정렬
-    }));
+    // availabilities 형식으로 변환 (빈 startTimes 제외)
+    const availabilities = Object.entries(dateMap)
+      .map(([date, startTimes]) => ({
+        date,
+        startTimes: startTimes.sort() // 시간 순으로 정렬
+      }))
+      .filter(item => item.startTimes.length > 0); // 빈 배열 제외
+
+    // 선택된 시간이 없으면 저장하지 않음
+    if (availabilities.length === 0) {
+      toast.error('선택된 시간이 없습니다.');
+      return;
+    }
 
     console.log(`[SmartSchedule] ${interviewerName} (${userId}) 저장 데이터:`, availabilities);
 
@@ -642,6 +650,9 @@ export default function SmartScheduleMainForm() {
                             console.log('[SmartSchedule] 업데이트된 interviewersCellActive:', updated);
                             return updated;
                           });
+                          
+                          // 상태 업데이트와 동시에 API 저장
+                          handleSaveInterviewerTime(interviewer.userId, interviewer.name);
                         }}
                       />
                     </div>

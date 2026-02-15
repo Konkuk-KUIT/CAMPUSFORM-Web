@@ -7,6 +7,7 @@ import Btn from '@/components/ui/Btn';
 import { useCurrentProjectStore } from '@/store/currentProjectStore';
 import { useNewProjectStore } from '@/store/newProjectStore';
 import { projectService } from '@/services/projectService';
+import { syncSheet } from '@/services/googleSheetService';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
@@ -56,6 +57,24 @@ export default function ApplicantInterviewSubmitForm() {
     
     initializeProjectId();
   }, [token]);
+
+  // 구글 시트 동기화 (페이지 로드 시)
+  useEffect(() => {
+    const syncApplicants = async () => {
+      if (!projectId) return;
+      
+      try {
+        console.log('[ApplicantSubmit] 구글 시트 동기화 시작...');
+        await syncSheet(projectId);
+        console.log('[ApplicantSubmit] 구글 시트 동기화 완료');
+      } catch (error) {
+        console.error('[ApplicantSubmit] 구글 시트 동기화 실패:', error);
+        // 동기화 실패해도 계속 진행
+      }
+    };
+    
+    syncApplicants();
+  }, [projectId]);
 
   // 면접 설정 조회 (공개 API 사용)
   useEffect(() => {
@@ -171,9 +190,9 @@ export default function ApplicantInterviewSubmitForm() {
         const d = new Date(summary.date);
         const dateKey = format(d, 'M월 d일 (E)', { locale: ko });
         
-        // slots 배열에서 startTime만 추출
+        // slots 배열에서 startTime만 추출 (초 제거)
         const times = summary.slots
-          .map((slot: any) => slot.startTime)
+          .map((slot: any) => slot.startTime.substring(0, 5))
           .filter((time: string) => time); // null/undefined 제거
         
         result[dateKey] = times;
@@ -286,6 +305,18 @@ export default function ApplicantInterviewSubmitForm() {
       return;
     }
 
+    // 제출 전 구글 시트 동기화 (projectId가 있을 때만)
+    if (projectId) {
+      try {
+        console.log('[ApplicantSubmit] 제출 전 구글 시트 동기화 시작...');
+        await syncSheet(projectId);
+        console.log('[ApplicantSubmit] 제출 전 구글 시트 동기화 완료');
+      } catch (error) {
+        console.error('[ApplicantSubmit] 제출 전 동기화 실패:', error);
+        // 동기화 실패해도 제출은 시도 (이미 동기화되어 있을 수 있음)
+      }
+    }
+
     const selected = Object.entries(selectedSlots)
       .filter(([_, isSelected]) => isSelected)
       .map(([key]) => key);
@@ -363,9 +394,18 @@ export default function ApplicantInterviewSubmitForm() {
       
       // 제출 완료 상태로 전환
       setIsSubmitted(true);
-    } catch (error) {
+    } catch (error: any) {
       console.error('[ApplicantSubmit] 제출 실패:', error);
-      alert('제출에 실패했습니다. 다시 시도해주세요.');
+      
+      // 에러 메시지 상세 표시
+      let errorMessage = '제출에 실패했습니다.';
+      if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
+      alert(`${errorMessage}\n\n입력한 이름과 전화번호가 서류 심사에 등록된 정보와 일치하는지 확인해주세요.`);
     }
   };
 
@@ -461,7 +501,9 @@ export default function ApplicantInterviewSubmitForm() {
           ) : (
             /* 드롭다운 리스트 */
             <div className="space-y-0">
-              {Object.entries(finalTimeSlots).map(([date, times]) => {
+              {Object.entries(finalTimeSlots)
+                .filter(([_, times]) => times.length > 0) // 시간이 있는 날짜만 표시
+                .map(([date, times]) => {
                 const isExpanded = expandedDates.has(date);
                 return (
                   <div key={date}>
@@ -479,7 +521,7 @@ export default function ApplicantInterviewSubmitForm() {
                           alt=""
                           width={31}
                           height={31}
-                          className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                          className={isExpanded ? 'rotate-180' : ''}
                         />
                       </div>
                     </button>

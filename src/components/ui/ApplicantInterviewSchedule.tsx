@@ -179,7 +179,7 @@ export default function ApplicantInterviewSchedule() {
         const times = summary.slots
           .map((slot: any) => {
             console.log('[ApplicantInterview] slot:', slot);
-            return slot.startTime;
+            return slot.startTime.substring(0, 5); // 초 제거
           })
           .filter((time: string) => !!time);
         
