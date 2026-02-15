@@ -37,6 +37,7 @@ export interface ApplicantDetail {
   status: string;
   answers: Answer[];
   favorite: boolean;
+  commentCount: number;
 }
 
 // UI에서 사용하는 통합 타입
