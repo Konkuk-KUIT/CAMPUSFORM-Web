@@ -50,7 +50,16 @@ export default function SmartScheduleMainForm() {
       console.error('[SmartSchedule] 에러 응답:', error?.response?.data);
       console.error('[SmartSchedule] ============================');
       
-      toast.error('스마트 시간표 생성에 실패했습니다');
+      // 에러 메시지 처리
+      let errorMessage = '스마트 시간표 생성에 실패했습니다.';
+      
+      if (error?.response?.data?.message?.includes('foreign key constraint')) {
+        errorMessage = '기존 스케줄 데이터가 있어 생성할 수 없습니다.\n관리자에게 문의해주세요.';
+      } else if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      
+      toast.error(errorMessage);
       setIsGenerating(false);
     }
   };

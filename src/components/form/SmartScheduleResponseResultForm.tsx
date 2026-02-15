@@ -40,6 +40,11 @@ export default function SmartScheduleResponseResultForm() {
   const [interviewSetting, setInterviewSetting] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // 시간 포맷팅 함수 (초 제거)
+  function formatTime(time: string) {
+    return time.substring(0, 5);
+  }
+
   // 프로젝트 ID 초기화
   useEffect(() => {
     const initializeProjectId = async () => {
@@ -347,7 +352,7 @@ export default function SmartScheduleResponseResultForm() {
             {dateSchedule.slots.map((slot, slotIndex) => (
               <div key={slotIndex} className="bg-white h-[118px] flex items-center px-[26px] gap-0">
                 {/* Time */}
-                <p className="text-subtitle-rg text-gray-950 w-[60px] flex-shrink-0 mr-[35px]">{slot.time}</p>
+                <p className="text-subtitle-rg text-gray-950 w-[60px] flex-shrink-0 mr-[35px]">{formatTime(slot.time)}</p>
 
                 {/* Applicants Card */}
                 <div className="border-[1.5px] border-gray-200 rounded-[10px] p-[15px] flex flex-col gap-[6px] flex-1 min-w-0 overflow-hidden">

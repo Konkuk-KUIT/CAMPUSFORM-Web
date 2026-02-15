@@ -24,7 +24,8 @@ interface Interviewer {
 }
 
 interface TimeSlot {
-  time: string;
+  startTime: string;
+  endTime: string;
   applicants: Applicant[];
   interviewers: Interviewer[];
 }
@@ -48,20 +49,19 @@ export default function SmartScheduleResultForm() {
   // 실제 API 데이터 연동
   const [scheduleData, setScheduleData] = useState<DateSchedule[]>([]);
   const [unassignedApplicants, setUnassignedApplicants] = useState<UnassignedApplicant[]>([]);
-  const [selectedDate, setSelectedDate] = useState<string>('');
+  
   useEffect(() => {
     const fetchData = async () => {
       if (!projectId) return;
       try {
+        // 스마트 시간표 결과 조회 (GET API)
         const res = await getSmartSchedulePreview(projectId);
         const data = res.data;
+        console.log('[SmartScheduleResult] API 응답:', data);
         setScheduleData(data.days || []);
         setUnassignedApplicants(data.unassignedApplicants || []);
-        if (data.days && data.days.length > 0) {
-          setSelectedDate(formatDateToKorean(data.days[0].date));
-        }
       } catch (e) {
-        // 에러 핸들링
+        console.error('[SmartScheduleResult] 데이터 조회 실패:', e);
       }
     };
     fetchData();
@@ -73,6 +73,16 @@ export default function SmartScheduleResultForm() {
     const date = new Date(dateStr);
     const week = ['일', '월', '화', '수', '목', '금', '토'];
     return `${date.getMonth() + 1}월 ${date.getDate()}일 (${week[date.getDay()]})`;
+  }
+
+  // 시간 형식 변환: "10:00:00" → "10:00"
+  function formatTime(time: string) {
+    return time.substring(0, 5); // HH:mm:ss → HH:mm
+  }
+
+  // 시간 범위 형식: "10:00 - 10:20"
+  function formatTimeRange(startTime: string, endTime: string) {
+    return `${formatTime(startTime)} - ${formatTime(endTime)}`;
   }
 
   const handleConfirm = async () => {
@@ -124,68 +134,70 @@ export default function SmartScheduleResultForm() {
 
         {/* Unassigned Applicants */}
         {unassignedApplicants.length > 0 && (
-          <div className="px-4 mb-4">
-            <h2 className="text-subtitle-sm-sb text-gray-950 mb-2 pl-[10px]">
+          <div className="px-4 pb-4">
+            <h2 className="text-subtitle-sm-sb text-gray-950 mb-3">
               면접 배정 불가 인원({unassignedApplicants.length}명)
             </h2>
-            {unassignedApplicants.map((applicant, index) => (
-              <div key={index} className="bg-gray-50 border border-gray-100 rounded-[10px] px-4 py-[15px] mb-2">
-                <p className="text-body-rg text-gray-950 mb-2">
-                  {applicant.name}({applicant.school}/{applicant.major}/{applicant.position})
-                </p>
-                <p className="text-body-rg text-gray-700">사유: {applicant.reason}</p>
-              </div>
-            ))}
+            <div className="space-y-2">
+              {unassignedApplicants.map((applicant, index) => (
+                <div key={index} className="bg-gray-50 rounded-[10px] p-4">
+                  <p className="text-body-rg text-gray-950 mb-1">
+                    {applicant.name}({applicant.school}/{applicant.major}/{applicant.position})
+                  </p>
+                  <p className="text-body-rg text-gray-700">사유: {applicant.reason}</p>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
-        {/* Date Header */}
-        {/* 날짜 선택 탭 */}
-        <div className="flex gap-2 px-4 pt-4 pb-2">
-          {scheduleData.map((day, idx) => (
-            <button
-              key={day.date}
-              className={`px-3 py-1 rounded ${selectedDate === formatDateToKorean(day.date) ? 'bg-primary text-white' : 'bg-gray-100 text-gray-700'}`}
-              onClick={() => setSelectedDate(formatDateToKorean(day.date))}
-            >
-              {formatDateToKorean(day.date)}
-            </button>
-          ))}
-        </div>
+        {/* Date Sections */}
+        {scheduleData.map((dateSchedule, dateIndex) => (
+          dateSchedule.slots.length > 0 && (
+            <div key={dateIndex} className="mb-4">
+              {/* Date Header */}
+              <div className="px-4 pb-3">
+                <h2 className="text-subtitle-sm-sb text-gray-950">
+                  {formatDateToKorean(dateSchedule.date)}
+                </h2>
+              </div>
 
-        {/* Schedule Cards */}
-        <div className="px-4 pt-3 pb-4 space-y-3">
-          {scheduleData
-            .find((d) => formatDateToKorean(d.date) === selectedDate)?.slots
-            ?.map((slot, index) => (
-              <div key={index} className="h-[169px] border-[1.5px] border-gray-200 rounded-[10px] p-4 flex flex-col">
-                {/* Time */}
-                <p className="text-subtitle-rg text-primary mb-[10px]">{slot.time}</p>
+              {/* Schedule Cards */}
+              <div className="px-4 space-y-3">
+                {dateSchedule.slots.map((slot, index) => (
+                  <div key={index} className="border-[1.5px] border-gray-200 rounded-[10px] p-4">
+                    {/* Time */}
+                    <p className="text-subtitle-rg text-primary mb-3">
+                      {formatTimeRange(slot.startTime, slot.endTime)}
+                    </p>
 
-                {/* Applicants */}
-                <div className="mb-3">
-                  <div className="flex gap-[15px]">
-                    <span className="text-body-md text-gray-950 w-[56px] flex-shrink-0">지원자</span>
-                    <div className="flex-1 space-y-[6px]">
-                      {slot.applicants.map((applicant, appIndex) => (
-                        <p key={appIndex} className="text-body-rg text-gray-950">
-                          {applicant.name}({applicant.school}/{applicant.major}/{applicant.position})
-                        </p>
-                      ))}
+                    {/* Applicants */}
+                    <div className="mb-3">
+                      <div className="flex gap-4">
+                        <span className="text-body-md text-gray-950 w-[56px] flex-shrink-0">지원자</span>
+                        <div className="flex-1 space-y-1">
+                          {slot.applicants.map((applicant, appIndex) => (
+                            <p key={appIndex} className="text-body-rg text-gray-950">
+                              {applicant.name}({applicant.school}/{applicant.major}/{applicant.position})
+                            </p>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Interviewers */}
+                    <div className="flex gap-4">
+                      <span className="text-body-md text-gray-950 w-[56px] flex-shrink-0">면접관</span>
+                      <p className="text-body-rg text-gray-950 flex-1">
+                        {slot.interviewers.map((i) => i.name).join(', ')}
+                      </p>
                     </div>
                   </div>
-                </div>
-
-                {/* Interviewers */}
-                <div className="flex gap-[15px]">
-                  <span className="text-body-md text-gray-950 w-[56px] flex-shrink-0">면접관</span>
-                  <p className="text-body-rg text-gray-950 flex-1">
-                    {slot.interviewers.map((i) => i.name).join(', ')}
-                  </p>
-                </div>
+                ))}
               </div>
-            ))}
-        </div>
+            </div>
+          )
+        ))}
       </div>
 
       {/* Bottom Button */}
