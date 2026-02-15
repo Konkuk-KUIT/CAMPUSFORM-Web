@@ -309,21 +309,21 @@ export default function ApplicantInterviewSchedule() {
                     const isSelected = selectedSlots[key] || false;
 
                     return (
-                      <button
+                      <div
                         key={key}
-                        onClick={() => handleTimeSlotToggle(date, time)}
                         className={`
                           py-2 px-3 rounded-[5px] border text-body-sm-rg
-                          transition-all duration-200
+                          flex items-center justify-center
+                          pointer-events-none
                           ${
                             isSelected
                               ? 'bg-primary text-white border-primary'
-                              : 'bg-white text-gray-950 border-gray-200 hover:border-primary'
+                              : 'bg-white text-gray-950 border-gray-200'
                           }
                         `}
                       >
                         {time}
-                      </button>
+                      </div>
                     );
                   })}
                 </div>
