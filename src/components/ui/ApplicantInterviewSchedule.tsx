@@ -39,6 +39,8 @@ export default function ApplicantInterviewSchedule() {
   const setProjectId = useCurrentProjectStore(s => s.setProjectId);
   const createdProjectId = useNewProjectStore(s => s.createdProjectId);
   const [interviewSetting, setInterviewSetting] = useState<any>(null);
+  const [slotsSummaries, setSlotsSummaries] = useState<any[]>([]);
+  const [token, setToken] = useState<string>('');
 
   // 프로젝트 ID 초기화
   useEffect(() => {
@@ -63,33 +65,63 @@ export default function ApplicantInterviewSchedule() {
     initializeProjectId();
   }, []);
 
-  // 면접 설정 조회
+  // 토큰 조회
   useEffect(() => {
-    const fetchInterviewSetting = async () => {
+    const fetchToken = async () => {
       if (!projectId) return;
       
       try {
-        const setting = await projectService.getInterviewSetting(projectId);
-        console.log('[ApplicantInterview] 면접 설정:', setting);
+        const linkData = await projectService.getInvestigationLink(projectId);
+        console.log('[ApplicantInterview] Investigation Link:', linkData);
         
-        // 새로운 API 형식: interviewDates 배열
-        if (setting && setting.interviewDates && setting.interviewDates.length > 0 && setting.startTime && setting.endTime) {
-          // interviewDates 배열을 startDate, endDate로 변환
-          const dates = setting.interviewDates.map((d: string) => new Date(d)).sort((a: Date, b: Date) => a.getTime() - b.getTime());
-          const convertedSetting = {
-            ...setting,
-            startDate: dates[0].toISOString().slice(0, 10),
-            endDate: dates[dates.length - 1].toISOString().slice(0, 10),
-          };
-          setInterviewSetting(convertedSetting);
+        // 토큰 추출
+        const link = linkData?.link || linkData?.url;
+        if (link) {
+          const url = new URL(link, window.location.origin);
+          const tokenParam = url.searchParams.get('token');
+          if (tokenParam) {
+            setToken(tokenParam);
+            console.log('[ApplicantInterview] 토큰:', tokenParam);
+          }
         }
       } catch (error) {
-        console.error('면접 설정 조회 실패:', error);
+        console.log('[ApplicantInterview] 토큰 조회 실패:', error);
       }
     };
     
-    fetchInterviewSetting();
+    fetchToken();
   }, [projectId]);
+
+  // 면접 슬롯 조회 (공개 API)
+  useEffect(() => {
+    const fetchInterviewSlots = async () => {
+      if (!token) return;
+      
+      try {
+        // 공개 API로 슬롯 조회
+        const slotsData = await projectService.getPublicInterviewSlots(token);
+        console.log('[ApplicantInterview] 공개 슬롯 API 응답:', JSON.stringify(slotsData, null, 2));
+        
+        if (slotsData && slotsData.summaries && Array.isArray(slotsData.summaries)) {
+          setSlotsSummaries(slotsData.summaries);
+          
+          // 날짜 정보 추출
+          const dates = slotsData.summaries.map((s: any) => s.date).filter(Boolean);
+          
+          if (dates.length > 0) {
+            const setting = {
+              interviewDates: dates,
+            };
+            setInterviewSetting(setting);
+          }
+        }
+      } catch (error) {
+        console.error('면접 슬롯 조회 실패:', error);
+      }
+    };
+    
+    fetchInterviewSlots();
+  }, [token]);
 
   // 지원자 링크 설정 불러오기
   useEffect(() => {
@@ -123,45 +155,45 @@ export default function ApplicantInterviewSchedule() {
     }
   }, [selectedSlots]);
 
-  // 면접 시간 데이터 동적 생성 (interviewDates 기반)
+  // 면접 시간 데이터 (API 슬롯만 사용)
   const timeSlotsByDate: Record<string, string[]> = useMemo(() => {
-    if (!interviewSetting || !interviewSetting.interviewDates) {
+    console.log('[ApplicantInterview] timeSlotsByDate 생성 - slotsSummaries:', slotsSummaries);
+    
+    if (slotsSummaries.length === 0) {
+      console.log('[ApplicantInterview] slotsSummaries가 비어있음');
       return {};
     }
 
     const result: Record<string, string[]> = {};
     
-    // 시작 시간과 종료 시간 파싱
-    const [startHour, startMin] = interviewSetting.startTime.split(':').map(Number);
-    const [endHour, endMin] = interviewSetting.endTime.split(':').map(Number);
-    
-    // interviewDates 배열의 각 날짜에 대해 시간 슬롯 생성
-    interviewSetting.interviewDates.forEach((dateStr: string) => {
-      const d = new Date(dateStr);
-      const dateKey = format(d, 'M월 d일 (E)', { locale: ko });
-      const times: string[] = [];
+    // API에서 받은 summaries의 slots만 사용
+    slotsSummaries.forEach((summary: any, index: number) => {
+      console.log(`[ApplicantInterview] summary[${index}]:`, summary);
       
-      // 30분 단위로 시간 생성
-      // 종료 시간이 :00이면 그 시간대는 포함하지 않음 (ex. 18:00 종료 -> 17:30까지)
-      // 종료 시간이 :30이면 :00까지 포함 (ex. 18:30 종료 -> 18:00까지)
-      let currentHour = startHour;
-      let currentMin = startMin;
-      
-      while (currentHour < endHour || (currentHour === endHour && currentMin < endMin)) {
-        times.push(`${currentHour.toString().padStart(2, '0')}:${currentMin.toString().padStart(2, '0')}`);
+      if (summary.date && summary.slots && Array.isArray(summary.slots) && summary.slots.length > 0) {
+        const d = new Date(summary.date);
+        const dateKey = format(d, 'M월 d일 (E)', { locale: ko });
         
-        currentMin += 30;
-        if (currentMin >= 60) {
-          currentMin = 0;
-          currentHour += 1;
+        console.log(`[ApplicantInterview] ${dateKey} - slots 개수: ${summary.slots.length}`);
+        
+        const times = summary.slots
+          .map((slot: any) => {
+            console.log('[ApplicantInterview] slot:', slot);
+            return slot.startTime;
+          })
+          .filter((time: string) => !!time);
+        
+        console.log(`[ApplicantInterview] ${dateKey} - 추출된 시간들:`, times);
+        
+        if (times.length > 0) {
+          result[dateKey] = times;
         }
       }
-      
-      result[dateKey] = times;
     });
     
+    console.log('[ApplicantInterview] 최종 timeSlotsByDate:', result);
     return result;
-  }, [interviewSetting]);
+  }, [slotsSummaries]);
 
   const handleTimeSlotToggle = (date: string, time: string) => {
     const key = `${date}-${time}`;

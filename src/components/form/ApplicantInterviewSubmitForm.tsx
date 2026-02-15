@@ -30,6 +30,7 @@ export default function ApplicantInterviewSubmitForm() {
   const setProjectId = useCurrentProjectStore(s => s.setProjectId);
   const createdProjectId = useNewProjectStore(s => s.createdProjectId);
   const [interviewSetting, setInterviewSetting] = useState<any>(null);
+  const [slotsSummaries, setSlotsSummaries] = useState<any[]>([]);
   const [guidanceText, setGuidanceText] = useState('');
 
 
@@ -79,38 +80,17 @@ export default function ApplicantInterviewSubmitForm() {
           if (slotsData.summaries && Array.isArray(slotsData.summaries) && slotsData.summaries.length > 0) {
             console.log('[ApplicantSubmit] summaries[0]:', JSON.stringify(slotsData.summaries[0], null, 2));
             
-            // summaries에서 날짜와 시간 정보 추출
+            // summaries를 그대로 state에 저장
+            setSlotsSummaries(slotsData.summaries);
+            
+            // summaries에서 날짜 추출
             const dates = slotsData.summaries.map((s: any) => s.date).filter(Boolean);
-            const allSlots = slotsData.summaries.flatMap((s: any) => s.slots || []);
             
             console.log('[ApplicantSubmit] 추출된 dates:', dates);
-            console.log('[ApplicantSubmit] 추출된 allSlots 개수:', allSlots.length);
-            console.log('[ApplicantSubmit] allSlots[0]:', allSlots[0]);
             
             if (dates.length > 0) {
-              // 면접 설정 정보 추출 (API 응답에 포함되어 있으면 사용)
-              let startTime = '09:00';
-              let endTime = '18:00';
-              
-              // API 응답에 interviewSetting이 있으면 사용
-              if (slotsData.interviewSetting) {
-                startTime = slotsData.interviewSetting.startTime || startTime;
-                endTime = slotsData.interviewSetting.endTime || endTime;
-              } else if (allSlots.length > 0) {
-                // slots에서 시간 추출 시도
-                const times = allSlots.map((slot: any) => slot.startTime).filter(Boolean);
-                if (times.length > 0) {
-                  startTime = times[0];
-                  endTime = times[times.length - 1];
-                }
-              }
-              
-              console.log('[ApplicantSubmit] 추출된 설정:', { dates, startTime, endTime });
-              
               const setting = {
                 interviewDates: dates,
-                startTime,
-                endTime,
                 slotDurationMin: 30
               };
               
@@ -177,13 +157,44 @@ export default function ApplicantInterviewSubmitForm() {
     fetchApplicantConfig();
   }, [token, projectId]);
 
-  // 면접 시간 데이터 동적 생성 (interviewDates 기반)
+  // 면접 시간 데이터 동적 생성 (API의 slots 사용)
   const timeSlotsByDate: Record<string, string[]> = useMemo(() => {
-    if (!interviewSetting) {
+    if (slotsSummaries.length === 0) {
       return {};
     }
 
     const result: Record<string, string[]> = {};
+    
+    // API에서 받은 summaries를 기반으로 시간 슬롯 구성
+    slotsSummaries.forEach((summary: any) => {
+      if (summary.date && summary.slots && Array.isArray(summary.slots)) {
+        const d = new Date(summary.date);
+        const dateKey = format(d, 'M월 d일 (E)', { locale: ko });
+        
+        // slots 배열에서 startTime만 추출
+        const times = summary.slots
+          .map((slot: any) => slot.startTime)
+          .filter((time: string) => time); // null/undefined 제거
+        
+        result[dateKey] = times;
+      }
+    });
+    
+    return result;
+  }, [slotsSummaries]);
+
+  // 호환성을 위한 fallback: API가 slots를 제공하지 않는 경우
+  const fallbackTimeSlotsByDate: Record<string, string[]> = useMemo(() => {
+    if (!interviewSetting || slotsSummaries.length > 0) {
+      return {};
+    }
+
+    const result: Record<string, string[]> = {};
+    
+    // 시작 시간과 종료 시간이 있는 경우에만
+    if (!interviewSetting.startTime || !interviewSetting.endTime) {
+      return {};
+    }
     
     // 시작 시간과 종료 시간 파싱
     const [startHour, startMin] = interviewSetting.startTime.split(':').map(Number);
@@ -239,7 +250,12 @@ export default function ApplicantInterviewSubmitForm() {
     }
     
     return result;
-  }, [interviewSetting]);
+  }, [interviewSetting, slotsSummaries]);
+
+  // API slots가 있으면 사용, 없으면 fallback 사용
+  const finalTimeSlots = Object.keys(timeSlotsByDate).length > 0 
+    ? timeSlotsByDate 
+    : fallbackTimeSlotsByDate;
 
   const toggleDate = (date: string) => {
     const newExpanded = new Set(expandedDates);
@@ -438,14 +454,14 @@ export default function ApplicantInterviewSubmitForm() {
             <div className="text-center py-8 text-body-sm text-gray-300">
               면접 설정 정보를 불러오는 중...
             </div>
-          ) : Object.keys(timeSlotsByDate).length === 0 ? (
+          ) : Object.keys(finalTimeSlots).length === 0 ? (
             <div className="text-center py-8 text-body-sm text-gray-300">
               면접 정보 설정 후 이용 가능합니다.
             </div>
           ) : (
             /* 드롭다운 리스트 */
             <div className="space-y-0">
-              {Object.entries(timeSlotsByDate).map(([date, times]) => {
+              {Object.entries(finalTimeSlots).map(([date, times]) => {
                 const isExpanded = expandedDates.has(date);
                 return (
                   <div key={date}>

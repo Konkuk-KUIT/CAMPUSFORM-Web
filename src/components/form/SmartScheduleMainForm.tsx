@@ -174,6 +174,9 @@ export default function SmartScheduleMainForm() {
   const [showInterviewerView, setShowInterviewerView] = useState(false);
   const [investigationLink, setInvestigationLink] = useState<string>('');
   const [isGeneratingLink, setIsGeneratingLink] = useState(false);
+  
+  // 전체 캘린더의 현재 표시 날짜 상태
+  const [overviewCalendarStartDate, setOverviewCalendarStartDate] = useState(new Date());
 
   // 각 면접관별 선택된 시간 상태 (interviewerId -> cellActive)
   const [interviewersCellActive, setInterviewersCellActive] = useState<{ 
@@ -197,6 +200,8 @@ export default function SmartScheduleMainForm() {
   useEffect(() => {
     if (typeof window !== 'undefined' && Object.keys(interviewersCellActive).length > 0) {
       localStorage.setItem('interviewersCellActive', JSON.stringify(interviewersCellActive));
+      console.log('[SmartSchedule] interviewersCellActive 업데이트됨:', interviewersCellActive);
+      console.log('[SmartSchedule] 전체 면접관 수:', Object.keys(interviewersCellActive).length);
     }
   }, [interviewersCellActive]);
 
@@ -212,50 +217,68 @@ export default function SmartScheduleMainForm() {
   // 개별 면접관 시간 저장 함수
   const handleSaveInterviewerTime = async (userId: number, interviewerName: string) => {
     if (!projectId) {
-      alert('프로젝트가 선택되지 않았습니다.');
+      toast.error('프로젝트가 선택되지 않았습니다.');
+      return;
+    }
+    
+    if (!interviewSetting) {
+      toast.error('면접 설정을 먼저 완료해주세요.');
       return;
     }
 
     const cellActive = interviewersCellActive[userId];
     if (!cellActive || Object.keys(cellActive).length === 0) {
-      alert('선택된 시간이 없습니다.');
+      toast.error('선택된 시간이 없습니다.');
       return;
     }
 
-    // cellActive를 API 형식으로 변환
-    const availableSlots: Array<{ date: string; timeIndex: number; half?: 'top' | 'bottom'; isFullTime?: boolean }> = [];
+    // cellActive를 날짜 기반 API 형식으로 변환
+    // cellKey 형식: "2026-02-14-0" (date-timeIndex)
+    const dateMap: { [date: string]: string[] } = {};
     
     Object.entries(cellActive).forEach(([cellKey, value]) => {
-      // cellKey 형식: "2026-02-14-0" (date-timeIndex)
       const parts = cellKey.split('-');
       if (parts.length < 4) return;
       
       const date = `${parts[0]}-${parts[1]}-${parts[2]}`; // "2026-02-14"
-      const timeIndex = parseInt(parts[3]); // 0
+      const timeIndex = parseInt(parts[3]); // 0 (시작 시간으로부터의 시간 차이)
       
-      if (value.top && value.bottom) {
-        // 전체 시간 선택
-        availableSlots.push({ date, timeIndex, isFullTime: true });
-      } else if (value.top) {
-        // 상단만 선택
-        availableSlots.push({ date, timeIndex, half: 'top' });
-      } else if (value.bottom) {
-        // 하단만 선택
-        availableSlots.push({ date, timeIndex, half: 'bottom' });
+      if (!dateMap[date]) {
+        dateMap[date] = [];
+      }
+      
+      // interviewSetting에서 시작 시간 가져오기
+      const [startHour] = interviewSetting.startTime.split(':').map(Number);
+      const actualHour = startHour + timeIndex;
+      
+      // top이 선택되면 :00 추가
+      if (value.top) {
+        dateMap[date].push(`${actualHour.toString().padStart(2, '0')}:00`);
+      }
+      
+      // bottom이 선택되면 :30 추가
+      if (value.bottom) {
+        dateMap[date].push(`${actualHour.toString().padStart(2, '0')}:30`);
       }
     });
 
-    console.log(`[SmartSchedule] ${interviewerName} (${userId}) 저장 데이터:`, availableSlots);
+    // availabilities 형식으로 변환
+    const availabilities = Object.entries(dateMap).map(([date, startTimes]) => ({
+      date,
+      startTimes: startTimes.sort() // 시간 순으로 정렬
+    }));
+
+    console.log(`[SmartSchedule] ${interviewerName} (${userId}) 저장 데이터:`, availabilities);
 
     try {
-      await projectService.updateInterviewerAvailability(projectId, userId, { availableSlots });
-      alert(`${interviewerName}님의 시간이 저장되었습니다.`);
+      await projectService.updateInterviewerAvailability(projectId, userId, { availabilities });
+      toast.success(`${interviewerName}님의 시간이 저장되었습니다.`);
       
       // 면접관 목록 다시 로드 (participated 업데이트)
       fetchInterviewers();
     } catch (error) {
       console.error('시간 저장 실패:', error);
-      alert('시간 저장에 실패했습니다.');
+      toast.error('시간 저장에 실패했습니다.');
     }
   };
 
@@ -537,6 +560,8 @@ export default function SmartScheduleMainForm() {
                   showInterviewerView={showInterviewerView}
                   onShowInterviewerViewChange={setShowInterviewerView}
                   interviewersCellActive={interviewersCellActive}
+                  currentStartDate={overviewCalendarStartDate}
+                  onCurrentStartDateChange={setOverviewCalendarStartDate}
                 />
               </AllAccordion>
             </div>

@@ -85,6 +85,8 @@ export default function SmartScheduleCalendarPreview({
   cellActive: externalCellActive,
   onCellActiveChange,
   interviewersCellActive,
+  currentStartDate: externalCurrentStartDate,
+  onCurrentStartDateChange,
 }: {
   interviewerName?: string | null;
   seed?: number;
@@ -101,9 +103,11 @@ export default function SmartScheduleCalendarPreview({
   cellActive?: { [key: string]: { top: boolean; bottom: boolean } };
   onCellActiveChange?: (cellActive: { [key: string]: { top: boolean; bottom: boolean } }) => void;
   interviewersCellActive?: { [interviewerId: number]: { [key: string]: { top: boolean; bottom: boolean } } };
+  currentStartDate?: Date;
+  onCurrentStartDateChange?: (date: Date) => void;
 }) {
   const [internalCellActive, setInternalCellActive] = useState<{ [key: string]: { top: boolean; bottom: boolean } }>({});
-  const [currentStartDate, setCurrentStartDate] = useState(new Date());
+  const [internalCurrentStartDate, setInternalCurrentStartDate] = useState(new Date());
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date()); // 캘린더 모달 내부에서만 사용
   const [hoveredCell, setHoveredCell] = useState<{ day: number; time: number; half: 'top' | 'bottom' } | null>(null);
@@ -115,6 +119,10 @@ export default function SmartScheduleCalendarPreview({
   // Use external state if provided, otherwise use internal state
   const showInterviewerView = externalShowInterviewerView !== undefined ? externalShowInterviewerView : internalShowInterviewerView;
   const setShowInterviewerView = onShowInterviewerViewChange || setInternalShowInterviewerView;
+
+  // currentStartDate도 외부/내부 상태 선택적 사용
+  const currentStartDate = externalCurrentStartDate !== undefined ? externalCurrentStartDate : internalCurrentStartDate;
+  const setCurrentStartDate = onCurrentStartDateChange || setInternalCurrentStartDate;
 
   // cellActive도 외부/내부 상태 선택적 사용
   const cellActive = externalCellActive !== undefined ? externalCellActive : internalCellActive;

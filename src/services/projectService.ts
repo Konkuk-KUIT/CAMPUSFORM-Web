@@ -166,6 +166,11 @@ class ProjectService {
     const response = await apiClient.get(`/recruiting/projects/${projectId}/interview-slots`);
     return response.data;
   }
+  // POST : 스마트 시간표 생성 및 확정
+  async generateSmartSchedule(projectId: number): Promise<any> {
+    const response = await apiClient.post(`/projects/${projectId}/interview/smart-schedule`);
+    return response.data;
+  }
 }
 
 export const projectService = new ProjectService();
