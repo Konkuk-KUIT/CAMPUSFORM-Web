@@ -120,8 +120,10 @@ export default function InterviewDetailClient({ projectId, applicantId }: Interv
           </div>
 
           <div className="p-4 mx-4 bg-white rounded-10">
-            {applicant.answers.map((item, idx) => (
-              <QuestionSection key={idx} title={item.question} content={item.answer} />
+            {applicant.answers
+              .filter(item => item.question !== '타임스탬프')
+              .map((item, idx) => (
+                <QuestionSection key={idx} title={item.question} content={item.answer} />
             ))}
           </div>
         </div>
