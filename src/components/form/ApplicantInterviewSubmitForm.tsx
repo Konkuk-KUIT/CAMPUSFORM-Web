@@ -389,7 +389,8 @@ export default function ApplicantInterviewSubmitForm() {
   };
 
   const handleClose = () => {
-    router.push('/smart-schedule');
+    // 창/탭 닫기
+    window.close();
   };
 
   // 제출 완료 화면
