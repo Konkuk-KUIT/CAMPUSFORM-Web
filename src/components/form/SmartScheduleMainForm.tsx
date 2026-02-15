@@ -11,6 +11,7 @@ import ConfirmResetDialog from '@/components/ui/ConfirmResetDialog';
 import AllAccordion from '@/components/ui/AllAccordion';
 import SmartScheduleButton from '@/components/ui/SmartScheduleButton';
 import SmartScheduleCalendarPreview from '@/components/ui/SmartScheduleCalendarPreview';
+import NotificationBell from '@/components/ui/NotificationBell';
 
 export default function SmartScheduleMainForm() {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -18,11 +19,11 @@ export default function SmartScheduleMainForm() {
     setShowConfirmDialog(false);
     router.push('/smart-schedule/result');
   };
-    const [mounted, setMounted] = useState(false);
-    // useEffect to set mounted true after client hydration
-    useEffect(() => {
-      setMounted(true);
-    }, []);
+  const [mounted, setMounted] = useState(false);
+  // useEffect to set mounted true after client hydration
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   const router = useRouter();
   const [selectedInterviewer, setSelectedInterviewer] = useState<number | null>(null);
   const [requiredInterviewers, setRequiredInterviewers] = useState<{ [key: number]: boolean }>({ 0: true });
@@ -60,9 +61,7 @@ export default function SmartScheduleMainForm() {
             <Image src="/icons/logo.svg" alt="로고" width={22} height={22} className="w-[22px] h-[22px]" />
           </Link>
           <span className="text-title">스마트 시간표</span>
-          <button className="w-6 h-6 cursor-pointer" onClick={() => router.push('/home/notification')}>
-            <Image src="/icons/notification.svg" alt="알림" width={24} height={24} />
-          </button>
+          <NotificationBell />
         </header>
 
         {/* Main content */}
@@ -93,9 +92,12 @@ export default function SmartScheduleMainForm() {
             {/* Calendar preview - 전체 시간표 (항상 표시) */}
             <div className="mb-3">
               <AllAccordion title="전체">
-                <SmartScheduleCalendarPreview 
-                  seeds={[1, 2, 3]} 
-                  interviewers={interviewers.map((int, idx) => ({ ...int, isRequired: requiredInterviewers[idx] || false }))} 
+                <SmartScheduleCalendarPreview
+                  seeds={[1, 2, 3]}
+                  interviewers={interviewers.map((int, idx) => ({
+                    ...int,
+                    isRequired: requiredInterviewers[idx] || false,
+                  }))}
                   interviewDates={interviewDates}
                   showInterviewerView={showInterviewerView}
                   onShowInterviewerViewChange={setShowInterviewerView}
@@ -152,7 +154,9 @@ export default function SmartScheduleMainForm() {
                         showProfiles={false}
                         showRequiredSection={true}
                         requiredInterviewer={requiredInterviewers[idx] || false}
-                        onRequiredInterviewerChange={(value) => setRequiredInterviewers(prev => ({ ...prev, [idx]: value }))}
+                        onRequiredInterviewerChange={value =>
+                          setRequiredInterviewers(prev => ({ ...prev, [idx]: value }))
+                        }
                         interviewDates={interviewDates}
                       />
                     </div>
@@ -219,22 +223,17 @@ export default function SmartScheduleMainForm() {
 
           {/* CTA Button */}
           <div className="fixed bottom-20 left-0 right-0 px-5 max-w-93.75 mx-auto">
-            <Btn
-              variant="primary"
-              size="lg"
-              className="w-full"
-              onClick={() => setShowConfirmDialog(true)}
-            >
+            <Btn variant="primary" size="lg" className="w-full" onClick={() => setShowConfirmDialog(true)}>
               스마트 시간표 생성
             </Btn>
           </div>
-                    {/* Confirm Reset Dialog for 스마트 시간표 생성 */}
-                    <ConfirmResetDialog
-                      isOpen={showConfirmDialog}
-                      onClose={() => setShowConfirmDialog(false)}
-                      onConfirm={handleConfirm}
-                    />
-          
+          {/* Confirm Reset Dialog for 스마트 시간표 생성 */}
+          <ConfirmResetDialog
+            isOpen={showConfirmDialog}
+            onClose={() => setShowConfirmDialog(false)}
+            onConfirm={handleConfirm}
+          />
+
           {/* Spacer for fixed button */}
           <div className="h-32" />
 

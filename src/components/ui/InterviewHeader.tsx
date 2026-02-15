@@ -1,5 +1,8 @@
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
+import NotificationBell from '@/components/ui/NotificationBell';
 
 export default function InterviewHeader() {
   return (
@@ -8,9 +11,7 @@ export default function InterviewHeader() {
         <Image src="/icons/logo.svg" alt="로고" width={22} height={22} />
       </Link>
       <span className="text-title">면접 지원자 관리</span>
-      <button className="w-6 h-6">
-        <Image src="/icons/notification.svg" alt="알림" width={24} height={24} />
-      </button>
+      <NotificationBell />
     </header>
   );
 }

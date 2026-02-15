@@ -10,6 +10,7 @@ import InfoModal from '@/components/ui/InfoModal';
 import SheetDropdown from '@/components/home/addproject/SheetDropdown';
 import Navbar from '@/components/Navbar';
 import Button from '@/components/ui/Btn';
+import NotificationBell from '@/components/ui/NotificationBell';
 import { toast } from '@/components/Toast';
 import { projectService } from '@/services/projectService';
 import { authService } from '@/services/authService';
@@ -170,9 +171,7 @@ export default function ManageApplicationForm({ projectId }: { projectId: number
             <Image src="/icons/logo.svg" alt="logo" width={21} height={22} />
           </Link>
           <span className="text-[15px] font-semibold text-gray-950">지원서 관리</span>
-          <Link href="/home/notification" className="w-6 h-6 flex items-center justify-center">
-            <Image src="/icons/alarm.svg" alt="alarm" width={18} height={18} />
-          </Link>
+          <NotificationBell />
         </div>
 
         <div className="flex-1 px-5 py-6 flex flex-col gap-6 overflow-y-auto scrollbar-hide pb-10">

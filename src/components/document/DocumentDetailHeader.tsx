@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { ToastContainer } from '@/components/Toast';
 import { projectService } from '@/services/projectService';
+import NotificationBell from '@/components/ui/NotificationBell';
 
 interface DocumentDetailHeaderProps {
   projectId: number;
@@ -34,9 +35,7 @@ export default function DocumentDetailHeader({ projectId }: DocumentDetailHeader
           <Image src="/icons/back.svg" alt="뒤로가기" width={24} height={24} />
         </Link>
         <span className="text-title">{projectName}</span>
-        <button className="w-6 h-6">
-          <Image src="/icons/notification.svg" alt="알림" width={24} height={24} />
-        </button>
+        <NotificationBell />
       </header>
     </>
   );

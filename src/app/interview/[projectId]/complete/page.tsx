@@ -2,6 +2,7 @@
 
 import InterviewCompleteButtons from '@/components/interview/InterviewCompleteButtons';
 import Navbar from '@/components/Navbar';
+import NotificationBell from '@/components/ui/NotificationBell';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -16,9 +17,7 @@ export default async function InterviewCompletePage({ params }: { params: Promis
             <Image src="/icons/back.svg" alt="뒤로가기" width={24} height={24} />
           </Link>
           <span className="text-title">면접 결과</span>
-          <button className="w-6 h-6">
-            <Image src="/icons/notification.svg" alt="알림" width={24} height={24} />
-          </button>
+          <NotificationBell />
         </header>
 
         <div className="flex-1 flex flex-col items-center justify-center px-4">
