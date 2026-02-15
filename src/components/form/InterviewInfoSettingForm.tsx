@@ -214,7 +214,7 @@ export default function InterviewInfoSettingForm() {
 
   return (
     <main className="min-h-screen flex justify-center bg-white font-['Pretendard']">
-      <div className="relative w-[375px] bg-white min-h-screen flex flex-col overflow-x-hidden">
+      <div className="relative w-93.75 bg-white min-h-screen flex flex-col overflow-x-hidden">
         {/* Top bar */}
         <Header title="면접 정보 설정" backTo="/smart-schedule" />
 
@@ -259,18 +259,18 @@ export default function InterviewInfoSettingForm() {
             <div className="flex flex-col gap-2">
               <span className="text-[15px] font-medium text-gray-950">타임 당 지원자 수</span>
               <div className="flex items-center justify-end gap-2">
-                <span className="text-[12px] text-gray-950">최대</span>
+                <span className="text-12 text-gray-950">최대</span>
                 <button
                   aria-label="decrease"
-                  className="w-[29px] h-[29px] bg-blue-100 rounded-full flex items-center justify-center text-[18px]"
+                  className="w-7.25 h-7.25 bg-blue-100 rounded-full flex items-center justify-center text-18"
                   onClick={() => setMaxApplicantsPerSlot(v => Math.max(1, v - 1))}
                 >
                   −
                 </button>
-                <span className="text-[16px] text-gray-600 w-[32px] text-center">{maxApplicantsPerSlot}</span>
+                <span className="text-16 text-gray-600 w-8 text-center">{maxApplicantsPerSlot}</span>
                 <button
                   aria-label="increase"
-                  className="w-[29px] h-[29px] bg-blue-100 rounded-full flex items-center justify-center text-[18px]"
+                  className="w-7.25 h-7.25 bg-blue-100 rounded-full flex items-center justify-center text-18"
                   onClick={() => setMaxApplicantsPerSlot(v => v + 1)}
                 >
                   +
@@ -285,18 +285,18 @@ export default function InterviewInfoSettingForm() {
               <span className="text-[15px] font-medium text-gray-950">타임 당 면접관 수</span>
               {/* 최소 */}
               <div className="flex items-center justify-end gap-2">
-                <span className="text-[12px] text-gray-950">최소</span>
+                <span className="text-12 text-gray-950">최소</span>
                 <button
                   aria-label="min-dec"
-                  className="w-[29px] h-[29px] bg-blue-100 rounded-full flex items-center justify-center text-[18px]"
+                  className="w-7.25 h-7.25 bg-blue-100 rounded-full flex items-center justify-center text-18"
                   onClick={() => setMinInterviewersPerSlot(v => Math.max(1, v - 1))}
                 >
                   −
                 </button>
-                <span className="text-[16px] text-gray-600 w-[32px] text-center">{minInterviewersPerSlot}</span>
+                <span className="text-16 text-gray-600 w-8 text-center">{minInterviewersPerSlot}</span>
                 <button
                   aria-label="min-inc"
-                  className="w-[29px] h-[29px] bg-blue-100 rounded-full flex items-center justify-center text-[18px]"
+                  className="w-7.25 h-7.25 bg-blue-100 rounded-full flex items-center justify-center text-18"
                   onClick={() => setMinInterviewersPerSlot(v => v + 1)}
                 >
                   +
@@ -304,18 +304,18 @@ export default function InterviewInfoSettingForm() {
               </div>
               {/* 최대 */}
               <div className="flex items-center justify-end gap-2">
-                <span className="text-[12px] text-gray-950">최대</span>
+                <span className="text-12 text-gray-950">최대</span>
                 <button
                   aria-label="max-dec"
-                  className="w-[29px] h-[29px] bg-blue-100 rounded-full flex items-center justify-center text-[18px]"
+                  className="w-7.25 h-7.25 bg-blue-100 rounded-full flex items-center justify-center text-18"
                   onClick={() => setMaxInterviewersPerSlot(v => Math.max(1, v - 1))}
                 >
                   −
                 </button>
-                <span className="text-[16px] text-gray-600 w-[32px] text-center">{maxInterviewersPerSlot}</span>
+                <span className="text-16 text-gray-600 w-8 text-center">{maxInterviewersPerSlot}</span>
                 <button
                   aria-label="max-inc"
-                  className="w-[29px] h-[29px] bg-blue-100 rounded-full flex items-center justify-center text-[18px]"
+                  className="w-7.25 h-7.25 bg-blue-100 rounded-full flex items-center justify-center text-18"
                   onClick={() => setMaxInterviewersPerSlot(v => v + 1)}
                 >
                   +
@@ -329,7 +329,7 @@ export default function InterviewInfoSettingForm() {
             <div className="grid grid-cols-2 gap-y-3 py-2">
               <div>
                 <span className="text-[15px] font-medium text-gray-950">
-                  예상 소요 시간 <span className="text-[12px] text-gray-600">(분/타임 당)</span>
+                  예상 소요 시간 <span className="text-12 text-gray-600">(분/타임 당)</span>
                 </span>
               </div>
               <div className="flex items-center justify-end">

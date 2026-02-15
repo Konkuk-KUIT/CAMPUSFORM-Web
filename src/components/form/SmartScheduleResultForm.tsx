@@ -121,13 +121,13 @@ export default function SmartScheduleResultForm() {
       </div>
 
       {/* Content */}
-      <div className="pb-[150px]">
+      <div className="pb-37.5">
         {/* Info Link */}
-        <div className="px-4 pt-4 pb-3 flex items-center gap-[5px]">
+        <div className="px-4 pt-4 pb-3 flex items-center gap-1.25">
           <button onClick={() => setShowInfo(true)} className="text-body-md text-gray-400 underline">
             스마트 시간표 유의사항 안내
           </button>
-          <div className="w-[18px] h-[18px] relative">
+          <div className="w-4.5 h-4.5 relative">
             <Image src="/icons/info-2.svg" alt="info" width={18} height={18} />
           </div>
         </div>
@@ -140,7 +140,7 @@ export default function SmartScheduleResultForm() {
             </h2>
             <div className="space-y-2">
               {unassignedApplicants.map((applicant, index) => (
-                <div key={index} className="bg-gray-50 rounded-[10px] p-4">
+                <div key={index} className="bg-gray-50 rounded-10 p-4">
                   <p className="text-body-rg text-gray-950 mb-1">
                     {applicant.name}({applicant.school}/{applicant.major}/{applicant.position})
                   </p>
@@ -165,7 +165,7 @@ export default function SmartScheduleResultForm() {
               {/* Schedule Cards */}
               <div className="px-4 space-y-3">
                 {dateSchedule.slots.map((slot, index) => (
-                  <div key={index} className="border-[1.5px] border-gray-200 rounded-[10px] p-4">
+                  <div key={index} className="border-[1.5px] border-gray-200 rounded-10 p-4">
                     {/* Time */}
                     <p className="text-subtitle-rg text-primary mb-3">
                       {formatTimeRange(slot.startTime, slot.endTime)}
@@ -174,7 +174,7 @@ export default function SmartScheduleResultForm() {
                     {/* Applicants */}
                     <div className="mb-3">
                       <div className="flex gap-4">
-                        <span className="text-body-md text-gray-950 w-[56px] flex-shrink-0">지원자</span>
+                        <span className="text-body-md text-gray-950 w-14 shrink-0">지원자</span>
                         <div className="flex-1 space-y-1">
                           {slot.applicants.map((applicant, appIndex) => (
                             <p key={appIndex} className="text-body-rg text-gray-950">
@@ -187,7 +187,7 @@ export default function SmartScheduleResultForm() {
 
                     {/* Interviewers */}
                     <div className="flex gap-4">
-                      <span className="text-body-md text-gray-950 w-[56px] flex-shrink-0">면접관</span>
+                      <span className="text-body-md text-gray-950 w-14 shrink-0">면접관</span>
                       <p className="text-body-rg text-gray-950 flex-1">
                         {slot.interviewers.map((i) => i.name).join(', ')}
                       </p>
@@ -201,7 +201,7 @@ export default function SmartScheduleResultForm() {
       </div>
 
       {/* Bottom Button */}
-      <div className="fixed bottom-[65px] left-0 right-0 bg-white border-t border-gray-100 px-5 max-w-93.75 mx-auto pt-[10px] pb-[10px]">
+      <div className="fixed bottom-16.25 left-0 right-0 bg-white border-t border-gray-100 px-5 max-w-93.75 mx-auto pt-2.5 pb-2.5">
         <Btn variant="primary" size="lg" className="w-full" onClick={handleConfirm}>
           면접 시간 확정
         </Btn>
@@ -210,14 +210,14 @@ export default function SmartScheduleResultForm() {
       {/* Info Modal */}
       {showInfo && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(31,31,31,0.40)]">
-          <div className="bg-white rounded-[10px] w-[343px] px-6 py-[34px] relative">
+          <div className="bg-white rounded-10 w-85.75 px-6 py-8.5 relative">
             {/* Close Button */}
-            <button onClick={() => setShowInfo(false)} className="absolute top-[10px] right-[10px] w-[24px] h-[24px]">
+            <button onClick={() => setShowInfo(false)} className="absolute top-2.5 right-2.5 w-6 h-6">
               <Image src="/icons/close.svg" alt="close" width={24} height={24} />
             </button>
 
             {/* Content */}
-            <div className="flex flex-col justify-center w-[285px] h-[205px]">
+            <div className="flex flex-col justify-center w-71.25 h-51.25">
               <p className="text-subtitle-sm-rg text-gray-950 mb-4">
                 지원자와 면접관의 가능 시간을 알고리즘
                 <br />
