@@ -55,7 +55,7 @@ export default function DocumentResultContent({ projectId }: DocumentResultConte
         />
       )}
       <ResultTab onTabChange={setSelectedTab} />
-      <div className="p-4 bg-gray-50 min-h-screen">
+      <div className="p-4 bg-gray-50 min-h-screen pb-32">
         {isLoaded &&
           (selectedTab === '합격자' ? (
             <DocumentPassedList
