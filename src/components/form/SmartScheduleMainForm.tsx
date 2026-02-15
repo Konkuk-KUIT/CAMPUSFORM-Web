@@ -131,6 +131,7 @@ export default function SmartScheduleMainForm() {
     startTime: string;
     endTime: string;
     slotDurationMin: number;
+    interviewDates?: string[];
   } | null>(null);
   
   // useEffect to set mounted true after client hydration
