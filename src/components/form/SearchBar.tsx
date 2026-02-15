@@ -11,6 +11,7 @@ interface SearchBarProps {
   showSort?: boolean;
   sortValue?: string;
   onSortChange?: (value: string) => void;
+  onRefresh?: () => Promise<void>;
 }
 
 export default function SearchBar({
@@ -20,6 +21,7 @@ export default function SearchBar({
   showSort = false,
   sortValue,
   onSortChange,
+  onRefresh,
 }: SearchBarProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [lastRefreshTime, setLastRefreshTime] = useState<Date>(new Date());
@@ -57,10 +59,10 @@ export default function SearchBar({
     setIsOpen(false);
   };
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setLastRefreshTime(new Date());
     setTimeText('0분 전');
-    // TODO: 데이터 새로고침 로직
+    await onRefresh?.();
   };
 
   return (

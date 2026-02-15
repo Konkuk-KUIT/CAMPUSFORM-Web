@@ -10,6 +10,7 @@ import InfoModal from '@/components/ui/InfoModal';
 import SheetDropdown from '@/components/home/addproject/SheetDropdown';
 import Navbar from '@/components/Navbar';
 import Button from '@/components/ui/Btn';
+import { toast } from '@/components/Toast';
 import { projectService } from '@/services/projectService';
 import { authService } from '@/services/authService';
 import type { Project, ProjectAdmin, ProjectAdminRaw } from '@/types/project';
@@ -27,6 +28,8 @@ export default function ManageApplicationForm({ projectId }: { projectId: number
   const [isAdminError, setIsAdminError] = useState(false);
   const [adminList, setAdminList] = useState<ProjectAdmin[]>([]);
   const [ownerUserId, setOwnerUserId] = useState<number | null>(null);
+  const [projectName, setProjectName] = useState('');
+  const [isEditingName, setIsEditingName] = useState(false);
 
   useEffect(() => {
     if (!projectId) return;
@@ -37,6 +40,7 @@ export default function ManageApplicationForm({ projectId }: { projectId: number
         const found = projects.find(p => p.id === projectId);
         if (found) {
           setProject(found);
+          setProjectName(found.title);
           setStatus(found.state === 'DOCUMENT' ? '모집 중' : '모집 마감');
           setStartDate(new Date(found.startAt));
           setEndDate(new Date(found.endAt));
@@ -122,6 +126,18 @@ export default function ManageApplicationForm({ projectId }: { projectId: number
     setEndDate(end);
   };
 
+  const handleSaveProjectName = async () => {
+    if (!projectId || !projectName.trim()) return;
+    try {
+      await projectService.updateProjectName(projectId, projectName);
+      setIsEditingName(false);
+      toast.success('프로젝트 이름이 수정되었습니다.');
+    } catch (e) {
+      console.error('프로젝트 이름 수정 실패:', e);
+      toast.error('프로젝트 이름 수정에 실패했습니다.');
+    }
+  };
+
   const formatDate = (date: Date | null) => {
     if (!date) return '';
     return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date
@@ -148,7 +164,7 @@ export default function ManageApplicationForm({ projectId }: { projectId: number
         }
       `}</style>
 
-      <div className="relative w-[375px] bg-white min-h-screen flex flex-col">
+      <div className="relative w-[375px] bg-white min-h-screen flex flex-col pb-10">
         <div className="flex items-center justify-between h-12 px-4 bg-white border-b border-gray-100">
           <Link href="/home" className="w-6 h-6 flex items-center justify-center">
             <Image src="/icons/logo.svg" alt="logo" width={21} height={22} />
@@ -160,6 +176,31 @@ export default function ManageApplicationForm({ projectId }: { projectId: number
         </div>
 
         <div className="flex-1 px-5 py-6 flex flex-col gap-6 overflow-y-auto scrollbar-hide pb-10">
+          <div className="flex flex-col gap-2">
+            <label className="text-[14px] font-bold text-gray-950">프로젝트 이름</label>
+            <div className="flex gap-2 items-start">
+              <div className="flex-1">
+                <TextboxGoogle
+                  placeholder="프로젝트 이름을 입력해주세요"
+                  value={projectName}
+                  onChange={val => {
+                    setProjectName(val);
+                    setIsEditingName(true);
+                  }}
+                />
+              </div>
+              {isEditingName && (
+                <Button
+                  variant="primary"
+                  className="!w-[50px] !h-[50px] !rounded-[10px] shrink-0 text-[13px] font-medium"
+                  onClick={handleSaveProjectName}
+                >
+                  저장
+                </Button>
+              )}
+            </div>
+          </div>
+
           <div className="flex flex-col gap-2">
             <label className="text-[14px] font-bold text-gray-950">모집 상태</label>
             <SheetDropdown
@@ -238,7 +279,7 @@ export default function ManageApplicationForm({ projectId }: { projectId: number
                 </div>
               </div>
               <Link
-                href="/home/addproject/connect/edit-position"
+                href={`/home/addproject/connect/edit-position?from=manage&projectId=${projectId}`}
                 className="flex items-center gap-1 text-[13px] font-normal leading-[18px] tracking-[0.13px] text-[var(--color-primary)] underline decoration-solid"
               >
                 편집하기

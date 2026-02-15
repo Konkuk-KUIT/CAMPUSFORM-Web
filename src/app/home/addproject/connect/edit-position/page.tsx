@@ -1,5 +1,10 @@
+import { Suspense } from 'react';
 import PositionEditForm from '@/components/home/addproject/PositionEditForm';
 
 export default function EditPositionPage() {
-  return <PositionEditForm />;
+  return (
+    <Suspense>
+      <PositionEditForm />
+    </Suspense>
+  );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Header from '@/components/ui/Header';
 import Button from '@/components/ui/Btn';
 import SheetDropdown from '@/components/home/addproject/SheetDropdown';
@@ -15,7 +15,12 @@ interface PositionMapping {
 
 export default function PositionEditForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { setProjectForm, projectForm } = useNewProjectStore();
+
+  const from = searchParams.get('from');
+  const projectId = searchParams.get('projectId');
+  const backPath = from === 'manage' ? `/manage/${projectId}` : '/home/addproject/connect';
 
   const [collectedPositions, setCollectedPositions] = useState<string[]>([]);
   const [positions, setPositions] = useState<PositionMapping[]>([{ original: '', changed: '' }]);
@@ -26,7 +31,7 @@ export default function PositionEditForm() {
       const sheetUrl = projectForm.sheetUrl;
       const positionColumnIndex = projectForm.requiredMappings?.positionIdx ?? -1;
 
-      if (!sheetUrl) return; // sheetUrl만 체크
+      if (!sheetUrl) return;
 
       try {
         const result = await projectService.getMappingColumnValues(sheetUrl, positionColumnIndex);
@@ -63,13 +68,13 @@ export default function PositionEditForm() {
       .map(p => ({ fromValue: p.original, toValue: p.changed }));
 
     setProjectForm({ valueMappings });
-    router.back();
+    router.push(backPath);
   };
 
   return (
     <div className="flex justify-center min-h-screen bg-white">
       <div className="relative w-93.75 bg-white min-h-screen flex flex-col">
-        <Header title="포지션 편집" backTo="/home/addproject/connect" hideNotification={true} />
+        <Header title="포지션 편집" backTo={backPath} hideNotification={true} />
 
         <div className="flex-1 px-4 pt-6 pb-32 flex flex-col gap-6 overflow-y-auto scrollbar-hide">
           <p className="text-[13px] font-normal leading-4.5 tracking-[0.13px] text-gray-500">
@@ -82,15 +87,12 @@ export default function PositionEditForm() {
             <h3 className="text-[15px] font-medium leading-5.25 text-black">수집된 포지션</h3>
             <div className="flex flex-wrap gap-2.5">
               {collectedPositions.map((position, index) => (
-                <button
+                <div
                   key={index}
-                  onClick={() => togglePosition(position)}
-                  className={`h-6.75 px-2.5 py-0.75 rounded-[13px] text-[13px] font-medium leading-[1.5] tracking-[-0.286px] ${
-                    selectedPositions.includes(position) ? 'bg-primary text-white' : 'bg-blue-50 text-[#5d5d5d]'
-                  }`}
+                  className="h-6.75 px-2.5 py-0.75 rounded-[13px] text-[13px] font-medium leading-[1.5] tracking-[-0.286px] bg-blue-50 text-[#5d5d5d]"
                 >
                   {position}
-                </button>
+                </div>
               ))}
             </div>
           </div>

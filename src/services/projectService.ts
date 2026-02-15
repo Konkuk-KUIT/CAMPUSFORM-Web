@@ -56,6 +56,12 @@ class ProjectService {
     return response.data;
   }
 
+  // PATCH : 프로젝트 이름 수정
+  async updateProjectName(projectId: number, title: string): Promise<Project> {
+    const response = await apiClient.patch<Project>(`/projects/${projectId}/name`, { title });
+    return response.data;
+  }
+
   // DELETE : 프로젝트 삭제 (OWNER 전용)
   async deleteProject(projectId: number): Promise<void> {
     await apiClient.delete(`/projects/${projectId}`);
@@ -97,7 +103,15 @@ class ProjectService {
     await apiClient.post(`/projects/${projectId}/sync-sheet`);
   }
 
-  // PATCH : 서류 단계 종료
+  // PATCH : 서류 단계 → 면접 단계로 전환 (파란 버튼: 다음 단계 면접 설정하기)
+  // DOCUMENT → INTERVIEW
+  async startInterview(projectId: number): Promise<Project> {
+    const response = await apiClient.patch<Project>(`/recruiting/projects/${projectId}/start-interview`);
+    return response.data;
+  }
+
+  // PATCH : 서류 단계 종료 - 면접 없이 모집 종료 (흰색 버튼)
+  // DOCUMENT → DOCUMENT_COMPLETE
   async completeDocument(projectId: number): Promise<Project> {
     const response = await apiClient.patch<Project>(`/recruiting/projects/${projectId}/complete-document`);
     return response.data;

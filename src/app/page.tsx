@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation';
+import SplashForm from '@/components/form/auth/SplashForm';
 
 export default function MainPage() {
-  redirect('/auth/login');
+  return <SplashForm />;
 }

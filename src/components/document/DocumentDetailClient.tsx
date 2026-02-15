@@ -22,6 +22,20 @@ const statusMap: Record<string, string> = {
   FAIL: '불합격',
 };
 
+const formatPhoneNumber = (phone: string) => {
+  const cleaned = phone.replace(/\D/g, '');
+
+  if (cleaned.length === 11) {
+    return cleaned.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+  }
+
+  if (cleaned.length === 10) {
+    return cleaned.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+  }
+
+  return phone;
+};
+
 const mapApplicant = (data: ApplicantDetail): Applicant => ({
   applicantId: data.applicantId,
   name: data.name,
@@ -33,8 +47,8 @@ const mapApplicant = (data: ApplicantDetail): Applicant => ({
   email: data.email ?? '',
   favorite: data.favorite,
   status: statusMap[data.status] ?? '보류',
-  commentCount: 0, //TODO 서버
-  answers: data.answers ?? [],
+  commentCount: data.commentCount ?? 0,
+  answers: (data.answers ?? []).filter(a => a.question !== '타임스탬프'),
 });
 
 export default function DocumentDetailClient({ applicantId, projectId, stage }: DocumentDetailClientProps) {
@@ -42,6 +56,20 @@ export default function DocumentDetailClient({ applicantId, projectId, stage }: 
   const [isLoading, setIsLoading] = useState(true);
   const [isCommentOpen, setCommentOpen] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
+
+  const formatPhoneNumber = (phone: string) => {
+  const cleaned = phone.replace(/\D/g, '');
+
+  if (cleaned.length === 11) {
+    return cleaned.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+  }
+
+  if (cleaned.length === 10) {
+    return cleaned.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+  }
+
+  return phone;
+};
 
   const currentUserId = 1;
 
@@ -103,7 +131,7 @@ export default function DocumentDetailClient({ applicantId, projectId, stage }: 
               gender={applicant.gender}
               status={applicant.status}
               university={`${applicant.university}/${applicant.major}/${applicant.position}`}
-              phoneNumber={applicant.phoneNumber}
+              phoneNumber={formatPhoneNumber(applicant.phoneNumber)}
               email={applicant.email}
               commentCount={applicant.commentCount}
               isFavorite={isFavorite}
