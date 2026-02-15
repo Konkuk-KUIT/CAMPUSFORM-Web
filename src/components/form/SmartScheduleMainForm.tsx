@@ -215,29 +215,40 @@ export default function SmartScheduleMainForm() {
   // 각 면접관별 선택된 시간 상태 (interviewerId -> cellActive)
   const [interviewersCellActive, setInterviewersCellActive] = useState<{ 
     [interviewerId: number]: { [key: string]: { top: boolean; bottom: boolean } } 
-  }>(() => {
-    // localStorage에서 초기값 로드
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('interviewersCellActive');
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch (e) {
-          return {};
-        }
-      }
-    }
-    return {};
-  });
+  }>({});
 
-  // interviewersCellActive 변경 시 localStorage에 저장
+  // projectId 변경 시 해당 프로젝트의 데이터를 localStorage에서 로드
   useEffect(() => {
-    if (typeof window !== 'undefined' && Object.keys(interviewersCellActive).length > 0) {
-      localStorage.setItem('interviewersCellActive', JSON.stringify(interviewersCellActive));
-      console.log('[SmartSchedule] interviewersCellActive 업데이트됨:', interviewersCellActive);
-      console.log('[SmartSchedule] 전체 면접관 수:', Object.keys(interviewersCellActive).length);
+    if (!projectId || typeof window === 'undefined') return;
+    
+    const storageKey = `interviewersCellActive_${projectId}`;
+    const saved = localStorage.getItem(storageKey);
+    
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setInterviewersCellActive(parsed);
+        console.log(`[SmartSchedule] projectId ${projectId} 데이터 로드:`, parsed);
+      } catch (e) {
+        console.error('[SmartSchedule] localStorage 파싱 실패:', e);
+        setInterviewersCellActive({});
+      }
+    } else {
+      console.log(`[SmartSchedule] projectId ${projectId} 저장된 데이터 없음`);
+      setInterviewersCellActive({});
     }
-  }, [interviewersCellActive]);
+  }, [projectId]);
+
+  // interviewersCellActive 변경 시 localStorage에 저장 (프로젝트별)
+  useEffect(() => {
+    if (!projectId || typeof window === 'undefined') return;
+    
+    const storageKey = `interviewersCellActive_${projectId}`;
+    if (Object.keys(interviewersCellActive).length > 0) {
+      localStorage.setItem(storageKey, JSON.stringify(interviewersCellActive));
+      console.log(`[SmartSchedule] projectId ${projectId} 데이터 저장:`, interviewersCellActive);
+    }
+  }, [interviewersCellActive, projectId]);
 
   // 면접관 목록 state
   const [interviewers, setInterviewers] = useState<Array<{ 
@@ -450,22 +461,18 @@ export default function SmartScheduleMainForm() {
         
         setInterviewers(adminList);
         
-        // API에서 가져온 데이터와 현재 상태를 머지 (사용자가 선택한 데이터 유지)
+        // API에서 가져온 데이터로 초기화 (localStorage 데이터는 projectId 변경 시 이미 로드됨)
+        // localStorage에 데이터가 없는 경우에만 API 데이터를 사용
         setInterviewersCellActive(prev => {
-          const merged = { ...prev };
+          // 현재 상태가 비어있으면 API 데이터 사용
+          if (Object.keys(prev).length === 0 && Object.keys(newInterviewersCellActive).length > 0) {
+            console.log('[SmartSchedule] API 데이터로 초기화:', newInterviewersCellActive);
+            return newInterviewersCellActive;
+          }
           
-          // API 데이터를 추가하되, 이미 있는 데이터는 유지
-          Object.entries(newInterviewersCellActive).forEach(([userId, cellActive]) => {
-            const userIdNum = parseInt(userId);
-            if (!merged[userIdNum] || Object.keys(merged[userIdNum]).length === 0) {
-              // 현재 상태에 데이터가 없으면 API 데이터 사용
-              merged[userIdNum] = cellActive;
-            }
-            // 현재 상태에 데이터가 있으면 그대로 유지 (사용자가 선택한 것)
-          });
-          
-          console.log('[SmartSchedule] 머지된 interviewersCellActive:', merged);
-          return merged;
+          // localStorage에 데이터가 있으면 그대로 유지 (사용자가 선택한 것)
+          console.log('[SmartSchedule] 기존 데이터 유지 (localStorage):', prev);
+          return prev;
         });
       } catch (error) {
         console.error('면접관 목록 조회 실패:', error);
