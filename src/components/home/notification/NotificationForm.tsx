@@ -27,8 +27,6 @@ function buildMessage(noti: Notification): string {
       return `${payload.commenter ?? '누군가'} 님이 댓글을 작성했어요.`;
     case 'NEW_APPLICANT':
       return `${payload.commenter ?? '새 지원자'} 님이 새롭게 지원했어요.`;
-    case 'SHEET_SYNC_RESULT':
-      return (payload.content as string) ?? '시트가 동기화되었어요.';
     case 'ADMIN_ADDED':
       return '새 관리자가 추가되었어요.';
     default:
