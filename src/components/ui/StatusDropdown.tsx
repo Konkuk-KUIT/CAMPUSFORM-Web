@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Image from 'next/image';
 
 type StatusType = '보류' | '합격' | '불합격';
@@ -19,6 +19,8 @@ interface StatusDropdownProps {
 export default function StatusDropdown({ value, onChange }: StatusDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [internalValue, setInternalValue] = useState<StatusType>('보류');
+  const [openUpward, setOpenUpward] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   const selected = value ?? internalValue;
 
@@ -30,19 +32,25 @@ export default function StatusDropdown({ value, onChange }: StatusDropdownProps)
 
   const selectedOption = options.find(opt => opt.value === selected) ?? options[2];
 
-  const handleSelect = (newValue: StatusType) => {
-    if (onChange) {
-      onChange(newValue);
-    } else {
-      setInternalValue(newValue);
+  const handleOpen = () => {
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const dropdownHeight = 120;
+      setOpenUpward(rect.bottom + dropdownHeight > window.innerHeight);
     }
+    setIsOpen(prev => !prev);
+  };
+
+  const handleSelect = (newValue: StatusType) => {
+    onChange ? onChange(newValue) : setInternalValue(newValue);
     setIsOpen(false);
   };
 
   return (
     <div className="relative w-20">
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        ref={buttonRef}
+        onClick={handleOpen}
         className="w-full h-6.5 bg-gray-50 border border-gray-200 rounded-5 px-2 py-1 flex items-center relative"
       >
         <div className="flex items-center gap-1 absolute left-[45%] -translate-x-1/2">
@@ -54,8 +62,10 @@ export default function StatusDropdown({ value, onChange }: StatusDropdownProps)
 
       {isOpen && (
         <>
-          <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
-          <div className="absolute top-full w-21.25 bg-gray-50 rounded-10 overflow-hidden z-20">
+          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+          <div
+            className={`absolute ${openUpward ? 'bottom-full mb-1' : 'top-full mt-1'} left-0 w-21.25 bg-gray-50 rounded-10 overflow-hidden z-50 shadow-md`}
+          >
             {options.map(option => (
               <button
                 key={option.value}
