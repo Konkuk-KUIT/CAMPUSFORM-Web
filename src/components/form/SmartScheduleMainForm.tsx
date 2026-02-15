@@ -16,7 +16,7 @@ import { useCurrentProjectStore } from '@/store/currentProjectStore';
 import { useNewProjectStore } from '@/store/newProjectStore';
 import { projectService } from '@/services/projectService';
 import { authService } from '@/services/authService';
-import { applicantService } from '@/services/applicantService';
+import { documentResultService } from '@/services/documentResultService';
 import { toast } from '@/components/Toast';
 import type { ProjectAdminRaw } from '@/types/project';
 
@@ -38,8 +38,8 @@ export default function SmartScheduleMainForm() {
     }
 
     try {
-      // INTERVIEW 단계 지원자 목록 조회 (서류 합격자)
-      const response = await applicantService.getApplicants(projectId, 'INTERVIEW');
+      // 서류 합격자 목록 조회
+      const response = await documentResultService.getDocumentResults(projectId, 'PASS');
       const applicants = response.applicants || [];
 
       // 전화번호 추출
@@ -52,8 +52,8 @@ export default function SmartScheduleMainForm() {
         return;
       }
 
-      // 클립보드에 복사
-      const text = phoneNumbers.join('\n');
+      // 클립보드에 복사 (공백으로 구분)
+      const text = phoneNumbers.join(' ');
       const textarea = document.createElement('textarea');
       textarea.value = text;
       textarea.style.position = 'fixed';
