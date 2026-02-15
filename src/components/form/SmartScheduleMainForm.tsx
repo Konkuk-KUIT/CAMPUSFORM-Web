@@ -8,6 +8,7 @@ import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Btn from '@/components/ui/Btn';
 import ConfirmResetDialog from '@/components/ui/ConfirmResetDialog';
+import UnassignedApplicantsAlert from '@/components/ui/UnassignedApplicantsAlert';
 import AllAccordion from '@/components/ui/AllAccordion';
 import SmartScheduleButton from '@/components/ui/SmartScheduleButton';
 import SmartScheduleCalendarPreview from '@/components/ui/SmartScheduleCalendarPreview';
@@ -21,6 +22,13 @@ import type { ProjectAdminRaw } from '@/types/project';
 export default function SmartScheduleMainForm() {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [showInfoAlert, setShowInfoAlert] = useState(false);
+  
+  const handleInfoAlertConfirm = () => {
+    setShowInfoAlert(false);
+    router.push('/smart-schedule/result');
+  };
+  
   const handleConfirm = async () => {
     if (!projectId) {
       toast.error('프로젝트를 선택해주세요');
@@ -42,7 +50,10 @@ export default function SmartScheduleMainForm() {
       console.log('[SmartSchedule] ============================');
       
       toast.success('스마트 시간표가 생성되었습니다');
-      router.push('/smart-schedule/result');
+      
+      // 항상 정보 모달 표시
+      setShowInfoAlert(true);
+      setIsGenerating(false);
     } catch (error: any) {
       console.error('[SmartSchedule] ===== 생성 실패 =====');
       console.error('[SmartSchedule] 에러:', error);
@@ -760,6 +771,12 @@ export default function SmartScheduleMainForm() {
                       isOpen={showConfirmDialog}
                       onClose={() => setShowConfirmDialog(false)}
                       onConfirm={handleConfirm}
+                    />
+                    
+                    {/* Info Alert */}
+                    <UnassignedApplicantsAlert
+                      isOpen={showInfoAlert}
+                      onConfirm={handleInfoAlertConfirm}
                     />
           
           {/* Spacer for fixed button */}
