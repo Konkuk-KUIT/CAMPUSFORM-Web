@@ -75,27 +75,41 @@ export default function SmartScheduleResponseResultForm() {
         console.log('[ResponseResult] 면접 설정:', setting);
         setInterviewSetting(setting);
 
-        // 지원자 응답 조회 (API가 없을 경우 빈 배열 사용)
+        // [방법 1] 슬롯 구조 조회
         try {
-          const responses = await projectService.getInterviewSlotsApplicants(projectId);
-          console.log('[ResponseResult] 지원자 응답 원본:', responses);
-          console.log('[ResponseResult] 응답 타입:', typeof responses);
-          console.log('[ResponseResult] 응답 키들:', responses ? Object.keys(responses) : 'null');
+          const slots = await projectService.getInterviewSlots(projectId);
+          console.log('[ResponseResult] ===== 슬롯 구조 API =====');
+          console.log('[ResponseResult] /interview-slots:', slots);
+          console.log('[ResponseResult] 타입:', typeof slots);
+          console.log('[ResponseResult] 키들:', slots ? Object.keys(slots) : 'null');
+          console.log('[ResponseResult] =============================');
+        } catch (error) {
+          console.warn('[ResponseResult] 슬롯 구조 API 실패:', error);
+        }
+
+        // [방법 2] 슬롯별 지원자 조회
+        try {
+          const applicantsResponse = await projectService.getInterviewSlotsApplicants(projectId);
+          console.log('[ResponseResult] ===== 지원자 응답 API =====');
+          console.log('[ResponseResult] /interview-slots/applicants:', applicantsResponse);
+          console.log('[ResponseResult] 타입:', typeof applicantsResponse);
+          console.log('[ResponseResult] 키들:', applicantsResponse ? Object.keys(applicantsResponse) : 'null');
+          console.log('[ResponseResult] =============================');
           
           // API 응답 구조에 따라 데이터 추출
           let applicantsData = [];
-          if (Array.isArray(responses)) {
-            applicantsData = responses;
-          } else if (responses?.summaries) {
+          if (Array.isArray(applicantsResponse)) {
+            applicantsData = applicantsResponse;
+          } else if (applicantsResponse?.summaries) {
             // summaries 구조: [{ date, slots: [{ startTime, applicants: [...] }] }]
-            applicantsData = responses.summaries;
-          } else if (responses?.applicants) {
-            applicantsData = responses.applicants;
-          } else if (responses?.slots) {
-            applicantsData = responses.slots;
-          } else if (responses) {
+            applicantsData = applicantsResponse.summaries;
+          } else if (applicantsResponse?.applicants) {
+            applicantsData = applicantsResponse.applicants;
+          } else if (applicantsResponse?.slots) {
+            applicantsData = applicantsResponse.slots;
+          } else if (applicantsResponse) {
             // 응답 자체가 객체일 경우
-            applicantsData = [responses];
+            applicantsData = [applicantsResponse];
           }
           
           console.log('[ResponseResult] 파싱된 데이터:', applicantsData);
@@ -137,54 +151,58 @@ export default function SmartScheduleResponseResultForm() {
         const dateObj = new Date(response.date);
         const dateKey = format(dateObj, 'M월 d일 (E)', { locale: ko });
         
-        if (!groupedByDateTime[dateKey]) {
-          groupedByDateTime[dateKey] = {};
-        }
-        
         response.slots.forEach((slot: any) => {
-          if (slot.startTime && slot.applicants && Array.isArray(slot.applicants)) {
+          if (slot.startTime) {
+            // 슬롯이 있으면 무조건 날짜/시간 키 생성 (지원자 유무 무관)
+            if (!groupedByDateTime[dateKey]) {
+              groupedByDateTime[dateKey] = {};
+            }
             if (!groupedByDateTime[dateKey][slot.startTime]) {
               groupedByDateTime[dateKey][slot.startTime] = [];
             }
             
-            // applicants 배열의 각 지원자 추가
-            slot.applicants.forEach((app: any) => {
-              const applicant: Applicant = {
-                applicantId: app.applicantId || app.id,
-                name: app.name || '이름 없음',
-                school: app.school || '학교 정보 없음',
-                major: app.major || '전공 정보 없음',
-                position: app.position || '포지션 없음',
-              };
-              groupedByDateTime[dateKey][slot.startTime].push(applicant);
-            });
+            // applicants 배열의 각 지원자 추가 (있을 경우)
+            if (slot.applicants && Array.isArray(slot.applicants)) {
+              slot.applicants.forEach((app: any) => {
+                const applicant: Applicant = {
+                  applicantId: app.applicantId || app.id,
+                  name: app.name || '이름 없음',
+                  school: app.school || '학교 정보 없음',
+                  major: app.major || '전공 정보 없음',
+                  position: app.position || '포지션 없음',
+                };
+                groupedByDateTime[dateKey][slot.startTime].push(applicant);
+              });
+            }
           }
         });
       }
       // 슬롯 기반 응답일 경우 (date, startTime, applicants 구조)
-      else if (response.date && response.startTime && response.applicants) {
+      else if (response.date && response.startTime) {
         const dateObj = new Date(response.date);
         const dateKey = format(dateObj, 'M월 d일 (E)', { locale: ko });
         
+        // 슬롯이 있으면 무조건 날짜/시간 키 생성 (지원자 유무 무관)
         if (!groupedByDateTime[dateKey]) {
           groupedByDateTime[dateKey] = {};
         }
-        
         if (!groupedByDateTime[dateKey][response.startTime]) {
           groupedByDateTime[dateKey][response.startTime] = [];
         }
         
-        // applicants 배열의 각 지원자 추가
-        response.applicants.forEach((app: any) => {
-          const applicant: Applicant = {
-            applicantId: app.applicantId || app.id,
-            name: app.name || '이름 없음',
-            school: app.school || '학교 정보 없음',
-            major: app.major || '전공 정보 없음',
-            position: app.position || '포지션 없음',
-          };
-          groupedByDateTime[dateKey][response.startTime].push(applicant);
-        });
+        // applicants 배열의 각 지원자 추가 (있을 경우)
+        if (response.applicants && Array.isArray(response.applicants)) {
+          response.applicants.forEach((app: any) => {
+            const applicant: Applicant = {
+              applicantId: app.applicantId || app.id,
+              name: app.name || '이름 없음',
+              school: app.school || '학교 정보 없음',
+              major: app.major || '전공 정보 없음',
+              position: app.position || '포지션 없음',
+            };
+            groupedByDateTime[dateKey][response.startTime].push(applicant);
+          });
+        }
       }
       // 지원자 기반 응답일 경우 (applicantId, availabilities 구조)
       else if (response.applicantId || response.name) {
@@ -333,18 +351,22 @@ export default function SmartScheduleResponseResultForm() {
 
                 {/* Applicants Card */}
                 <div className="border-[1.5px] border-gray-200 rounded-[10px] p-[15px] flex flex-col gap-[6px] flex-1 min-w-0 overflow-hidden">
-                  {slot.applicants.map((applicant, appIndex) => (
-                    <p
-                      key={appIndex}
-                      className={`text-body-sm-rg truncate ${
-                        searchQuery && applicant.name.toLowerCase().includes(searchQuery.toLowerCase())
-                          ? 'text-primary'
-                          : 'text-gray-950'
-                      }`}
-                    >
-                      {applicant.name}({applicant.school}/{applicant.major}/{applicant.position})
-                    </p>
-                  ))}
+                  {slot.applicants.length > 0 ? (
+                    slot.applicants.map((applicant, appIndex) => (
+                      <p
+                        key={appIndex}
+                        className={`text-body-sm-rg truncate ${
+                          searchQuery && applicant.name.toLowerCase().includes(searchQuery.toLowerCase())
+                            ? 'text-primary'
+                            : 'text-gray-950'
+                        }`}
+                      >
+                        {applicant.name}({applicant.school}/{applicant.major}/{applicant.position})
+                      </p>
+                    ))
+                  ) : (
+                    <p className="text-body-sm-rg text-gray-400">아직 지원자가 없습니다</p>
+                  )}
                 </div>
               </div>
             ))}

@@ -355,8 +355,12 @@ export default function ApplicantInterviewSubmitForm() {
         console.log('[ApplicantSubmit] ============================');
         
         // 공개 API로 제출
-        await projectService.submitApplicantAvailability(token, submitData);
-        console.log('[ApplicantSubmit] 제출 완료 (공개 API)');
+        const submitResponse = await projectService.submitApplicantAvailability(token, submitData);
+        console.log('[ApplicantSubmit] ===== 제출 성공 =====');
+        console.log('[ApplicantSubmit] 서버 응답:', submitResponse);
+        console.log('[ApplicantSubmit] 응답 타입:', typeof submitResponse);
+        console.log('[ApplicantSubmit] 응답 키들:', submitResponse ? Object.keys(submitResponse) : 'null');
+        console.log('[ApplicantSubmit] =========================');
       } else {
         // 개발 모드 - 콘솔에만 출력
         console.log('[ApplicantSubmit] 제출 데이터 (개발 모드):', {
