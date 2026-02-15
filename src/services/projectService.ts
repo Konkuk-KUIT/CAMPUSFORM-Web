@@ -1,3 +1,4 @@
+
 import apiClient from '@/lib/api';
 import type {
   Project,
@@ -8,6 +9,17 @@ import type {
 } from '@/types/project';
 
 class ProjectService {
+    // GET : 면접 정보 설정 조회
+    async getInterviewSetting(projectId: number): Promise<any> {
+      const response = await apiClient.get(`/recruiting/projects/${projectId}/interview-setting`);
+      return response.data;
+    }
+  
+    // PUT : 면접 정보 설정 저장/수정
+    async updateInterviewSetting(projectId: number, data: any): Promise<any> {
+      const response = await apiClient.put(`/recruiting/projects/${projectId}/interview-setting`, data);
+      return response.data;
+    }
   // GET : 구글 OAuth 동의 URL 조회
   async getGoogleAuthorizeUrl(): Promise<string> {
     const response = await apiClient.get('/projects/google-oauth/authorize-url', {
@@ -108,6 +120,79 @@ class ProjectService {
   // PATCH : 면접 단계 종료 (프로젝트 전체 종료)
   async completeAll(projectId: number): Promise<Project> {
     const response = await apiClient.patch<Project>(`/recruiting/projects/${projectId}/complete-all`);
+    return response.data;
+  }
+
+  // GET : 면접관 시간 등록 상태 조회 (availability)
+  async getInterviewerAvailability(projectId: number, adminId: number): Promise<any> {
+    const response = await apiClient.get(`/recruiting/projects/${projectId}/interviewers/${adminId}/availability`);
+    return response.data;
+  }
+
+  // POST/PUT : 면접관 시간 등록 (availability 저장)
+  async updateInterviewerAvailability(projectId: number, adminId: number, data: any): Promise<any> {
+    const response = await apiClient.put(`/recruiting/projects/${projectId}/interviewers/${adminId}/availability`, data);
+    return response.data;
+  }
+
+  // GET : 지원자 시간 제출 페이지 설정 조회
+  async getApplicantLinkConfig(projectId: number): Promise<any> {
+    const response = await apiClient.get(`/recruiting/projects/${projectId}/investigation-link/config`);
+    return response.data;
+  }
+
+  // PUT : 지원자 시간 제출 페이지 설정 수정
+  async updateApplicantLinkConfig(projectId: number, data: { enabled?: boolean; guidanceText?: string }): Promise<any> {
+    const response = await apiClient.put(`/recruiting/projects/${projectId}/investigation-link/config`, data);
+    return response.data;
+  }
+
+  // GET : 지원자 시간 제출 링크 조회
+  async getInvestigationLink(projectId: number): Promise<any> {
+    const response = await apiClient.get(`/recruiting/projects/${projectId}/investigation-link`);
+    return response.data;
+  }
+
+  // POST : 지원자 면접 가능 시간 제출 (공개 API)
+  async submitApplicantAvailability(token: string, data: {
+    name: string;
+    phone: string;
+    selections: Array<{ date: string; startTimes: string[] }>;
+  }): Promise<any> {
+    const response = await apiClient.post(`/public/interview/submit?token=${token}`, data);
+    return response.data;
+  }
+
+  // GET : 슬롯별 신청 지원자 목록 조회 (응답 결과)
+  async getInterviewSlotsApplicants(projectId: number): Promise<any> {
+    const response = await apiClient.get(`/recruiting/projects/${projectId}/interview-slots/applicants`);
+    return response.data;
+  }
+
+  // GET : 면접 슬롯 조회 (공개 API - 지원자용, 토큰 기반)
+  async getPublicInterviewSlots(token: string): Promise<any> {
+    const response = await apiClient.get(`/public/interview/slots?token=${token}`);
+    return response.data;
+  }
+
+  // GET : 관리자용 전체 면접 슬롯 목록 조회
+  async getInterviewSlots(projectId: number): Promise<any> {
+    const response = await apiClient.get(`/recruiting/projects/${projectId}/interview-slots`);
+    return response.data;
+  }
+  // GET : 스마트 시간표 생성 및 미리보기
+  async generateSmartSchedule(projectId: number): Promise<any> {
+    console.log('[ProjectService] generateSmartSchedule 호출 (미리보기), projectId:', projectId);
+    const response = await apiClient.get(`/projects/${projectId}/interview/smart-schedule`);
+    console.log('[ProjectService] generateSmartSchedule 응답:', response.data);
+    return response.data;
+  }
+
+  // POST : 스마트 시간표 확정
+  async confirmSmartSchedule(projectId: number): Promise<any> {
+    console.log('[ProjectService] confirmSmartSchedule 호출, projectId:', projectId);
+    const response = await apiClient.post(`/projects/${projectId}/interview/smart-schedule`);
+    console.log('[ProjectService] confirmSmartSchedule 응답:', response.data);
     return response.data;
   }
 }
