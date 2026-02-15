@@ -164,7 +164,7 @@ export default function SmartScheduleCalendarPreview({
   }, [currentStartDate]);
 
   const handlePrevDays = () => {
-    setCurrentStartDate(prev => {
+    setCurrentStartDate((prev: Date) => {
       const newDate = new Date(prev);
       newDate.setDate(newDate.getDate() - 3);
       return newDate;
@@ -172,7 +172,7 @@ export default function SmartScheduleCalendarPreview({
   };
 
   const handleNextDays = () => {
-    setCurrentStartDate(prev => {
+    setCurrentStartDate((prev: Date) => {
       const newDate = new Date(prev);
       newDate.setDate(newDate.getDate() + 3);
       return newDate;

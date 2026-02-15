@@ -156,8 +156,8 @@ class ProjectService {
   // POST : 지원자 면접 가능 시간 제출 (공개 API)
   async submitApplicantAvailability(token: string, data: {
     name: string;
-    phoneNumber: string;
-    availabilities: Array<{ date: string; startTimes: string[] }>;
+    phone: string;
+    selections: Array<{ date: string; startTimes: string[] }>;
   }): Promise<any> {
     const response = await apiClient.post(`/public/interview/submit?token=${token}`, data);
     return response.data;

@@ -7,7 +7,6 @@ import Btn from '@/components/ui/Btn';
 import { useCurrentProjectStore } from '@/store/currentProjectStore';
 import { useNewProjectStore } from '@/store/newProjectStore';
 import { projectService } from '@/services/projectService';
-import { syncSheet } from '@/services/googleSheetService';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
@@ -57,24 +56,6 @@ export default function ApplicantInterviewSubmitForm() {
     
     initializeProjectId();
   }, [token]);
-
-  // 구글 시트 동기화 (페이지 로드 시)
-  useEffect(() => {
-    const syncApplicants = async () => {
-      if (!projectId) return;
-      
-      try {
-        console.log('[ApplicantSubmit] 구글 시트 동기화 시작...');
-        await syncSheet(projectId);
-        console.log('[ApplicantSubmit] 구글 시트 동기화 완료');
-      } catch (error) {
-        console.error('[ApplicantSubmit] 구글 시트 동기화 실패:', error);
-        // 동기화 실패해도 계속 진행
-      }
-    };
-    
-    syncApplicants();
-  }, [projectId]);
 
   // 면접 설정 조회 (공개 API 사용)
   useEffect(() => {
@@ -305,18 +286,6 @@ export default function ApplicantInterviewSubmitForm() {
       return;
     }
 
-    // 제출 전 구글 시트 동기화 (projectId가 있을 때만)
-    if (projectId) {
-      try {
-        console.log('[ApplicantSubmit] 제출 전 구글 시트 동기화 시작...');
-        await syncSheet(projectId);
-        console.log('[ApplicantSubmit] 제출 전 구글 시트 동기화 완료');
-      } catch (error) {
-        console.error('[ApplicantSubmit] 제출 전 동기화 실패:', error);
-        // 동기화 실패해도 제출은 시도 (이미 동기화되어 있을 수 있음)
-      }
-    }
-
     const selected = Object.entries(selectedSlots)
       .filter(([_, isSelected]) => isSelected)
       .map(([key]) => key);
@@ -365,29 +334,35 @@ export default function ApplicantInterviewSubmitForm() {
       }
     });
 
-    // availabilities 배열 생성
-    const availabilities = Object.entries(groupedByDate).map(([date, startTimes]) => ({
+    // selections 배열 생성
+    const selections = Object.entries(groupedByDate).map(([date, startTimes]) => ({
       date,
       startTimes: startTimes.sort(), // 시간순 정렬
     }));
 
-    console.log('[ApplicantSubmit] 변환된 availabilities:', availabilities);
+    console.log('[ApplicantSubmit] 변환된 selections:', selections);
 
     try {
       if (token) {
-        // 공개 API로 제출
-        await projectService.submitApplicantAvailability(token, {
+        // 최종 전송 데이터 확인
+        const submitData = {
           name,
-          phoneNumber: phone,
-          availabilities,
-        });
+          phone,
+          selections,
+        };
+        console.log('[ApplicantSubmit] ===== 최종 제출 데이터 =====');
+        console.log(JSON.stringify(submitData, null, 2));
+        console.log('[ApplicantSubmit] ============================');
+        
+        // 공개 API로 제출
+        await projectService.submitApplicantAvailability(token, submitData);
         console.log('[ApplicantSubmit] 제출 완료 (공개 API)');
       } else {
         // 개발 모드 - 콘솔에만 출력
         console.log('[ApplicantSubmit] 제출 데이터 (개발 모드):', {
           name,
-          phoneNumber: phone,
-          availabilities,
+          phone,
+          selections,
         });
         console.warn('[ApplicantSubmit] 개발 모드: token이 필요합니다.');
       }
