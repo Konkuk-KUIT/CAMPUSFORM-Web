@@ -16,6 +16,7 @@ import { useCurrentProjectStore } from '@/store/currentProjectStore';
 import { useNewProjectStore } from '@/store/newProjectStore';
 import { projectService } from '@/services/projectService';
 import { authService } from '@/services/authService';
+import { applicantService } from '@/services/applicantService';
 import { toast } from '@/components/Toast';
 import type { ProjectAdminRaw } from '@/types/project';
 
@@ -27,6 +28,49 @@ export default function SmartScheduleMainForm() {
   const handleInfoAlertConfirm = () => {
     setShowInfoAlert(false);
     router.push('/smart-schedule/result');
+  };
+
+  // 서류 합격자 전화번호 복사 함수
+  const handleCopyPhoneNumbers = async () => {
+    if (!projectId) {
+      toast.error('프로젝트를 선택해주세요.');
+      return;
+    }
+
+    try {
+      // INTERVIEW 단계 지원자 목록 조회 (서류 합격자)
+      const response = await applicantService.getApplicants(projectId, 'INTERVIEW');
+      const applicants = response.applicants || [];
+
+      // 전화번호 추출
+      const phoneNumbers = applicants
+        .map(a => a.phoneNumber)
+        .filter(Boolean) as string[];
+
+      if (phoneNumbers.length === 0) {
+        toast.error('복사할 전화번호가 없습니다.');
+        return;
+      }
+
+      // 클립보드에 복사
+      const text = phoneNumbers.join('\n');
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.top = '0';
+      textarea.style.left = '0';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+
+      toast.success(`${phoneNumbers.length}명의 전화번호가 복사되었습니다.`);
+    } catch (error) {
+      console.error('전화번호 복사 실패:', error);
+      toast.error('전화번호 복사에 실패했습니다.');
+    }
   };
   
   const handleConfirm = async () => {
@@ -51,9 +95,8 @@ export default function SmartScheduleMainForm() {
       
       toast.success('스마트 시간표가 생성되었습니다');
       
-      // 항상 정보 모달 표시
-      setShowInfoAlert(true);
       setIsGenerating(false);
+      router.push('/smart-schedule/result');
     } catch (error: any) {
       console.error('[SmartSchedule] ===== 생성 실패 =====');
       console.error('[SmartSchedule] 에러:', error);
@@ -754,7 +797,9 @@ export default function SmartScheduleMainForm() {
                 >
                   응답 결과 확인
                 </SmartScheduleButton>
-                <SmartScheduleButton showHash={true}>지원자 전화번호 복사</SmartScheduleButton>
+                <SmartScheduleButton showHash={true} onClick={handleCopyPhoneNumbers}>
+                  지원자 전화번호 복사
+                </SmartScheduleButton>
               </div>
             </div>
           </div>
