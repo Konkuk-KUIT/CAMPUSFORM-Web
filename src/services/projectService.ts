@@ -175,6 +175,12 @@ class ProjectService {
     return response.data;
   }
 
+  // GET : 면접 공개 페이지 설정 조회 (공개 API - 지원자용, 토큰 기반)
+  async getPublicInterviewConfig(token: string): Promise<{ projectTitle: string; guidanceText: string }> {
+    const response = await apiClient.get(`/public/interview/config?token=${token}`);
+    return response.data;
+  }
+
   // GET : 관리자용 전체 면접 슬롯 목록 조회
   async getInterviewSlots(projectId: number): Promise<any> {
     const response = await apiClient.get(`/recruiting/projects/${projectId}/interview-slots`);
