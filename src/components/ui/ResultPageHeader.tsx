@@ -1,4 +1,3 @@
-// components/document/DocumentPageHeader.tsx
 'use client';
 
 import Link from 'next/link';
@@ -7,19 +6,19 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import type { Project } from '@/types/project';
 
-interface DocumentPageHeaderProps {
+interface ResultPageHeaderProps {
   projectId: number;
   title: string;
   backHref: string;
   showSubtitle?: boolean;
 }
 
-export default function DocumentPageHeader({
+export default function ResultPageHeader({
   projectId,
   title,
   backHref,
   showSubtitle = true,
-}: DocumentPageHeaderProps) {
+}: ResultPageHeaderProps) {
   const [projectTitle, setProjectTitle] = useState<string>('');
 
   useEffect(() => {
