@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getSmartSchedulePreview } from '@/services/smartScheduleService';
+import { projectService } from '@/services/projectService';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Header from '@/components/ui/Header';
@@ -74,9 +75,32 @@ export default function SmartScheduleResultForm() {
     return `${date.getMonth() + 1}월 ${date.getDate()}일 (${week[date.getDay()]})`;
   }
 
-  const handleConfirm = () => {
-    alert('면접 시간이 확정되었습니다.');
-    router.push('/smart-schedule');
+  const handleConfirm = async () => {
+    if (!projectId) {
+      alert('프로젝트를 선택해주세요.');
+      return;
+    }
+
+    console.log('[ScheduleResult] ===== 면접 시간 확정 시작 =====');
+    console.log('[ScheduleResult] projectId:', projectId);
+
+    try {
+      const result = await projectService.confirmSmartSchedule(projectId);
+      console.log('[ScheduleResult] ===== 확정 성공 =====');
+      console.log('[ScheduleResult] 서버 응답:', result);
+      console.log('[ScheduleResult] ============================');
+      
+      alert('면접 시간이 확정되었습니다.');
+      router.push('/smart-schedule');
+    } catch (error: any) {
+      console.error('[ScheduleResult] ===== 확정 실패 =====');
+      console.error('[ScheduleResult] 에러:', error);
+      console.error('[ScheduleResult] 에러 메시지:', error?.message);
+      console.error('[ScheduleResult] 에러 응답:', error?.response?.data);
+      console.error('[ScheduleResult] ============================');
+      
+      alert('면접 시간 확정에 실패했습니다.');
+    }
   };
 
   return (

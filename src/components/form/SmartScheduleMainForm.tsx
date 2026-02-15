@@ -30,12 +30,26 @@ export default function SmartScheduleMainForm() {
     setShowConfirmDialog(false);
     setIsGenerating(true);
     
+    console.log('[SmartSchedule] ===== 스마트 시간표 생성 시작 =====');
+    console.log('[SmartSchedule] projectId:', projectId);
+    
     try {
-      await projectService.generateSmartSchedule(projectId);
+      const result = await projectService.generateSmartSchedule(projectId);
+      console.log('[SmartSchedule] ===== 생성 성공 =====');
+      console.log('[SmartSchedule] 서버 응답:', result);
+      console.log('[SmartSchedule] 응답 타입:', typeof result);
+      console.log('[SmartSchedule] 응답 키들:', result ? Object.keys(result) : 'null');
+      console.log('[SmartSchedule] ============================');
+      
       toast.success('스마트 시간표가 생성되었습니다');
       router.push('/smart-schedule/result');
-    } catch (error) {
-      console.error('스마트 시간표 생성 실패:', error);
+    } catch (error: any) {
+      console.error('[SmartSchedule] ===== 생성 실패 =====');
+      console.error('[SmartSchedule] 에러:', error);
+      console.error('[SmartSchedule] 에러 메시지:', error?.message);
+      console.error('[SmartSchedule] 에러 응답:', error?.response?.data);
+      console.error('[SmartSchedule] ============================');
+      
       toast.error('스마트 시간표 생성에 실패했습니다');
       setIsGenerating(false);
     }
