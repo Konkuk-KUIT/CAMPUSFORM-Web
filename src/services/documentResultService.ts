@@ -8,10 +8,18 @@ import type {
 import type { ScreeningResult } from '@/types/project';
 
 class DocumentResultService {
-  // GET : 합격/불합격자 목록 조회
+  // GET : 서류 합격/불합격자 목록 조회
   async getDocumentResults(projectId: number, status: ScreeningResult): Promise<DocumentResultResponse> {
     const response = await apiClient.get<DocumentResultResponse>(`/projects/${projectId}/results`, {
       params: { stage: 'DOCUMENT', status },
+    });
+    return response.data;
+  }
+
+  // GET : 면접 합격/불합격자 목록 조회
+  async getInterviewResults(projectId: number, status: ScreeningResult): Promise<DocumentResultResponse> {
+    const response = await apiClient.get<DocumentResultResponse>(`/projects/${projectId}/results`, {
+      params: { stage: 'INTERVIEW', status },
     });
     return response.data;
   }

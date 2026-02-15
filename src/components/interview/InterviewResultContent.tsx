@@ -1,20 +1,50 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ResultTab from '@/components/ui/ResultTab';
 import ResultCard from '@/components/ui/ResultCard';
 import Navbar from '@/components/Navbar';
 import InterviewPassedList from '@/components/interview/InterviewPassedList';
 import InterviewFailedList from '@/components/interview/InterviewFailedList';
+import { documentResultService } from '@/services/documentResultService';
+import type { DocumentResultStats, DocumentApplicantResult } from '@/types/document';
 
-export default function InterviewResultContent() {
+interface InterviewResultContentProps {
+  projectId: number;
+}
+
+export default function InterviewResultContent({ projectId }: InterviewResultContentProps) {
   const [selectedTab, setSelectedTab] = useState<'합격자' | '불합격자'>('합격자');
+  const [stats, setStats] = useState<DocumentResultStats | null>(null);
+  const [passedList, setPassedList] = useState<DocumentApplicantResult[]>([]);
+  const [failedList, setFailedList] = useState<DocumentApplicantResult[]>([]);
+  const [passedTemplate, setPassedTemplate] = useState<string>('');
+  const [failedTemplate, setFailedTemplate] = useState<string>('');
+  const [passedAppliedTemplate, setPassedAppliedTemplate] = useState<string>('');
+  const [failedAppliedTemplate, setFailedAppliedTemplate] = useState<string>('');
+  const [passedIsVariableEnabled, setPassedIsVariableEnabled] = useState(false);
+  const [failedIsVariableEnabled, setFailedIsVariableEnabled] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
 
-  // 면접 결과 데이터 (실제로는 API에서 가져올 데이터)
-  const hasResults = true; // false로 변경하면 빈화면 표시
+  useEffect(() => {
+    const fetchResults = async () => {
+      const [passedRes, failedRes] = await Promise.all([
+        documentResultService.getInterviewResults(projectId, 'PASS'),
+        documentResultService.getInterviewResults(projectId, 'FAIL'),
+      ]);
+      setStats(passedRes.stats);
+      setPassedList(passedRes.applicants);
+      setFailedList(failedRes.applicants);
+      setPassedTemplate(passedRes.template.content);
+      setFailedTemplate(failedRes.template.content);
+      setIsLoaded(true);
+    };
+
+    fetchResults();
+  }, [projectId]);
 
   // 결과가 없을 때 빈 화면
-  if (!hasResults) {
+  if (isLoaded && passedList.length === 0 && failedList.length === 0) {
     return (
       <>
         <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)] px-5 bg-white">
@@ -31,31 +61,45 @@ export default function InterviewResultContent() {
 
   return (
     <>
-      {/* 면접 결과 */}
-      <ResultCard
-        type="면접결과"
-        totalApplicantCount={48}
-        currentStagePassCount={10}
-        competitionRate="0:0"
-        genderRatio={{
-          malePercent: 80,
-          femalePercent: 20,
-          otherPercent: 0,
-        }}
-      />
-
-      {/* 합격자, 불합격자 */}
+      {stats && (
+        <ResultCard
+          type="면접결과"
+          totalApplicantCount={stats.totalApplicantCount}
+          currentStagePassCount={stats.currentStagePassCount}
+          competitionRate={stats.competitionRate}
+          genderRatio={stats.genderRatio}
+        />
+      )}
       <ResultTab onTabChange={setSelectedTab} />
       <div className="p-4 bg-gray-50 min-h-screen">
-        {selectedTab === '합격자' ? (
-          <div>
-            <InterviewPassedList />
-          </div>
-        ) : (
-          <div>
-            <InterviewFailedList />
-          </div>
-        )}
+        {isLoaded &&
+          (selectedTab === '합격자' ? (
+            <InterviewPassedList
+              list={passedList}
+              projectId={projectId}
+              initialTemplate={passedTemplate}
+              onTemplateChange={setPassedTemplate}
+              appliedTemplate={passedAppliedTemplate}
+              isVariableEnabled={passedIsVariableEnabled}
+              onTemplateApply={(template, isVariable) => {
+                setPassedAppliedTemplate(template);
+                setPassedIsVariableEnabled(isVariable);
+              }}
+            />
+          ) : (
+            <InterviewFailedList
+              list={failedList}
+              projectId={projectId}
+              initialTemplate={failedTemplate}
+              onTemplateChange={setFailedTemplate}
+              appliedTemplate={failedAppliedTemplate}
+              isVariableEnabled={failedIsVariableEnabled}
+              onTemplateApply={(template, isVariable) => {
+                setFailedAppliedTemplate(template);
+                setFailedIsVariableEnabled(isVariable);
+              }}
+            />
+          ))}
       </div>
       <Navbar />
     </>
