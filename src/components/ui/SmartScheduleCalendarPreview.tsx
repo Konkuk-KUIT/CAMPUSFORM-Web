@@ -164,19 +164,35 @@ export default function SmartScheduleCalendarPreview({
   }, [currentStartDate]);
 
   const handlePrevDays = () => {
-    setCurrentStartDate((prev: Date) => {
-      const newDate = new Date(prev);
+    if (onCurrentStartDateChange) {
+      // 외부 제어인 경우 - 함수가 아닌 새 Date를 직접 전달
+      const newDate = new Date(currentStartDate);
       newDate.setDate(newDate.getDate() - 3);
-      return newDate;
-    });
+      onCurrentStartDateChange(newDate);
+    } else {
+      // 내부 상태인 경우 - 함수 형태 가능
+      setInternalCurrentStartDate((prev: Date) => {
+        const newDate = new Date(prev);
+        newDate.setDate(newDate.getDate() - 3);
+        return newDate;
+      });
+    }
   };
 
   const handleNextDays = () => {
-    setCurrentStartDate((prev: Date) => {
-      const newDate = new Date(prev);
+    if (onCurrentStartDateChange) {
+      // 외부 제어인 경우 - 함수가 아닌 새 Date를 직접 전달
+      const newDate = new Date(currentStartDate);
       newDate.setDate(newDate.getDate() + 3);
-      return newDate;
-    });
+      onCurrentStartDateChange(newDate);
+    } else {
+      // 내부 상태인 경우 - 함수 형태 가능
+      setInternalCurrentStartDate((prev: Date) => {
+        const newDate = new Date(prev);
+        newDate.setDate(newDate.getDate() + 3);
+        return newDate;
+      });
+    }
   };
 
   // 월간 캘린더 로직
