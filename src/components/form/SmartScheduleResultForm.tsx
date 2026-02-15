@@ -122,6 +122,16 @@ export default function SmartScheduleResultForm() {
 
       {/* Content */}
       <div className="pb-[150px]">
+        {/* Info Link */}
+        <div className="px-4 pt-4 pb-3 flex items-center gap-[5px]">
+          <button onClick={() => setShowInfo(true)} className="text-body-md text-gray-400 underline">
+            스마트 시간표 유의사항 안내
+          </button>
+          <div className="w-[18px] h-[18px] relative">
+            <Image src="/icons/info-2.svg" alt="info" width={18} height={18} />
+          </div>
+        </div>
+
         {/* Unassigned Applicants */}
         {unassignedApplicants.length > 0 && (
           <div className="px-4 pb-4">
@@ -140,16 +150,6 @@ export default function SmartScheduleResultForm() {
             </div>
           </div>
         )}
-
-        {/* Info Link */}
-        <div className="px-4 pt-4 pb-3 flex items-center gap-[5px]">
-          <button onClick={() => setShowInfo(true)} className="text-body-md text-gray-400 underline">
-            스마트 시간표 유의사항 안내
-          </button>
-          <div className="w-[18px] h-[18px] relative">
-            <Image src="/icons/info-2.svg" alt="info" width={18} height={18} />
-          </div>
-        </div>
 
         {/* Date Sections */}
         {scheduleData.map((dateSchedule, dateIndex) => (
