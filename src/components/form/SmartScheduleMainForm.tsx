@@ -321,8 +321,6 @@ export default function SmartScheduleMainForm() {
       return;
     }
 
-    console.log(`[SmartSchedule] ${interviewerName} (${userId}) 저장 데이터:`, availabilities);
-
     try {
       await projectService.updateInterviewerAvailability(projectId, userId, { availabilities });
       toast.success(`${interviewerName}님의 시간이 저장되었습니다.`);

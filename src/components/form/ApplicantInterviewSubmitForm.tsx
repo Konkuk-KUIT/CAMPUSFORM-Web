@@ -64,29 +64,18 @@ export default function ApplicantInterviewSubmitForm() {
         // token이 있으면 공개 API 사용
         try {
           const slotsData = await projectService.getPublicInterviewSlots(token);
-          console.log('[ApplicantSubmit] 공개 면접 슬롯 전체 응답:', JSON.stringify(slotsData, null, 2));
           
           if (!slotsData) {
-            console.error('[ApplicantSubmit] API 응답이 비어있음');
             return;
           }
-
-          console.log('[ApplicantSubmit] API 응답 키들:', Object.keys(slotsData));
-          console.log('[ApplicantSubmit] summaries 존재?', !!slotsData.summaries);
-          console.log('[ApplicantSubmit] summaries 타입:', Array.isArray(slotsData.summaries) ? 'array' : typeof slotsData.summaries);
-          console.log('[ApplicantSubmit] summaries 길이:', slotsData.summaries?.length);
           
           // API 응답에서 면접 설정 정보 추출
           if (slotsData.summaries && Array.isArray(slotsData.summaries) && slotsData.summaries.length > 0) {
-            console.log('[ApplicantSubmit] summaries[0]:', JSON.stringify(slotsData.summaries[0], null, 2));
-            
             // summaries를 그대로 state에 저장
             setSlotsSummaries(slotsData.summaries);
             
             // summaries에서 날짜 추출
             const dates = slotsData.summaries.map((s: any) => s.date).filter(Boolean);
-            
-            console.log('[ApplicantSubmit] 추출된 dates:', dates);
             
             if (dates.length > 0) {
               const setting = {
@@ -94,27 +83,21 @@ export default function ApplicantInterviewSubmitForm() {
                 slotDurationMin: 30
               };
               
-              console.log('[ApplicantSubmit] 최종 설정:', setting);
               setInterviewSetting(setting);
-            } else {
-              console.warn('[ApplicantSubmit] 날짜 데이터가 없음');
             }
             
             // 안내 문구 (있다면)
             if (slotsData.guidanceText) {
               setGuidanceText(slotsData.guidanceText);
             }
-          } else {
-            console.warn('[ApplicantSubmit] summaries 구조가 없거나 비어있음. 응답 구조:', Object.keys(slotsData));
           }
         } catch (error) {
-          console.error('[ApplicantSubmit] 공개 면접 슬롯 조회 실패:', error);
+          console.error('공개 면접 슬롯 조회 실패:', error);
         }
       } else if (projectId) {
         // token이 없으면 개발 모드 (기존 방식)
         try {
           const setting = await projectService.getInterviewSetting(projectId);
-          console.log('[ApplicantSubmit] 면접 설정:', setting);
           
           // 새로운 API 형식: interviewDates 배열
           if (setting && setting.interviewDates && setting.interviewDates.length > 0 && setting.startTime && setting.endTime) {
@@ -144,13 +127,11 @@ export default function ApplicantInterviewSubmitForm() {
       
       try {
         const config = await projectService.getApplicantLinkConfig(projectId);
-        console.log('[ApplicantSubmit] 지원자 링크 설정:', config);
         
         if (config && config.guidanceText !== undefined && config.guidanceText !== null) {
           setGuidanceText(config.guidanceText);
         }
       } catch (error) {
-        console.log('지원자 링크 설정 조회 실패 (미설정일 수 있음):', error);
       }
     };
     
@@ -290,10 +271,6 @@ export default function ApplicantInterviewSubmitForm() {
       .filter(([_, isSelected]) => isSelected)
       .map(([key]) => key);
 
-    console.log('[ApplicantSubmit] Name:', name);
-    console.log('[ApplicantSubmit] Phone:', phone);
-    console.log('[ApplicantSubmit] Selected Slots:', selected);
-
     // selected 형식: ["2월 17일 (금)-09:00", "2월 17일 (금)-09:30", ...]
     // API 형식으로 변환: { date: "2026-02-17", startTimes: ["09:00", "09:30"] }
     
@@ -340,41 +317,21 @@ export default function ApplicantInterviewSubmitForm() {
       startTimes: startTimes.sort(), // 시간순 정렬
     }));
 
-    console.log('[ApplicantSubmit] 변환된 selections:', selections);
-
     try {
       if (token) {
-        // 최종 전송 데이터 확인
         const submitData = {
           name,
           phone,
           selections,
         };
-        console.log('[ApplicantSubmit] ===== 최종 제출 데이터 =====');
-        console.log(JSON.stringify(submitData, null, 2));
-        console.log('[ApplicantSubmit] ============================');
         
-        // 공개 API로 제출
-        const submitResponse = await projectService.submitApplicantAvailability(token, submitData);
-        console.log('[ApplicantSubmit] ===== 제출 성공 =====');
-        console.log('[ApplicantSubmit] 서버 응답:', submitResponse);
-        console.log('[ApplicantSubmit] 응답 타입:', typeof submitResponse);
-        console.log('[ApplicantSubmit] 응답 키들:', submitResponse ? Object.keys(submitResponse) : 'null');
-        console.log('[ApplicantSubmit] =========================');
-      } else {
-        // 개발 모드 - 콘솔에만 출력
-        console.log('[ApplicantSubmit] 제출 데이터 (개발 모드):', {
-          name,
-          phone,
-          selections,
-        });
-        console.warn('[ApplicantSubmit] 개발 모드: token이 필요합니다.');
+        await projectService.submitApplicantAvailability(token, submitData);
       }
       
       // 제출 완료 상태로 전환
       setIsSubmitted(true);
     } catch (error: any) {
-      console.error('[ApplicantSubmit] 제출 실패:', error);
+      console.error('제출 실패:', error);
       
       // 에러 메시지 상세 표시
       let errorMessage = '제출에 실패했습니다.';
