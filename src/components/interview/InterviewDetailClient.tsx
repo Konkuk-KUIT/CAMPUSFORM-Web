@@ -111,6 +111,7 @@ export default function InterviewDetailClient({ projectId, applicantId }: Interv
               email={applicant.email}
               isFavorite={isFavorite}
               onToggleFavorite={handleToggleFavorite}
+              commentCount={applicant.commentCount}
               onCommentClick={() => setCommentOpen(true)}
               appointmentDate={appointmentDate}
               appointmentTime={appointmentTime}
@@ -120,11 +121,7 @@ export default function InterviewDetailClient({ projectId, applicantId }: Interv
 
           <div className="p-4 mx-4 bg-white rounded-10">
             {applicant.answers.map((item, idx) => (
-              <QuestionSection
-                key={idx}
-                title={item.question}
-                content={item.answer}
-              />
+              <QuestionSection key={idx} title={item.question} content={item.answer} />
             ))}
           </div>
         </div>
