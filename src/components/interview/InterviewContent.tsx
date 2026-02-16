@@ -73,6 +73,8 @@ export default function InterviewContent({ projectId }: { projectId: number }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isAppointmentOpen, setIsAppointmentOpen] = useState(false);
   const [selectedAppointmentApplicantId, setSelectedAppointmentApplicantId] = useState<number | null>(null);
+  const [selectedAppointmentDate, setSelectedAppointmentDate] = useState<string | undefined>();
+  const [selectedAppointmentTime, setSelectedAppointmentTime] = useState<string | undefined>(); 
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -232,6 +234,8 @@ export default function InterviewContent({ projectId }: { projectId: number }) {
                 appointmentTime={applicant.appointmentTime}
                 onAppointmentClick={() => {
                   setSelectedAppointmentApplicantId(applicant.applicantId);
+                  setSelectedAppointmentDate(applicant.appointmentDate);
+                  setSelectedAppointmentTime(applicant.appointmentTime);
                   setIsAppointmentOpen(true);
                 }}
                 onStatusChange={handleStatusChange}
@@ -265,11 +269,13 @@ export default function InterviewContent({ projectId }: { projectId: number }) {
         stage="INTERVIEW"
         currentUserId={currentUserId}
       />
-
+      
       <AppointmentModal
         isOpen={isAppointmentOpen}
         onClose={() => setIsAppointmentOpen(false)}
         onConfirm={handleAppointmentConfirm}
+        initialDate={selectedAppointmentDate}
+        initialTime={selectedAppointmentTime}
       />
     </div>
   );
