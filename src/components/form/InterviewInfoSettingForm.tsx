@@ -220,7 +220,7 @@ export default function InterviewInfoSettingForm() {
         <Header title="면접 정보 설정" backTo={projectId ? `/smart-schedule/${projectId}` : '/smart-schedule'} />
 
         {/* Scrollable content */}
-        <div className="flex-1 px-4 pb-24 overflow-y-auto">
+        <div className="flex-1 px-4 pb-4 overflow-y-auto">
           {/* 면접 날짜 */}
           <div className="mt-2">
             <div className="flex items-center gap-2 py-1 mb-3">

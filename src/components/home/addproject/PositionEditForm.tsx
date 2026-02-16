@@ -104,7 +104,7 @@ export default function PositionEditForm() {
                 onClick={handleAddPosition}
                 className="flex items-center gap-1 text-[13px] font-normal leading-4.5 tracking-[0.13px] text-[var(--color-primary)] underline decoration-solid"
               >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
                   <path
                     d="M12 5v14m-7-7h14"
                     stroke="currentColor"
