@@ -199,7 +199,7 @@ export default function HomeMain() {
                   href="/home/addproject"
                   className="flex items-center justify-center active:scale-95 transition-transform cursor-pointer"
                 >
-                  <Image src="/icons/plus-blue.svg" alt="add" width={65} height={65} className="drop-shadow-lg" />
+                  <Image src="/icons/plus-blue.svg" alt="add" width={65} height={65} className="shadow-lg rounded-full" />
                 </Link>
               </div>
             </div>
