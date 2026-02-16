@@ -38,9 +38,10 @@ export interface ApplicantDetail {
   answers: Answer[];
   favorite: boolean;
   commentCount: number;
+  interviewDate?: string | null;
+  interviewStartTime?: string | null;
 }
 
-// UI에서 사용하는 통합 타입
 export interface Applicant {
   applicantId: number;
   name: string;
@@ -54,6 +55,8 @@ export interface Applicant {
   answers: Answer[];
   favorite: boolean;
   commentCount: number;
+  interviewDate?: string | null;
+  interviewStartTime?: string | null;
 }
 
 export interface ApplicantsRawResponse {

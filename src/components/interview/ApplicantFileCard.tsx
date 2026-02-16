@@ -48,7 +48,10 @@ export default function ApplicantFileCard({
 
   return (
     <div className="relative w-85.75 h-18.75 bg-white border-b border-gray-100 flex items-center px-5 first:border-t">
-      <Link href={`/interview/${projectId}/${id}`} className="flex flex-col flex-1">
+      <Link 
+        href={`/interview/${projectId}/${id}?date=${encodeURIComponent(appointmentDate || '')}&time=${encodeURIComponent(appointmentTime || '')}`}
+        className="flex flex-col flex-1"
+      >
         <div className="flex items-center gap-2.5">
           <h3 className="text-subtitle-sm-md text-gray-950">{name}</h3>
           {onAppointmentClick && (

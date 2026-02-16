@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 
 interface AppointmentModalProps {
   isOpen: boolean;
@@ -14,11 +14,41 @@ export default function AppointmentModal({
   isOpen,
   onClose,
   onConfirm,
+  initialDate,
+  initialTime,
 }: AppointmentModalProps) {
-  const [selectedMonth, setSelectedMonth] = useState(11);
-  const [selectedDay, setSelectedDay] = useState(15);
-  const [selectedHour, setSelectedHour] = useState(14);
-  const [selectedMinute, setSelectedMinute] = useState(0);
+  // initialDate: "10월 2일 (수)", initialTime: "01:00"
+  const parseInitial = () => {
+    let month = 11, day = 15, hour = 14, minute = 0;
+    if (initialDate) {
+      const m = initialDate.match(/(\d+)월/);
+      const d = initialDate.match(/(\d+)일/);
+      if (m) month = Number(m[1]);
+      if (d) day = Number(d[1]);
+    }
+    if (initialTime) {
+      const [h, min] = initialTime.split(':').map(Number);
+      if (!isNaN(h)) hour = h;
+      if (!isNaN(min)) minute = min;
+    }
+    return { month, day, hour, minute };
+  };
+
+  const [selectedMonth, setSelectedMonth] = useState(parseInitial().month);
+  const [selectedDay, setSelectedDay] = useState(parseInitial().day);
+  const [selectedHour, setSelectedHour] = useState(parseInitial().hour);
+  const [selectedMinute, setSelectedMinute] = useState(parseInitial().minute);
+
+  // 모달 열릴 때마다 현재 배정값으로 리셋
+  useEffect(() => {
+    if (isOpen) {
+      const { month, day, hour, minute } = parseInitial();
+      setSelectedMonth(month);
+      setSelectedDay(day);
+      setSelectedHour(hour);
+      setSelectedMinute(minute);
+    }
+  }, [isOpen, initialDate, initialTime]);
 
   if (!isOpen) return null;
 
