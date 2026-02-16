@@ -28,6 +28,21 @@ const statusReverseMap: Record<string, string> = {
   불합격: 'FAIL',
 };
 
+const formatInterviewDate = (raw: string | null | undefined): string | undefined => {
+  if (!raw) return undefined;
+  const date = new Date(raw);
+  if (isNaN(date.getTime())) return undefined;
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][date.getDay()];
+  return `${month}월 ${day}일 (${dayOfWeek})`;
+};
+
+const formatInterviewTime = (raw: string | null | undefined): string | undefined => {
+  if (!raw) return undefined;
+  return raw.length >= 5 ? raw.substring(0, 5) : raw; // "01:00:00" → "01:00"
+};
+
 const mapApplicant = (a: ApplicantRaw): InterviewApplicant => ({
   applicantId: a.id,
   name: a.name,
@@ -39,8 +54,8 @@ const mapApplicant = (a: ApplicantRaw): InterviewApplicant => ({
   email: a.email ?? '',
   documentStatus: '합격',
   interviewStatus: statusMap[a.status] ?? '보류',
-  appointmentDate: a.interviewDate ?? undefined,
-  appointmentTime: a.interviewStartTime ?? undefined,
+  appointmentDate: formatInterviewDate(a.interviewDate),
+  appointmentTime: formatInterviewTime(a.interviewStartTime),
   commentCount: a.commentCount,
 });
 
