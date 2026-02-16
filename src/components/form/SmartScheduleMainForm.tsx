@@ -103,6 +103,7 @@ export default function SmartScheduleMainForm() {
 
   const [mounted, setMounted] = useState(false);
   const [isConfigured, setIsConfigured] = useState<boolean>(false);
+  const [isOwner, setIsOwner] = useState<boolean>(false);
   const router = useRouter();
   const projectId = useCurrentProjectStore(s => s.projectId);
   const setProjectId = useCurrentProjectStore(s => s.setProjectId);
@@ -122,33 +123,17 @@ export default function SmartScheduleMainForm() {
   }, []);
 
   useEffect(() => {
-    const initializeProjectId = async () => {
-      if (projectId) return;
-
-      if (createdProjectId) {
-        setProjectId(createdProjectId);
-        return;
-      }
-
-      try {
-        const projects = await projectService.getProjects();
-        if (projects.length > 0) {
-          setProjectId(projects[0].id);
-        }
-      } catch (error) {
-        console.error('[SmartSchedule] 프로젝트 목록 조회 실패:', error);
-      }
-    };
-
-    initializeProjectId();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
     const checkInterviewSetting = async () => {
       if (!projectId) return;
 
       try {
+        // 현재 사용자의 role 확인 (오버레이 표시용)
+        const auth = await authService.getCurrentUser();
+        const { owner } = await projectService.getProjectAdmins(projectId);
+        const userIsOwner = auth.user && auth.user.userId === owner?.adminId;
+        setIsOwner(!!userIsOwner);
+
+        // 모든 사용자가 면접 설정 조회 가능
         const setting = await projectService.getInterviewSetting(projectId);
 
         const isValid =
@@ -166,7 +151,7 @@ export default function SmartScheduleMainForm() {
           setInterviewSetting(null);
           setIsConfigured(false);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('[SmartSchedule] 면접 정보 설정 조회 실패:', error);
         setInterviewSetting(null);
         setIsConfigured(false);
@@ -310,7 +295,13 @@ export default function SmartScheduleMainForm() {
     }
 
     try {
-      await projectService.updateInterviewerAvailability(projectId, userId, { availabilities });
+      if (isOwner) {
+        // OWNER: 기존 방식
+        await projectService.updateInterviewerAvailability(projectId, userId, { availabilities });
+      } else {
+        // ADMIN: 동일 API 사용 (명확히 분기)
+        await projectService.updateInterviewerAvailability(projectId, userId, { availabilities });
+      }
       toast.success(`${interviewerName}님의 시간이 저장되었습니다.`);
       fetchInterviewers();
     } catch (error) {
@@ -324,7 +315,8 @@ export default function SmartScheduleMainForm() {
 
     try {
       const auth = await authService.getCurrentUser();
-      const { admins } = await projectService.getProjectAdmins(projectId);
+      const { owner, admins } = await projectService.getProjectAdmins(projectId);
+
 
       const adminList: Array<{
         userId: number;
@@ -333,77 +325,80 @@ export default function SmartScheduleMainForm() {
         profileImageUrl?: string;
         isLeader: boolean;
         participated?: boolean;
+        role: string;
       }> = [];
 
       const newInterviewersCellActive: {
         [interviewerId: number]: { [key: string]: { top: boolean; bottom: boolean } };
       } = {};
 
-      if (auth.isAuthenticated && auth.user) {
+      // owner 정보 추가
+      if (owner) {
+        adminList.push({
+          userId: owner.adminId,
+          name: (auth.user && auth.user.userId === owner.adminId) ? '나(대표)' : owner.adminName,
+          email: owner.email,
+          profileImageUrl: owner.profileImageUrl ?? '',
+          isLeader: true,
+          role: owner.role,
+        });
+        // owner availability
         try {
-          const availability = await projectService.getInterviewerAvailability(projectId, auth.user.userId);
-
+          const availability = await projectService.getInterviewerAvailability(projectId, owner.adminId);
           if (availability && availability.availabilities && interviewSetting) {
             const cellActive: { [key: string]: { top: boolean; bottom: boolean } } = {};
             const [startHour] = interviewSetting.startTime.split(':').map(Number);
-
             availability.availabilities.forEach((dayAvail: any) => {
               const date = dayAvail.date;
               dayAvail.startTimes.forEach((startTime: string) => {
                 const [hour, min] = startTime.split(':').map(Number);
                 const timeIndex = hour - startHour;
                 const cellKey = `${date}-${timeIndex}`;
-
                 if (!cellActive[cellKey]) {
                   cellActive[cellKey] = { top: false, bottom: false };
                 }
-
                 if (min === 0) cellActive[cellKey].top = true;
                 else if (min === 30) cellActive[cellKey].bottom = true;
               });
             });
-
             if (Object.keys(cellActive).length > 0) {
-              newInterviewersCellActive[auth.user.userId] = cellActive;
+              newInterviewersCellActive[owner.adminId] = cellActive;
             }
           }
         } catch (error) {
           console.log('OWNER availability 조회 실패 (미등록일 수 있음)');
         }
-
-        adminList.push({
-          userId: auth.user.userId,
-          name: auth.user.nickname ?? '나(대표)',
-          email: auth.user.email ?? '',
-          profileImageUrl: auth.user.profileImageUrl ?? '',
-          isLeader: true,
-        });
       }
 
+      // admins 정보 추가
       for (const admin of admins) {
+        adminList.push({
+          userId: admin.adminId,
+          name: admin.adminName,
+          email: admin.email,
+          profileImageUrl: admin.profileImageUrl ?? '',
+          isLeader: false,
+          role: admin.role,
+        });
+        // admin availability
         try {
           const availability = await projectService.getInterviewerAvailability(projectId, admin.adminId);
-
           if (availability && availability.availabilities && interviewSetting) {
             const cellActive: { [key: string]: { top: boolean; bottom: boolean } } = {};
             const [startHour] = interviewSetting.startTime.split(':').map(Number);
-
             availability.availabilities.forEach((dayAvail: any) => {
               const date = dayAvail.date;
               dayAvail.startTimes.forEach((startTime: string) => {
                 const [hour, min] = startTime.split(':').map(Number);
                 const timeIndex = hour - startHour;
                 const cellKey = `${date}-${timeIndex}`;
-
                 if (!cellActive[cellKey]) {
                   cellActive[cellKey] = { top: false, bottom: false };
                 }
-
                 if (min === 0) cellActive[cellKey].top = true;
                 else if (min === 30) cellActive[cellKey].bottom = true;
               });
             });
-
             if (Object.keys(cellActive).length > 0) {
               newInterviewersCellActive[admin.adminId] = cellActive;
             }
@@ -411,14 +406,6 @@ export default function SmartScheduleMainForm() {
         } catch (error) {
           console.log(`ADMIN ${admin.adminName} availability 조회 실패`);
         }
-
-        adminList.push({
-          userId: admin.adminId,
-          name: admin.adminName,
-          email: admin.email,
-          profileImageUrl: admin.profileImageUrl ?? '',
-          isLeader: false,
-        });
       }
 
       setInterviewers(adminList);
@@ -492,10 +479,10 @@ export default function SmartScheduleMainForm() {
 
   return (
     <main className="min-h-screen flex justify-center bg-white">
-      <div className="relative w-[375px] bg-white min-h-screen flex flex-col overflow-x-hidden">
+      <div className="relative w-93.75 bg-white min-h-screen flex flex-col overflow-x-hidden">
         <header className="flex items-center justify-between h-12 px-4 bg-white">
           <Link href="/home" className="w-6 h-6">
-            <Image src="/icons/logo.svg" alt="로고" width={22} height={22} className="w-[22px] h-[22px]" />
+            <Image src="/icons/logo.svg" alt="로고" width={22} height={22} className="w-5.5 h-5.5" />
           </Link>
           <span className="text-title">스마트 시간표</span>
           <NotificationBell />
@@ -511,7 +498,7 @@ export default function SmartScheduleMainForm() {
                 <h3 className="text-subtitle-sm-sb text-gray-950 mb-1">1. 면접 정보 설정</h3>
                 <p className="text-body-xs text-gray-300">면접 일정과 운영 방식을 설정해 주세요.</p>
               </div>
-              <div className="mt-1 flex-shrink-0">
+              <div className="mt-1 shrink-0">
                 <Image src="/icons/chevron-right.svg" alt="next" width={24} height={24} className="w-6 h-6" />
               </div>
             </button>
@@ -553,30 +540,30 @@ export default function SmartScheduleMainForm() {
                         setSelectedInterviewer(idx);
                       }
                     }}
-                    className="w-full h-[66px] px-0 py-[5px] flex items-center justify-between border-b border-gray-200 cursor-pointer"
+                    className="w-full h-16.5 px-0 py-1.25 flex items-center justify-between border-b border-gray-200 cursor-pointer"
                   >
-                    <div className="flex items-center gap-[10px]">
+                    <div className="flex items-center gap-2.5">
                       {interviewer.profileImageUrl ? (
                         <Image
                           src={interviewer.profileImageUrl}
                           alt={interviewer.name}
                           width={35}
                           height={35}
-                          className="w-[35px] h-[35px] rounded-full flex-shrink-0"
+                          className="w-8.75 h-8.75 rounded-full shrink-0"
                         />
                       ) : (
-                        <div className="w-[35px] h-[35px] rounded-full bg-gray-200 flex-shrink-0" />
+                        <div className="w-8.75 h-8.75 rounded-full bg-gray-200 shrink-0" />
                       )}
                       <div className="text-left">
                         <div className="flex items-center gap-1.5">
-                          <p className="text-[14px] text-black font-normal leading-[20px]">{interviewer.name}</p>
+                          <p className="text-14 text-black font-normal leading-5">{interviewer.name}</p>
                           {interviewer.isLeader && (
-                            <span className="flex items-center justify-center px-[13px] h-[15px] border-[0.5px] border-primary rounded-[20px] text-[9px] text-primary bg-white leading-[0]">
+                            <span className="flex items-center justify-center px-3.25 h-3.75 border-[0.5px] border-primary rounded-10 text-9 text-primary bg-white leading-0">
                               대표자
                             </span>
                           )}
                         </div>
-                        <a className="text-[12px] text-gray-500 leading-[17px] tracking-[0.12px]">
+                        <a className="text-12 text-gray-500 leading-4.25 tracking-[0.12px]">
                           {interviewer.email}
                         </a>
                       </div>
@@ -586,7 +573,7 @@ export default function SmartScheduleMainForm() {
                       alt="toggle"
                       width={24}
                       height={24}
-                      className={`flex-shrink-0 w-6 h-6 ${selectedInterviewer === idx ? 'rotate-180' : ''}`}
+                      className={`shrink-0 w-6 h-6 ${selectedInterviewer === idx ? 'rotate-180' : ''}`}
                     />
                   </button>
 
@@ -653,10 +640,10 @@ export default function SmartScheduleMainForm() {
 
               <button
                 onClick={() => projectId && router.push(`/smart-schedule/${projectId}/interview-schedule`)}
-                className="w-full bg-blue-50 border-[0.5px] border-blue-200 rounded-[10px] px-2.5 py-2.5 flex items-center justify-center gap-1 hover:bg-blue-100 transition-colors cursor-pointer"
+                className="w-full bg-blue-50 border-[0.5px] border-blue-200 rounded-10 px-2.5 py-2.5 flex items-center justify-center gap-1 hover:bg-blue-100 transition-colors cursor-pointer"
               >
                 <span className="text-body-sm text-gray-950">지원자 시간 페이지 편집</span>
-                <Image src="/icons/edit-blue.svg" alt="edit" width={14} height={13} className="w-[14px] h-[13px]" />
+                <Image src="/icons/edit-blue.svg" alt="edit" width={14} height={13} className="w-3.5 h-3.25" />
               </button>
 
               <div className="flex gap-1.25">
@@ -697,10 +684,24 @@ export default function SmartScheduleMainForm() {
 
           <div className="h-32" />
 
-          {mounted && showOverlay && (
-            <div className="absolute left-0 right-0 top-[115px] bottom-20 flex items-center justify-center z-50 bg-white/85">
+          {mounted && showOverlay && isOwner && (
+            <div className="absolute left-0 right-0 top-28.75 bottom-20 flex items-center justify-center z-50 bg-white/85">
               <div className="text-center">
                 <p className="text-subtitle-md text-gray-950 font-medium">면접 정보 설정 후 이용 가능합니다.</p>
+              </div>
+            </div>
+          )}
+
+          {mounted && showOverlay && !isOwner && (
+            <div className="absolute bg-white/85 left-0 right-0 top-12 bottom-0 flex items-center justify-center z-40">
+              <div className="text-center">
+                <p className="text-subtitle-md text-gray-950 mb-6">아직 면접 설정이 등록되지 않았습니다.</p>
+                <div className="text-body-rg text-gray-500">
+                  <p>면접 정보 설정을 원하시면</p>
+                  <p>
+                    <span className="text-body-md">대표자에게 요청</span>해주세요.
+                  </p>
+                </div>
               </div>
             </div>
           )}
