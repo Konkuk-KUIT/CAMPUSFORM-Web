@@ -131,7 +131,7 @@ export default function SmartScheduleMainForm() {
         const auth = await authService.getCurrentUser();
         const { owner } = await projectService.getProjectAdmins(projectId);
         const userIsOwner = auth.user && auth.user.userId === owner?.adminId;
-        setIsOwner(userIsOwner);
+        setIsOwner(!!userIsOwner);
 
         // 모든 사용자가 면접 설정 조회 가능
         const setting = await projectService.getInterviewSetting(projectId);
