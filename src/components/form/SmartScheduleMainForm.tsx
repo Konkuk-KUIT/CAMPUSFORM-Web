@@ -295,7 +295,13 @@ export default function SmartScheduleMainForm() {
     }
 
     try {
-      await projectService.updateInterviewerAvailability(projectId, userId, { availabilities });
+      if (isOwner) {
+        // OWNER: 기존 방식
+        await projectService.updateInterviewerAvailability(projectId, userId, { availabilities });
+      } else {
+        // ADMIN: 동일 API 사용 (명확히 분기)
+        await projectService.updateInterviewerAvailability(projectId, userId, { availabilities });
+      }
       toast.success(`${interviewerName}님의 시간이 저장되었습니다.`);
       fetchInterviewers();
     } catch (error) {
@@ -309,7 +315,8 @@ export default function SmartScheduleMainForm() {
 
     try {
       const auth = await authService.getCurrentUser();
-      const { admins } = await projectService.getProjectAdmins(projectId);
+      const { owner, admins } = await projectService.getProjectAdmins(projectId);
+
 
       const adminList: Array<{
         userId: number;
@@ -318,77 +325,80 @@ export default function SmartScheduleMainForm() {
         profileImageUrl?: string;
         isLeader: boolean;
         participated?: boolean;
+        role: string;
       }> = [];
 
       const newInterviewersCellActive: {
         [interviewerId: number]: { [key: string]: { top: boolean; bottom: boolean } };
       } = {};
 
-      if (auth.isAuthenticated && auth.user) {
+      // owner 정보 추가
+      if (owner) {
+        adminList.push({
+          userId: owner.adminId,
+          name: (auth.user && auth.user.id === owner.adminId) ? '나(대표)' : owner.adminName,
+          email: owner.email,
+          profileImageUrl: owner.profileImageUrl ?? '',
+          isLeader: true,
+          role: owner.role,
+        });
+        // owner availability
         try {
-          const availability = await projectService.getInterviewerAvailability(projectId, auth.user.userId);
-
+          const availability = await projectService.getInterviewerAvailability(projectId, owner.adminId);
           if (availability && availability.availabilities && interviewSetting) {
             const cellActive: { [key: string]: { top: boolean; bottom: boolean } } = {};
             const [startHour] = interviewSetting.startTime.split(':').map(Number);
-
             availability.availabilities.forEach((dayAvail: any) => {
               const date = dayAvail.date;
               dayAvail.startTimes.forEach((startTime: string) => {
                 const [hour, min] = startTime.split(':').map(Number);
                 const timeIndex = hour - startHour;
                 const cellKey = `${date}-${timeIndex}`;
-
                 if (!cellActive[cellKey]) {
                   cellActive[cellKey] = { top: false, bottom: false };
                 }
-
                 if (min === 0) cellActive[cellKey].top = true;
                 else if (min === 30) cellActive[cellKey].bottom = true;
               });
             });
-
             if (Object.keys(cellActive).length > 0) {
-              newInterviewersCellActive[auth.user.userId] = cellActive;
+              newInterviewersCellActive[owner.adminId] = cellActive;
             }
           }
         } catch (error) {
           console.log('OWNER availability 조회 실패 (미등록일 수 있음)');
         }
-
-        adminList.push({
-          userId: auth.user.userId,
-          name: auth.user.nickname ?? '나(대표)',
-          email: auth.user.email ?? '',
-          profileImageUrl: auth.user.profileImageUrl ?? '',
-          isLeader: true,
-        });
       }
 
+      // admins 정보 추가
       for (const admin of admins) {
+        adminList.push({
+          userId: admin.adminId,
+          name: admin.adminName,
+          email: admin.email,
+          profileImageUrl: admin.profileImageUrl ?? '',
+          isLeader: false,
+          role: admin.role,
+        });
+        // admin availability
         try {
           const availability = await projectService.getInterviewerAvailability(projectId, admin.adminId);
-
           if (availability && availability.availabilities && interviewSetting) {
             const cellActive: { [key: string]: { top: boolean; bottom: boolean } } = {};
             const [startHour] = interviewSetting.startTime.split(':').map(Number);
-
             availability.availabilities.forEach((dayAvail: any) => {
               const date = dayAvail.date;
               dayAvail.startTimes.forEach((startTime: string) => {
                 const [hour, min] = startTime.split(':').map(Number);
                 const timeIndex = hour - startHour;
                 const cellKey = `${date}-${timeIndex}`;
-
                 if (!cellActive[cellKey]) {
                   cellActive[cellKey] = { top: false, bottom: false };
                 }
-
                 if (min === 0) cellActive[cellKey].top = true;
                 else if (min === 30) cellActive[cellKey].bottom = true;
               });
             });
-
             if (Object.keys(cellActive).length > 0) {
               newInterviewersCellActive[admin.adminId] = cellActive;
             }
@@ -396,14 +406,6 @@ export default function SmartScheduleMainForm() {
         } catch (error) {
           console.log(`ADMIN ${admin.adminName} availability 조회 실패`);
         }
-
-        adminList.push({
-          userId: admin.adminId,
-          name: admin.adminName,
-          email: admin.email,
-          profileImageUrl: admin.profileImageUrl ?? '',
-          isLeader: false,
-        });
       }
 
       setInterviewers(adminList);
