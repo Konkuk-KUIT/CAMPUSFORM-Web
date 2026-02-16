@@ -27,22 +27,25 @@ export default function ManageApplicationForm({ projectId }: { projectId: number
 
     const fetchData = async () => {
       try {
-        const [projects, auth, { admins }] = await Promise.all([
+        const [projects, auth, { owner, admins }] = await Promise.all([
           projectService.getProjects(),
           authService.getCurrentUser(),
           projectService.getProjectAdmins(projectId),
         ]);
 
-        console.log('raw admins:', admins);
-
         const found = projects.find(p => p.id === projectId);
-
-        console.log('raw project:', found);
 
         if (!found || !auth.isAuthenticated || !auth.user) return;
 
         const currentUserId = auth.user.userId;
-        const ownerIsMe = currentUserId === found.ownerId;
+        const ownerIsMe = currentUserId === owner.adminId;
+
+        const ownerAdmin: ProjectAdmin = {
+          userId: owner.adminId,
+          nickname: owner.adminName,
+          email: owner.email,
+          profileImageUrl: owner.profileImageUrl ?? '',
+        };
 
         const mappedAdmins: ProjectAdmin[] = admins.map((a: ProjectAdminRaw) => ({
           userId: a.adminId,
@@ -51,29 +54,12 @@ export default function ManageApplicationForm({ projectId }: { projectId: number
           profileImageUrl: a.profileImageUrl ?? '',
         }));
 
-        const ownerAdmin: ProjectAdmin = ownerIsMe
-          ? {
-              userId: currentUserId,
-              nickname: auth.user.nickname ?? '나(대표)',
-              email: auth.user.email ?? '',
-              profileImageUrl: auth.user.profileImageUrl ?? '',
-            }
-          : (mappedAdmins.find(a => a.userId === found.ownerId) ?? {
-              userId: found.ownerId,
-              nickname: '대표',
-              email: '',
-              profileImageUrl: '',
-            });
-
-        console.log('ownerAdmin:', ownerAdmin);
-        console.log('ownerAdmin.userId:', ownerAdmin.userId);
-
         setIsOwner(ownerIsMe);
         setViewProps({
           projectId,
           project: found,
-          adminList: [ownerAdmin, ...mappedAdmins.filter(a => a.userId !== found.ownerId)],
-          ownerUserId: ownerAdmin.userId,
+          adminList: [ownerAdmin, ...mappedAdmins],
+          ownerUserId: owner.adminId,
           status: found.state === 'DOCUMENT' ? '모집 중' : '모집 마감',
           startDate: new Date(found.startAt),
           endDate: new Date(found.endAt),

@@ -202,7 +202,6 @@ export default function InterviewInfoSettingForm() {
     
     try {
       await projectService.updateInterviewSetting(targetProjectId, payload);
-      localStorage.setItem('interviewInfoConfigured', 'true');
       console.log('[InterviewSetting] 면접 정보 설정 성공');
       alert('면접 정보가 설정되었습니다');
       if (targetProjectId) {
