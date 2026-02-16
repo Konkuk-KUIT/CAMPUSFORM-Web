@@ -6,21 +6,23 @@ import InterviewDetailClient from '@/components/interview/InterviewDetailClient'
 
 export default async function ApplicantDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ projectId: string; applicantId: string }>;
+  searchParams: Promise<{ date?: string; time?: string }>;
 }) {
   const { projectId, applicantId } = await params;
+  const { date, time } = await searchParams;
 
   return (
     <div className="h-screen flex flex-col bg-gray-50">
-      {/* 고정 헤더 */}
       <InterviewDetailHeader projectId={Number(projectId)} />
-
-      {/* 스크롤 가능한 콘텐츠 영역 */}
       <div className="flex-1 overflow-hidden">
         <InterviewDetailClient
           projectId={Number(projectId)}
           applicantId={Number(applicantId)}
+          initialDate={date}
+          initialTime={time}
         />
       </div>
     </div>
