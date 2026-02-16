@@ -173,7 +173,7 @@ export default function ProfileSetupForm() {
             <TermsCheckbox
               label=""
               linkText="이용약관"
-              linkUrl="https://www.notion.so/your-terms-of-service-link"
+              linkUrl="https://spiky-cheek-6cb.notion.site/2f498732e20180f38b55ec4cf97b123c?source=copy_link"
               isRequired={true}
               checked={termsAgreed}
               onChange={setTermsAgreed}
@@ -181,7 +181,7 @@ export default function ProfileSetupForm() {
             <TermsCheckbox
               label=""
               linkText="개인정보 처리방침"
-              linkUrl="https://www.notion.so/your-privacy-policy-link"
+              linkUrl="https://spiky-cheek-6cb.notion.site/2f498732e20180c88f2ec5d914a66119?source=copy_link"
               isRequired={true}
               checked={privacyAgreed}
               onChange={setPrivacyAgreed}
