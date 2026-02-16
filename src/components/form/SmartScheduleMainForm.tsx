@@ -558,7 +558,7 @@ export default function SmartScheduleMainForm() {
                         <div className="flex items-center gap-1.5">
                           <p className="text-14 text-black font-normal leading-5">{interviewer.name}</p>
                           {interviewer.isLeader && (
-                            <span className="flex items-center justify-center px-3.25 h-3.75 border-[0.5px] border-primary rounded-10 text-9 text-primary bg-white leading-0">
+                            <span className="flex items-center justify-center px-2 h-4 border border-primary rounded-full text-10 text-primary bg-white leading-tight">
                               대표자
                             </span>
                           )}
