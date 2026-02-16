@@ -103,6 +103,7 @@ export default function SmartScheduleMainForm() {
 
   const [mounted, setMounted] = useState(false);
   const [isConfigured, setIsConfigured] = useState<boolean>(false);
+  const [isOwner, setIsOwner] = useState<boolean>(false);
   const router = useRouter();
   const projectId = useCurrentProjectStore(s => s.projectId);
   const setProjectId = useCurrentProjectStore(s => s.setProjectId);
@@ -126,6 +127,13 @@ export default function SmartScheduleMainForm() {
       if (!projectId) return;
 
       try {
+        // 현재 사용자의 role 확인 (오버레이 표시용)
+        const auth = await authService.getCurrentUser();
+        const { owner } = await projectService.getProjectAdmins(projectId);
+        const userIsOwner = auth.user.id === owner?.adminId;
+        setIsOwner(userIsOwner);
+
+        // 모든 사용자가 면접 설정 조회 가능
         const setting = await projectService.getInterviewSetting(projectId);
 
         const isValid =
@@ -143,7 +151,7 @@ export default function SmartScheduleMainForm() {
           setInterviewSetting(null);
           setIsConfigured(false);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('[SmartSchedule] 면접 정보 설정 조회 실패:', error);
         setInterviewSetting(null);
         setIsConfigured(false);
@@ -674,10 +682,24 @@ export default function SmartScheduleMainForm() {
 
           <div className="h-32" />
 
-          {mounted && showOverlay && (
+          {mounted && showOverlay && isOwner && (
             <div className="absolute left-0 right-0 top-[115px] bottom-20 flex items-center justify-center z-50 bg-white/85">
               <div className="text-center">
                 <p className="text-subtitle-md text-gray-950 font-medium">면접 정보 설정 후 이용 가능합니다.</p>
+              </div>
+            </div>
+          )}
+
+          {mounted && showOverlay && !isOwner && (
+            <div className="absolute bg-white/85 left-0 right-0 top-12 bottom-0 flex items-center justify-center z-40">
+              <div className="text-center">
+                <p className="text-subtitle-md text-gray-950 mb-6">아직 면접 설정이 등록되지 않았습니다.</p>
+                <div className="text-body-rg text-gray-500">
+                  <p>면접 정보 설정을 원하시면</p>
+                  <p>
+                    <span className="text-body-md">대표자에게 요청</span>해주세요.
+                  </p>
+                </div>
               </div>
             </div>
           )}
