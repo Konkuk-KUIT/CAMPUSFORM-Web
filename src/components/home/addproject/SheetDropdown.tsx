@@ -43,13 +43,13 @@ export default function SheetDropdown({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full h-[50px] px-[15px] flex items-center justify-between text-[14px] font-normal leading-[20px] rounded-[5px] border border-solid transition-colors ${
+        className={`w-full h-[50px] px-[15px] flex items-center justify-between gap-2 text-[14px] font-normal leading-[20px] rounded-[5px] border border-solid transition-colors ${
           isOpen 
             ? 'bg-[var(--color-blue-50)] border-[var(--color-primary)] text-black' 
             : 'bg-white border-[var(--color-gray-200)] text-black'
         }`}
       >
-        <span className={value ? 'text-black' : 'text-[#b0b0b0]'}>
+        <span className={`truncate ${value ? 'text-black' : 'text-[#b0b0b0]'}`}>
           {value || placeholder}
         </span>
         <Image 
@@ -57,6 +57,7 @@ export default function SheetDropdown({
           alt="dropdown" 
           width={24} 
           height={24}
+          className="shrink-0"
         />
       </button>
 

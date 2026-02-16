@@ -4,7 +4,7 @@ import apiClient from '@/lib/api';
 export const getGoogleAuthorizeUrl = async (): Promise<string> => {
   const response = await apiClient.get('/projects/google-oauth/authorize-url', {
     params: {
-      useLocalhost: false,
+      useLocalhost: true, //로컬이면 true, 배포면 false
     },
   });
   return response.data.authorizeUrl;
