@@ -32,6 +32,7 @@ export default function ApplicantInterviewSubmitForm() {
   const [interviewSetting, setInterviewSetting] = useState<any>(null);
   const [slotsSummaries, setSlotsSummaries] = useState<any[]>([]);
   const [guidanceText, setGuidanceText] = useState('');
+  const [projectTitle, setProjectTitle] = useState('면접 가능 시간');
 
 
   // 프로젝트 ID 초기화 (token이 없을 때만)
@@ -55,6 +56,29 @@ export default function ApplicantInterviewSubmitForm() {
     };
     
     initializeProjectId();
+  }, [token]);
+
+  // 면접 config 조회 (프로젝트 제목 및 가이드 텍스트)
+  useEffect(() => {
+    const fetchInterviewConfig = async () => {
+      if (!token) return;
+      
+      try {
+        const config = await projectService.getPublicInterviewConfig(token);
+        if (config) {
+          if (config.projectTitle) {
+            setProjectTitle(config.projectTitle);
+          }
+          if (config.guidanceText) {
+            setGuidanceText(config.guidanceText);
+          }
+        }
+      } catch (error) {
+        console.error('공개 면접 config 조회 실패:', error);
+      }
+    };
+    
+    fetchInterviewConfig();
   }, [token]);
 
   // 면접 설정 조회 (공개 API 사용)
@@ -84,11 +108,6 @@ export default function ApplicantInterviewSubmitForm() {
               };
               
               setInterviewSetting(setting);
-            }
-            
-            // 안내 문구 (있다면)
-            if (slotsData.guidanceText) {
-              setGuidanceText(slotsData.guidanceText);
             }
           }
         } catch (error) {
@@ -356,7 +375,7 @@ export default function ApplicantInterviewSubmitForm() {
       <div className="min-h-screen bg-white flex flex-col">
         {/* 헤더 */}
         <div className="h-12 bg-white flex items-center justify-center">
-          <h1 className="text-title text-gray-950">면접 가능 시간</h1>
+          <h1 className="text-title text-gray-950">{projectTitle}</h1>
         </div>
 
         {/* 완료 메시지 */}
@@ -387,7 +406,7 @@ export default function ApplicantInterviewSubmitForm() {
     <div className="min-h-screen bg-white flex flex-col">
       {/* 헤더 */}
       <div className="h-12 bg-white flex items-center justify-center">
-        <h1 className="text-title text-gray-950">면접 가능 시간</h1>
+        <h1 className="text-title text-gray-950">{projectTitle}</h1>
       </div>
 
       {/* 안내 문구 박스 */}
