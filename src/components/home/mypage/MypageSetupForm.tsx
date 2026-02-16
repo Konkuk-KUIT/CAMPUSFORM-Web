@@ -187,7 +187,7 @@ export default function MypageSetupForm() {
                 value={nickname}
                 onChange={handleNicknameChange}
                 error={nicknameError}
-                errorMessage="이름에는 한글, 영문만 입력 가능합니다."
+                errorMessage="이름에는 1-12자 이내로 입력해 주세요."
               />
             </div>
 

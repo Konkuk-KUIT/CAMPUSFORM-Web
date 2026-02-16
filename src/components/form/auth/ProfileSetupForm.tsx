@@ -16,6 +16,7 @@ export default function ProfileSetupForm() {
   const [isLoading, setIsLoading] = useState(true);
   const [nickname, setNickname] = useState('');
   const [nicknameError, setNicknameError] = useState(false);
+  const [nicknameErrorMessage, setNicknameErrorMessage] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [shouldDeleteImage, setShouldDeleteImage] = useState(false);
 
@@ -62,17 +63,20 @@ export default function ProfileSetupForm() {
   const validateNickname = (): boolean => {
     if (!nickname.trim()) {
       setNicknameError(true);
+      setNicknameErrorMessage('이름(닉네임)을 입력해주세요.');
       return false;
     }
 
     if (nickname.length < 1 || nickname.length > 12) {
       setNicknameError(true);
+      setNicknameErrorMessage('1-12자 이내로 입력해 주세요.');
       return false;
     }
 
     const nameRegex = /^[가-힣a-zA-Z]+$/;
     if (!nameRegex.test(nickname)) {
       setNicknameError(true);
+      setNicknameErrorMessage('한글, 영문만 입력 가능합니다.');
       return false;
     }
 
@@ -157,7 +161,7 @@ export default function ProfileSetupForm() {
               value={nickname}
               onChange={handleNicknameChange}
               error={nicknameError}
-              errorMessage="이름에는 한글, 영문만 입력 가능합니다."
+              errorMessage={nicknameErrorMessage}
             />
           </div>
 
