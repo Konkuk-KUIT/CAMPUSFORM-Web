@@ -122,29 +122,6 @@ export default function SmartScheduleMainForm() {
   }, []);
 
   useEffect(() => {
-    const initializeProjectId = async () => {
-      if (projectId) return;
-
-      if (createdProjectId) {
-        setProjectId(createdProjectId);
-        return;
-      }
-
-      try {
-        const projects = await projectService.getProjects();
-        if (projects.length > 0) {
-          setProjectId(projects[0].id);
-        }
-      } catch (error) {
-        console.error('[SmartSchedule] 프로젝트 목록 조회 실패:', error);
-      }
-    };
-
-    initializeProjectId();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
     const checkInterviewSetting = async () => {
       if (!projectId) return;
 
