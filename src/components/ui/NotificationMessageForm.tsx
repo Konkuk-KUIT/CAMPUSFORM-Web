@@ -1,27 +1,102 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Button from '@/components/ui/Btn';
 import TextboxLarge from '@/components/ui/TextboxLarge';
 import Image from 'next/image';
 import Modal from '@/components/ui/Modal';
+import { documentResultService } from '@/services/documentResultService';
+import { toast } from '@/components/Toast';
+import type { ScreeningResult } from '@/types/project';
 
 interface NotificationMessageFormProps {
   type?: '합격자' | '불합격자';
+  onTemplateApply?: (template: string, isVariableEnabled: boolean) => void;
+  onTemplateChange?: (template: string) => void;
+  projectId: number;
+  status: ScreeningResult;
+  initialTemplate?: string;
+  stage?: 'DOCUMENT' | 'INTERVIEW';
 }
 
-export default function NotificationMessageForm({ type = '합격자' }: NotificationMessageFormProps) {
+export default function NotificationMessageForm({
+  type = '합격자',
+  onTemplateApply,
+  onTemplateChange,
+  projectId,
+  status,
+  initialTemplate = '',
+  stage = 'DOCUMENT',
+}: NotificationMessageFormProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [template, setTemplate] = useState(initialTemplate);
+  const [isVariableEnabled, setIsVariableEnabled] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+  const editableRef = useRef<HTMLDivElement>(null);
 
   const title = type === '합격자' ? '합격자 문자 템플릿 입력' : '불합격자 문자 템플릿 입력';
   const modalTitle = type === '합격자' ? '합격자' : '불합격자';
+
+  // debounce 자동저장
+  useEffect(() => {
+    if (!template) return;
+    const timer = setTimeout(async () => {
+      try {
+        await documentResultService.saveSmsTemplate(projectId, { stage, status, content: template });
+      } catch {
+        toast.error('템플릿 저장에 실패했습니다.');
+      }
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [template]);
+
+  const handleTemplateChange = (value: string) => {
+    setTemplate(value);
+    setIsVariableEnabled(false);
+    onTemplateChange?.(value);
+  };
+
+  const handleApplyVariables = () => {
+    setIsVariableEnabled(true);
+  };
+
+  const handleApplyTemplate = () => {
+    if (onTemplateApply) onTemplateApply(template, isVariableEnabled);
+  };
+
+  const handleEditableInput = () => {
+    if (editableRef.current) {
+      const text = editableRef.current.innerText;
+      setTemplate(text);
+      onTemplateChange?.(text);
+    }
+  };
+
+  const renderHighlightedHTML = () => {
+    if (!template) return '';
+    let html = template.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+    html = html.replace(/([@＠]이름|[@＠]포지션)/g, '<span style="color: #3B82F6;">$1</span>');
+    return html;
+  };
+
+  useEffect(() => {
+    if (isVariableEnabled && editableRef.current && template) {
+      editableRef.current.innerHTML = renderHighlightedHTML();
+    }
+  }, [isVariableEnabled, template]);
+
+  const getEditableStyles = () => {
+    if (isFocused) return 'bg-white border-primary border-1.5';
+    if (template) return 'bg-white border-gray-100 border';
+    return 'bg-gray-100 border-gray-200 border-0.5';
+  };
 
   return (
     <div className="flex flex-col gap-2 mt-3">
       <div className="flex items-center gap-1">
         <span className="text-subtitle-sm-md">{title}</span>
         <Image
-          src={'/icons/info.svg'}
+          src="/icons/info.svg"
           alt="정보"
           width={18}
           height={18}
@@ -29,11 +104,10 @@ export default function NotificationMessageForm({ type = '합격자' }: Notifica
           className="cursor-pointer"
         />
       </div>
-      {/* 템플릿 모달창 */}
+
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
         <div className="font-normal text-[15px] leading-5.75 text-black">
           <p className="mb-4">이 템플릿은 두 가지 방식으로 사용할 수 있어요.</p>
-
           <div className="mb-4">
             <h3 className="text-primary font-medium text-[15px] leading-5.75 mb-2">동일 문자 일괄 전송</h3>
             <ol className="list-decimal list-inside font-normal text-[15px] leading-5.75 text-black">
@@ -42,7 +116,6 @@ export default function NotificationMessageForm({ type = '합격자' }: Notifica
               <li>문자 앱에서 전체에게 동일하게 전송</li>
             </ol>
           </div>
-
           <div>
             <h3 className="text-primary font-medium text-[15px] leading-5.75 mb-2">자동 치환 개별 전송</h3>
             <ol className="list-decimal list-inside font-normal text-[15px] leading-5.75 text-black">
@@ -57,14 +130,34 @@ export default function NotificationMessageForm({ type = '합격자' }: Notifica
         </div>
       </Modal>
 
-      {/* 합격자/불합격자 문자 템플릿 입력 */}
-      <TextboxLarge placeholder="문자 내용을 입력하세요. @이름과 @포지션 변수를 사용하면 개인별 문자 생성이 가능합니다." />
+      {!isVariableEnabled ? (
+        <TextboxLarge
+          placeholder="문자 내용을 입력하세요. @이름과 @포지션 변수를 사용하면 개인별 문자 생성이 가능합니다."
+          value={template}
+          onChange={handleTemplateChange}
+        />
+      ) : (
+        <div className="relative">
+          <div
+            ref={editableRef}
+            contentEditable
+            onInput={handleEditableInput}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+            className={`w-85.75 h-41.25 p-4 rounded-10 outline-none resize-none transition-colors text-body-sm-rg text-gray-950 shadow-[2px_2px_20px_0px_rgba(0,0,0,0.03)] ${getEditableStyles()}`}
+            style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', overflowY: 'auto' }}
+            suppressContentEditableWarning
+            dangerouslySetInnerHTML={{ __html: renderHighlightedHTML() }}
+          />
+          {template && <span className="absolute bottom-4 right-4 text-10 text-gray-200">자동저장됨</span>}
+        </div>
+      )}
 
       <div className="flex gap-3 justify-end">
-        <Button variant="neutral" size="sm">
+        <Button variant="neutral" size="sm" onClick={handleApplyVariables}>
           변수 적용하기
         </Button>
-        <Button variant="neutral" size="sm">
+        <Button variant="neutral" size="sm" onClick={handleApplyTemplate}>
           템플릿 복사하기
         </Button>
       </div>

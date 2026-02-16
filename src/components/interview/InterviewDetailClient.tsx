@@ -1,48 +1,108 @@
-// 면접 상세 페이지 클라이언트 컴포넌트
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import PullToRefresh from '@/components/PullToRefresh';
 import ApplicantCardBasic from '@/components/interview/ApplicantCardBasic';
 import AppointmentModal from '@/components/interview/AppointmentModal';
-import BottomSheet from '@/components/ui/BottomSheet';
-import InputComment from '@/components/ui/InputComment';
-import Reply from '@/components/ui/Reply';
-import { mockInterviewApplicants } from '@/data/interviews';
-import { mockComments } from '@/data/comments';
+import CommentSection from '@/components/sections/CommentSection';
+import QuestionSection from '@/components/document/QuestionSection';
+import Loading from '@/components/ui/Loading';
+import { toast } from '@/components/Toast';
+import { applicantService } from '@/services/applicantService';
+import { authService } from '@/services/authService';
+import type { ApplicantDetail } from '@/types/applicant';
+
+const genderMap: Record<string, '남' | '여'> = {
+  MALE: '남',
+  FEMALE: '여',
+};
+
+const statusMap: Record<string, '보류' | '합격' | '불합격'> = {
+  HOLD: '보류',
+  PASS: '합격',
+  FAIL: '불합격',
+};
 
 interface InterviewDetailClientProps {
-  applicantId: string;
+  projectId: number;
+  applicantId: number;
 }
 
-export default function InterviewDetailClient({ applicantId }: InterviewDetailClientProps) {
-  // 지원자 데이터 가져오기
-  const applicant = mockInterviewApplicants.find((a) => a.id === applicantId);
-
+export default function InterviewDetailClient({ projectId, applicantId }: InterviewDetailClientProps) {
+  const [applicant, setApplicant] = useState<ApplicantDetail | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCommentOpen, setCommentOpen] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [appointmentDate, setAppointmentDate] = useState(applicant?.appointmentDate || '');
-  const [appointmentTime, setAppointmentTime] = useState(applicant?.appointmentTime || '');
+  const [appointmentDate, setAppointmentDate] = useState('');
+  const [appointmentTime, setAppointmentTime] = useState('');
+  const [currentUserId, setCurrentUserId] = useState<number>(0);
 
-  // 댓글 데이터 가져오기
-  const comments = mockComments.filter((c) => c.applicantId === applicantId);
+  const formatPhoneNumber = (phone: string) => {
+  const cleaned = phone.replace(/\D/g, '');
 
-  const handleAppointmentClick = () => {
-    setIsModalOpen(true);
+  if (cleaned.length === 11) {
+    return cleaned.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+  }
+
+  if (cleaned.length === 10) {
+    return cleaned.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+  }
+
+  return phone;
+};
+
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      const auth = await authService.getCurrentUser();
+      if (auth.isAuthenticated && auth.user) {
+        setCurrentUserId(auth.user.userId);
+      }
+    };
+    fetchCurrentUser();
+  }, []);
+
+  const fetchApplicant = async () => {
+    try {
+      setIsLoading(true);
+      const data = await applicantService.getApplicant(projectId, applicantId, 'INTERVIEW');
+      setApplicant(data);
+      setIsFavorite(data.favorite);
+    } catch (e) {
+      console.error('지원자 상세 조회 실패:', e);
+      toast.error('지원자 정보를 불러오지 못했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleConfirm = (date: string, time: string) => {
+  useEffect(() => {
+    fetchApplicant();
+  }, [projectId, applicantId]);
+
+  const handleRefresh = async () => {
+    await fetchApplicant();
+  };
+
+  const handleConfirm = (date: string, time: string, _rawDate: string) => {
     setAppointmentDate(date);
     setAppointmentTime(time);
     setIsModalOpen(false);
   };
 
-  // 즐겨찾기 토글 핸들러
-  const handleToggleFavorite = () => {
-    setIsFavorite((prev) => !prev);
+  const handleToggleFavorite = async () => {
+    try {
+      await applicantService.toggleBookmark(projectId, applicantId, 'INTERVIEW');
+      setIsFavorite(prev => !prev);
+    } catch (e) {
+      toast.error('즐겨찾기 변경에 실패했습니다.');
+    }
   };
 
-  // 지원자를 찾지 못한 경우
+  if (isLoading) {
+    return <Loading fullScreen={false} />;
+  }
+
   if (!applicant) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-200px)]">
@@ -52,49 +112,46 @@ export default function InterviewDetailClient({ applicantId }: InterviewDetailCl
   }
 
   return (
-    <>
-      <div className="p-4">
-        {/* 상세 내용 */}
-        <ApplicantCardBasic
-          name={applicant.name}
-          gender={applicant.gender}
-          status={applicant.interviewStatus}
-          university={`${applicant.university}/${applicant.major}/${applicant.position}`}
-          phone={applicant.phone}
-          email={applicant.email}
-          commentCount={applicant.commentCount}
-          isFavorite={isFavorite}
-          onToggleFavorite={handleToggleFavorite}
-          onCommentClick={() => setCommentOpen(true)}
-          appointmentDate={appointmentDate}
-          appointmentTime={appointmentTime}
-          onAppointmentClick={handleAppointmentClick}
-        />
-
-        {/* 댓글 바텀시트 */}
-        <BottomSheet isOpen={isCommentOpen} onClose={() => setCommentOpen(false)}>
-          <InputComment />
-          <div className="space-y-4 mt-4">
-            {comments.length === 0 ? (
-              <p className="text-center text-gray-400 py-4">아직 댓글이 없습니다.</p>
-            ) : (
-              comments.map((comment) => (
-                <Reply
-                  key={comment.id}
-                  id={comment.id}
-                  author={comment.author}
-                  content={comment.content}
-                  createdAt={comment.createdAt}
-                  isAuthor={comment.isAuthor}
-                  replies={comment.replies}
-                />
-              ))
-            )}
+    <div className="h-full flex flex-col">
+      <PullToRefresh onRefresh={handleRefresh}>
+        <div className="pb-20">
+          <div className="p-4">
+            <ApplicantCardBasic
+              name={applicant.name}
+              gender={genderMap[applicant.gender] ?? '남'}
+              status={statusMap[applicant.status] ?? '보류'}
+              university={`${applicant.school}/${applicant.major}/${applicant.position}`}
+              phone={formatPhoneNumber(applicant.phoneNumber)}
+              email={applicant.email}
+              isFavorite={isFavorite}
+              onToggleFavorite={handleToggleFavorite}
+              commentCount={applicant.commentCount}
+              onCommentClick={() => setCommentOpen(true)}
+              appointmentDate={appointmentDate}
+              appointmentTime={appointmentTime}
+              onAppointmentClick={() => setIsModalOpen(true)}
+            />
           </div>
-        </BottomSheet>
-      </div>
 
-      {/* 모달 */}
+          <div className="p-4 mx-4 bg-white rounded-10">
+            {applicant.answers
+              .filter(item => item.question !== '타임스탬프')
+              .map((item, idx) => (
+                <QuestionSection key={idx} title={item.question} content={item.answer} />
+            ))}
+          </div>
+        </div>
+      </PullToRefresh>
+
+      <CommentSection
+        isOpen={isCommentOpen}
+        onClose={() => setCommentOpen(false)}
+        projectId={projectId}
+        applicantId={applicantId}
+        stage="INTERVIEW"
+        currentUserId={currentUserId}
+      />
+
       <AppointmentModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -102,6 +159,6 @@ export default function InterviewDetailClient({ applicantId }: InterviewDetailCl
         initialDate={appointmentDate}
         initialTime={appointmentTime}
       />
-    </>
+    </div>
   );
 }

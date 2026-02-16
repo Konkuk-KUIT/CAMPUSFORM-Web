@@ -1,6 +1,9 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
+import { projectService } from '@/services/projectService';
+import { useCurrentProjectStore } from '@/store/currentProjectStore';
+import { useNewProjectStore } from '@/store/newProjectStore';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/ui/Header';
@@ -8,16 +11,14 @@ import Navbar from '@/components/Navbar';
 import Btn from '@/components/ui/Btn';
 import SmartScheduleDropdown from '@/components/ui/SmartScheduleDropdown';
 import TimePicker from '@/components/ui/TimePicker';
+import MultiSelectCalendar from '@/components/home/MultiSelectCalendar';
 
 type TimeOption = { label: string; value: string };
 
 export default function InterviewInfoSettingForm() {
   const router = useRouter();
-  // Date state
-  const today = new Date();
-  const [year, setYear] = useState<number>(today.getFullYear());
-  const [month, setMonth] = useState<number>(today.getMonth()); // 0-indexed
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  // Date state - 여러 날짜를 선택할 수 있도록 배열로 변경
+  const [selectedDates, setSelectedDates] = useState<Date[]>([]);
 
   // Time state
   const hourOptions = useMemo<TimeOption[]>(() => {
@@ -75,52 +76,105 @@ export default function InterviewInfoSettingForm() {
   const [estimatedDuration, setEstimatedDuration] = useState<string>('');
   const [restDuration, setRestDuration] = useState<string>('');
 
-  // Calendar helpers
-  const firstDayOfMonth = useMemo(() => new Date(year, month, 1), [year, month]);
-  const startWeekday = firstDayOfMonth.getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const prevMonthDays = new Date(year, month, 0).getDate();
-  const calendarCells = useMemo(() => {
-    const cells: { d: number; current: boolean }[] = [];
-    // leading days from prev month
-    for (let i = 0; i < startWeekday; i++) {
-      cells.push({ d: prevMonthDays - startWeekday + 1 + i, current: false });
-    }
-    // current month days
-    for (let d = 1; d <= daysInMonth; d++) cells.push({ d, current: true });
-    // trailing to fill 6 rows * 7 cols = 42
-    const trailing = 42 - cells.length;
-    for (let i = 1; i <= trailing; i++) cells.push({ d: i, current: false });
-    return cells;
-  }, [startWeekday, prevMonthDays, daysInMonth]);
-
-  const handlePrevMonth = () => {
-    setMonth(m => {
-      if (m === 0) {
-        setYear(y => y - 1);
-        return 11;
-      }
-      return m - 1;
-    });
-  };
-  const handleNextMonth = () => {
-    setMonth(m => {
-      if (m === 11) {
-        setYear(y => y + 1);
-        return 0;
-      }
-      return m + 1;
-    });
-  };
-
   const isTimeValid = () => {
     const startTotalMin = parseInt(startHour) * 60 + parseInt(startMinute);
     const endTotalMin = parseInt(endHour) * 60 + parseInt(endMinute);
     return startTotalMin < endTotalMin;
   };
 
-  const handleSubmit = () => {
-    if (!selectedDate) {
+  // 멀티 날짜 선택 핸들러
+  const handleMultiDateChange = (dates: Date[]) => {
+    setSelectedDates(dates);
+  };
+
+  // 날짜 배열을 YYYY-MM-DD 형식으로 변환 및 정렬
+  const getFormattedDates = (): string[] => {
+    return selectedDates
+      .map(date => date.toISOString().slice(0, 10))
+      .sort();
+  };
+
+  // zustand store에서 현재 projectId 받아오기
+  const projectId = useCurrentProjectStore(state => state.projectId);
+  const setProjectId = useCurrentProjectStore(state => state.setProjectId);
+  const createdProjectId = useNewProjectStore(state => state.createdProjectId);
+
+  // projectId가 없으면 프로젝트 목록에서 가져오기
+  useEffect(() => {
+    const initializeProjectId = async () => {
+      console.log('[InterviewSetting] 현재 projectId:', projectId);
+      console.log('[InterviewSetting] 생성된 projectId:', createdProjectId);
+      
+      // 1순위: 이미 currentStore에 projectId가 있으면 사용
+      if (projectId) {
+        console.log('[InterviewSetting] 기존 projectId 사용:', projectId);
+        return;
+      }
+      
+      // 2순위: 방금 생성한 프로젝트 ID가 있으면 사용
+      if (createdProjectId) {
+        console.log('[InterviewSetting] 생성된 projectId 설정:', createdProjectId);
+        setProjectId(createdProjectId);
+        return;
+      }
+      
+      // 3순위: 프로젝트 목록에서 가져오기
+      try {
+        console.log('[InterviewSetting] 프로젝트 목록 조회 중...');
+        const projects = await projectService.getProjects();
+        console.log('[InterviewSetting] 프로젝트 목록:', projects);
+        
+        if (projects.length > 0) {
+          console.log('[InterviewSetting] 첫 번째 프로젝트 사용:', projects[0].id);
+          setProjectId(projects[0].id);
+        } else {
+          console.warn('[InterviewSetting] 프로젝트가 없습니다');
+        }
+      } catch (error) {
+        console.error('[InterviewSetting] 프로젝트 목록 조회 실패:', error);
+      }
+    };
+    
+    initializeProjectId();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleSubmit = async () => {
+    console.log('[InterviewSetting] 제출 시도 - projectId:', projectId);
+    console.log('[InterviewSetting] createdProjectId:', createdProjectId);
+    
+    // projectId 가져오기 (우선순위: projectId > createdProjectId > 프로젝트 목록)
+    let targetProjectId = projectId;
+    
+    if (!targetProjectId && createdProjectId) {
+      console.log('[InterviewSetting] createdProjectId 사용:', createdProjectId);
+      targetProjectId = createdProjectId;
+      setProjectId(createdProjectId); // store에도 저장
+    }
+    
+    if (!targetProjectId) {
+      console.log('[InterviewSetting] 프로젝트 목록에서 가져오기 시도');
+      try {
+        const projects = await projectService.getProjects();
+        if (projects.length > 0) {
+          targetProjectId = projects[0].id;
+          setProjectId(targetProjectId);
+          console.log('[InterviewSetting] 프로젝트 목록에서 가져옴:', targetProjectId);
+        }
+      } catch (error) {
+        console.error('[InterviewSetting] 프로젝트 목록 조회 실패:', error);
+      }
+    }
+    
+    if (!targetProjectId) {
+      console.error('[InterviewSetting] projectId를 가져올 수 없습니다');
+      alert('프로젝트를 찾을 수 없습니다.\n프로젝트를 먼저 생성해주세요.');
+      return;
+    }
+    
+    console.log('[InterviewSetting] 최종 사용 projectId:', targetProjectId);
+    
+    if (selectedDates.length === 0) {
       alert('면접 날짜를 선택해주세요');
       return;
     }
@@ -134,103 +188,51 @@ export default function InterviewInfoSettingForm() {
     }
 
     const payload = {
-      date: selectedDate.toISOString().slice(0, 10),
-      start: `${startHour}:${startMinute}`,
-      end: `${endHour}:${endMinute}`,
+      interviewDates: getFormattedDates(),
+      startTime: `${startHour}:${startMinute}`,
+      endTime: `${endHour}:${endMinute}`,
       maxApplicantsPerSlot,
       minInterviewersPerSlot,
       maxInterviewersPerSlot,
-      estimatedDuration: `${estimatedDuration}분`,
-      restDuration: restDuration ? `${restDuration}분` : '없음',
+      slotDurationMin: estimatedDuration ? parseInt(estimatedDuration) : 0,
+      slotBreakMin: restDuration ? parseInt(restDuration) : 0,
     };
-    console.log('면접 정보 설정', payload);
-
-    // 설정 완료 상태 저장
-    localStorage.setItem('interviewInfoConfigured', 'true');
-
-    alert('면접 정보가 설정되었습니다');
-    // TODO: API call to save data
-    router.push('/smart-schedule');
+    
+    console.log('[InterviewSetting] API 호출 - projectId:', targetProjectId, 'payload:', payload);
+    
+    try {
+      await projectService.updateInterviewSetting(targetProjectId, payload);
+      localStorage.setItem('interviewInfoConfigured', 'true');
+      console.log('[InterviewSetting] 면접 정보 설정 성공');
+      alert('면접 정보가 설정되었습니다');
+      if (targetProjectId) {
+        router.push(`/smart-schedule/${targetProjectId}`);
+      }
+    } catch (e) {
+      console.error('[InterviewSetting] 면접 정보 설정 실패:', e);
+      alert('면접 정보 설정에 실패했습니다.');
+    }
   };
 
   return (
     <main className="min-h-screen flex justify-center bg-white font-['Pretendard']">
-      <div className="relative w-[375px] bg-white min-h-screen flex flex-col overflow-x-hidden">
+      <div className="relative w-93.75 bg-white min-h-screen flex flex-col overflow-x-hidden">
         {/* Top bar */}
-        <Header title="면접 정보 설정" backTo="/smart-schedule" />
+        <Header title="면접 정보 설정" backTo={projectId ? `/smart-schedule/${projectId}` : '/smart-schedule'} />
 
         {/* Scrollable content */}
         <div className="flex-1 px-4 pb-24 overflow-y-auto">
           {/* 면접 날짜 */}
           <div className="mt-2">
-            <div className="flex items-center gap-2 py-1">
+            <div className="flex items-center gap-2 py-1 mb-3">
               <Image src="/icons/calendar-black.svg" alt="calendar" width={15.75} height={15.75} />
               <span className="text-[15px] font-medium text-gray-950">면접 날짜</span>
             </div>
 
-            <div className="flex items-center justify-center px-6 py-2">
-              <div className="w-[303px] rounded-radius-10 bg-white px-2.5 py-2">
-                {/* Month label */}
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <button
-                    aria-label="prev"
-                    className="w-[33px] h-[33px] flex items-center justify-center rotate-180"
-                    onClick={handlePrevMonth}
-                  >
-                    <Image src="/icons/chevron-right.svg" alt="prev" width={24} height={7} />
-                  </button>
-                  <span className="text-[14px] font-medium text-gray-950 w-[184px] text-center">
-                    {year}년 {month + 1}월
-                  </span>
-                  <button
-                    aria-label="next"
-                    className="w-[33px] h-[33px] flex items-center justify-center"
-                    onClick={handleNextMonth}
-                  >
-                    <Image src="/icons/chevron-right.svg" alt="next" width={24} height={7} />
-                  </button>
-                </div>
-
-                {/* Week labels */}
-                <div className="grid grid-cols-7 h-[18px] mb-1">
-                  {['일', '월', '화', '수', '목', '금', '토'].map(w => (
-                    <div key={w} className="flex items-center justify-center text-[12px] text-gray-400">
-                      {w}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Calendar grid */}
-                <div className="grid grid-cols-7 gap-y-[2px]">
-                  {calendarCells.map((cell, idx) => {
-                    const isSelected =
-                      selectedDate &&
-                      cell.current &&
-                      selectedDate.getDate() === cell.d &&
-                      selectedDate.getMonth() === month &&
-                      selectedDate.getFullYear() === year;
-                    return (
-                      <button
-                        key={idx}
-                        className="h-[30px] flex items-center justify-center"
-                        onClick={() => cell.current && setSelectedDate(new Date(year, month, cell.d))}
-                      >
-                        <div className="relative w-6 h-6 flex items-center justify-center">
-                          <span
-                            className={`text-[14px] z-10 ${
-                              isSelected ? 'text-white font-semibold' : cell.current ? 'text-gray-950' : 'text-gray-300'
-                            }`}
-                          >
-                            {cell.d}
-                          </span>
-                          {isSelected && <div className="absolute inset-0 rounded-full bg-blue-600" />}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
+            <MultiSelectCalendar
+              selectedDates={selectedDates}
+              onDateChange={handleMultiDateChange}
+            />
           </div>
 
           {/* 면접 시간대 */}
@@ -259,18 +261,18 @@ export default function InterviewInfoSettingForm() {
             <div className="flex flex-col gap-2">
               <span className="text-[15px] font-medium text-gray-950">타임 당 지원자 수</span>
               <div className="flex items-center justify-end gap-2">
-                <span className="text-[12px] text-gray-950">최대</span>
+                <span className="text-12 text-gray-950">최대</span>
                 <button
                   aria-label="decrease"
-                  className="w-[29px] h-[29px] bg-blue-100 rounded-full flex items-center justify-center text-[18px]"
+                  className="w-7.25 h-7.25 bg-blue-100 rounded-full flex items-center justify-center text-18"
                   onClick={() => setMaxApplicantsPerSlot(v => Math.max(1, v - 1))}
                 >
                   −
                 </button>
-                <span className="text-[16px] text-gray-600 w-[32px] text-center">{maxApplicantsPerSlot}</span>
+                <span className="text-16 text-gray-600 w-8 text-center">{maxApplicantsPerSlot}</span>
                 <button
                   aria-label="increase"
-                  className="w-[29px] h-[29px] bg-blue-100 rounded-full flex items-center justify-center text-[18px]"
+                  className="w-7.25 h-7.25 bg-blue-100 rounded-full flex items-center justify-center text-18"
                   onClick={() => setMaxApplicantsPerSlot(v => v + 1)}
                 >
                   +
@@ -285,18 +287,18 @@ export default function InterviewInfoSettingForm() {
               <span className="text-[15px] font-medium text-gray-950">타임 당 면접관 수</span>
               {/* 최소 */}
               <div className="flex items-center justify-end gap-2">
-                <span className="text-[12px] text-gray-950">최소</span>
+                <span className="text-12 text-gray-950">최소</span>
                 <button
                   aria-label="min-dec"
-                  className="w-[29px] h-[29px] bg-blue-100 rounded-full flex items-center justify-center text-[18px]"
+                  className="w-7.25 h-7.25 bg-blue-100 rounded-full flex items-center justify-center text-18"
                   onClick={() => setMinInterviewersPerSlot(v => Math.max(1, v - 1))}
                 >
                   −
                 </button>
-                <span className="text-[16px] text-gray-600 w-[32px] text-center">{minInterviewersPerSlot}</span>
+                <span className="text-16 text-gray-600 w-8 text-center">{minInterviewersPerSlot}</span>
                 <button
                   aria-label="min-inc"
-                  className="w-[29px] h-[29px] bg-blue-100 rounded-full flex items-center justify-center text-[18px]"
+                  className="w-7.25 h-7.25 bg-blue-100 rounded-full flex items-center justify-center text-18"
                   onClick={() => setMinInterviewersPerSlot(v => v + 1)}
                 >
                   +
@@ -304,18 +306,18 @@ export default function InterviewInfoSettingForm() {
               </div>
               {/* 최대 */}
               <div className="flex items-center justify-end gap-2">
-                <span className="text-[12px] text-gray-950">최대</span>
+                <span className="text-12 text-gray-950">최대</span>
                 <button
                   aria-label="max-dec"
-                  className="w-[29px] h-[29px] bg-blue-100 rounded-full flex items-center justify-center text-[18px]"
+                  className="w-7.25 h-7.25 bg-blue-100 rounded-full flex items-center justify-center text-18"
                   onClick={() => setMaxInterviewersPerSlot(v => Math.max(1, v - 1))}
                 >
                   −
                 </button>
-                <span className="text-[16px] text-gray-600 w-[32px] text-center">{maxInterviewersPerSlot}</span>
+                <span className="text-16 text-gray-600 w-8 text-center">{maxInterviewersPerSlot}</span>
                 <button
                   aria-label="max-inc"
-                  className="w-[29px] h-[29px] bg-blue-100 rounded-full flex items-center justify-center text-[18px]"
+                  className="w-7.25 h-7.25 bg-blue-100 rounded-full flex items-center justify-center text-18"
                   onClick={() => setMaxInterviewersPerSlot(v => v + 1)}
                 >
                   +
@@ -329,7 +331,7 @@ export default function InterviewInfoSettingForm() {
             <div className="grid grid-cols-2 gap-y-3 py-2">
               <div>
                 <span className="text-[15px] font-medium text-gray-950">
-                  예상 소요 시간 <span className="text-[12px] text-gray-600">(분/타임 당)</span>
+                  예상 소요 시간 <span className="text-12 text-gray-600">(분/타임 당)</span>
                 </span>
               </div>
               <div className="flex items-center justify-end">

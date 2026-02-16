@@ -3,16 +3,20 @@
 
 import { useRouter } from 'next/navigation';
 import InterviewInitialCard from '@/components/interview/InterviewInitialCard';
+import { useCurrentProjectStore } from '@/store/currentProjectStore';
 
 export default function InterviewInitialCards() {
   const router = useRouter();
+  const projectId = useCurrentProjectStore(s => s.projectId);
 
   const handleLoadApplicants = () => {
     router.push('/interview/list');
   };
 
   const handleCreateSchedule = () => {
-    router.push('/smart-schedule');
+    if (projectId) {
+      router.push(`/smart-schedule/${projectId}`);
+    }
   };
 
   return (

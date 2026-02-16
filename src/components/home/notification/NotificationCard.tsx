@@ -1,14 +1,16 @@
-"use client";
+'use client';
 
-type NotificationType = 'applicant' | 'comment';
+import Image from 'next/image';
+import type { NotificationType } from '@/types/notification';
 
 interface NotificationCardProps {
-  type: NotificationType;     
+  type: NotificationType;
   title: string;
-  subContent?: string;       
+  subContent?: string;
   content: string;
   timeAgo: string;
   isUnread?: boolean;
+  onClick?: () => void;
 }
 
 export default function NotificationCard({
@@ -18,50 +20,46 @@ export default function NotificationCard({
   content,
   timeAgo,
   isUnread = false,
+  onClick,
 }: NotificationCardProps) {
-
   const getIconSrc = () => {
-    if (type === 'applicant') {
-      return isUnread ? "/icons/newapplicant-blue.svg" : "/icons/newapplicant.svg";
+    switch (type) {
+      case 'NEW_APPLICANT':
+        return isUnread ? '/icons/newapplicant-blue.svg' : '/icons/newapplicant.svg';
+      case 'COMMENT_CREATED':
+        return isUnread ? '/icons/comment-blue.svg' : '/icons/comment-black.svg';
+      case 'ADMIN_ADDED':
+        return isUnread ? '/icons/admin-blue.svg' : '/icons/admin.svg';
+      default:
+        return '/icons/comment.svg';
     }
-    return isUnread ? "/icons/comment-blue.svg" : "/icons/comment.svg";
   };
 
-  const iconClassName = type === 'applicant' && !isUnread ? "w-full h-full grayscale" : "w-full h-full";
-
   return (
-    <div 
-      className={`w-[375px] min-h-[80px] border-t border-gray-100 flex flex-col cursor-pointer px-[20px] py-[12px]
-                  ${isUnread ? "bg-blue-50" : "bg-white"}`}
+    <div
+      onClick={onClick}
+      className={`border-t border-gray-100 flex flex-col cursor-pointer px-[20px] py-[12px]
+                  ${isUnread ? 'bg-blue-50' : 'bg-white'}`}
     >
       <div className="flex items-center w-full">
-        <div className={`w-[23px] h-[23px] flex-shrink-0 flex items-center justify-center ${isUnread ? "text-primary" : "text-gray-950"}`}>
-          <img 
+        <div className={`shrink-0 relative ${isUnread ? 'text-primary' : 'text-gray-950'}`}>
+          <Image
             src={getIconSrc()}
-            alt={type} 
-            className={iconClassName} 
+            alt={type}
+            width={16.5}
+            height={16.5}
+            className={type === 'NEW_APPLICANT' && !isUnread ? 'grayscale' : ''}
           />
         </div>
 
-        <h4 className="ml-[8px] text-body-sm text-gray-950 flex-1 font-bold">
-          {title}
-        </h4>
+        <h4 className="ml-2 text-body-sm text-gray-950 flex-1 font-bold">{title}</h4>
 
-        <span className="text-body-sm text-gray-500 flex-shrink-0">
-          {timeAgo}
-        </span>
+        <span className="text-body-sm text-gray-500 shrink-0">{timeAgo}</span>
       </div>
 
-      <div className="ml-[50px] mt-[2px] flex flex-col gap-[2px]">
-        {subContent && (
-          <p className="text-body-md text-gray-500">
-            {subContent}
-          </p>
-        )}
-        
-        <p className="text-body-md text-gray-950 leading-[21px]">
-          {content}
-        </p>
+      <div className="ml-8.75 mt-0.5 flex flex-col gap-0.5">
+        {subContent && <p className="text-body-md text-gray-500">{subContent}</p>}
+        <p className="text-body-md text-gray-950">{content}</p>
       </div>
     </div>
   );

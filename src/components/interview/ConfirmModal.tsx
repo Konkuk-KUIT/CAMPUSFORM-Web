@@ -1,13 +1,12 @@
 'use client';
 
-import Link from 'next/link';
-
 interface ConfirmModalProps {
   isOpen: boolean;
   onCancel: () => void;
+  onConfirm: () => void;
 }
 
-export default function ConfirmModal({ isOpen, onCancel }: ConfirmModalProps) {
+export default function ConfirmModal({ isOpen, onCancel, onConfirm }: ConfirmModalProps) {
   if (!isOpen) return null;
 
   return (
@@ -29,9 +28,9 @@ export default function ConfirmModal({ isOpen, onCancel }: ConfirmModalProps) {
           <button onClick={onCancel} className="text-subtitle-md px-2 py-2 cursor-pointer">
             취소
           </button>
-          <Link href="/interview" className="text-subtitle-md px-2 py-2">
+          <button onClick={onConfirm} className="text-subtitle-md px-2 py-2">
             확인
-          </Link>
+          </button>
         </div>
       </div>
     </div>

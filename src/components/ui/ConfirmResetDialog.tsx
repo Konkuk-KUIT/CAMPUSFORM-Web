@@ -27,7 +27,7 @@ export default function ConfirmResetDialog({ isOpen, onClose, onConfirm }: Confi
         <div className="mt-auto flex justify-end w-full pb-3 pr-3 pt-8">
           <button 
             onClick={onClose}
-            className="w-16 h-12 flex items-center justify-center text-[16px] font-medium text-black tracking-[-0.5px] hover:text-gray-700 transition-colors"
+            className="w-16 h-12 flex items-center justify-center text-[16px] font-medium text-black tracking-[-0.5px] hover:text-gray-700 transition-colors cursor-pointer"
           >
             취소
           </button>
@@ -37,7 +37,7 @@ export default function ConfirmResetDialog({ isOpen, onClose, onConfirm }: Confi
               onConfirm();
               onClose();
             }}
-            className="w-16 h-12 flex items-center justify-center text-[16px] font-medium text-black tracking-[-0.5px] hover:text-gray-900 transition-colors"
+            className="w-16 h-12 flex items-center justify-center text-[16px] font-medium text-black tracking-[-0.5px] hover:text-gray-900 transition-colors cursor-pointer"
           >
             완료
           </button>

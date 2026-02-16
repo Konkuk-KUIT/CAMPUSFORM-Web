@@ -4,9 +4,15 @@ import { useState, useRef } from 'react';
 import Image from 'next/image';
 import SelectModal from '../ui/SelectModal';
 
-export default function ProfileImageButton() {
+interface ProfileImageButtonProps {
+  profileImageUrl?: string | null;
+  onImageChange?: (file: File | null) => void;
+  onImageDelete?: () => void;
+}
+
+export default function ProfileImageButton({ profileImageUrl, onImageChange, onImageDelete }: ProfileImageButtonProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [imgSrc, setImgSrc] = useState('');
+  const [previewSrc, setPreviewSrc] = useState<string>(''); // 미리보기 전용
   const inputRef = useRef<HTMLInputElement>(null);
 
   const profileOptions = [
@@ -14,18 +20,16 @@ export default function ProfileImageButton() {
     { id: 'delete', label: '이미지 삭제' },
   ];
 
-  // 모달에서 옵션 선택
   const handleOptionSelect = (optionId: string) => {
     if (optionId === 'edit') {
       inputRef.current?.click();
     } else if (optionId === 'delete') {
-      imgRemove();
+      handleImageRemove();
     }
     setIsModalOpen(false);
   };
 
-  // 이미지 선택 시 미리보기
-  const attachImgPath = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -34,33 +38,40 @@ export default function ProfileImageButton() {
       return;
     }
 
-    // 이미지 미리보기
+    // 미리보기 표시
     const reader = new FileReader();
     reader.readAsDataURL(file);
 
     reader.onload = (e: ProgressEvent<FileReader>) => {
       if (reader.readyState === 2 && e.target?.result) {
-        setImgSrc(e.target.result as string);
+        setPreviewSrc(e.target.result as string);
       }
     };
 
-    // TODO: 나중에 서버 연동할때 파일 부모 컴포넌트로 전달
+    onImageChange?.(file);
   };
 
-  // 이미지 삭제
-  const imgRemove = () => {
-    setImgSrc('');
+  const handleImageRemove = () => {
+    setPreviewSrc('');
     if (inputRef.current) {
       inputRef.current.value = '';
     }
+    onImageDelete?.();
   };
+
+  // 표시할 이미지: 미리보기 > 기존 프로필 이미지 > 기본 아이콘
+  const displayImage = previewSrc || profileImageUrl;
 
   return (
     <div className="relative">
-      <button onClick={() => setIsModalOpen(!isModalOpen)} className="relative cursor-pointer block mx-auto">
-        {imgSrc ? (
+      <button
+        onClick={() => setIsModalOpen(!isModalOpen)}
+        className="relative cursor-pointer block mx-auto"
+        type="button"
+      >
+        {displayImage ? (
           <div className="w-22.5 h-22.5 relative">
-            <Image src={imgSrc} alt="프로필 이미지" fill className="rounded-full object-cover" />
+            <Image src={displayImage} alt="프로필 이미지" fill className="rounded-full object-cover" />
           </div>
         ) : (
           <Image src="/icons/profile.svg" alt="프로필" width={90} height={90} loading="eager" />
@@ -70,7 +81,7 @@ export default function ProfileImageButton() {
         </div>
       </button>
 
-      <input type="file" ref={inputRef} accept="image/*" className="hidden" onChange={attachImgPath} />
+      <input type="file" ref={inputRef} accept="image/*" className="hidden" onChange={handleImageSelect} />
 
       {isModalOpen && (
         <>
