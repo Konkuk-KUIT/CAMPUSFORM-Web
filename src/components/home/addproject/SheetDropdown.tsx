@@ -65,8 +65,8 @@ export default function SheetDropdown({
         <div className="absolute top-[51px] left-0 w-full max-h-[385px] overflow-y-auto bg-[#f6f6f6] rounded-bl-[10px] rounded-br-[10px] shadow-[2px_5px_10px_0px_rgba(0,0,0,0.1)] z-50 scrollbar-hide">
           {showNoneOption && (
             <button
-               onClick={() => handleSelect('선택사항 없음')}
-               className="w-full h-[35px] pl-[23px] pr-[20px] py-[7px] text-left text-[13px] font-normal leading-[18px] text-black bg-[#f6f6f6] hover:bg-[#ececec] transition-colors"
+              onClick={() => handleSelect('선택사항 없음')}
+              className="w-full min-h-[35px] pl-[23px] pr-[20px] py-[7px] text-left text-[13px] font-normal leading-[18px] text-black bg-[#f6f6f6] hover:bg-[#ececec] transition-colors break-words whitespace-normal"
             >
               선택사항 없음
             </button>
@@ -76,7 +76,7 @@ export default function SheetDropdown({
             <button 
               key={index}
               onClick={() => handleSelect(option)}
-              className="w-full h-[35px] pl-[23px] pr-[20px] py-[7px] text-left text-[13px] font-normal leading-[18px] text-black bg-[#f6f6f6] hover:bg-[#ececec] transition-colors"
+              className="w-full min-h-[35px] pl-[23px] pr-[20px] py-[7px] text-left text-[13px] font-normal leading-[18px] text-black bg-[#f6f6f6] hover:bg-[#ececec] transition-colors break-words whitespace-normal"
             >
               {option}
             </button>
