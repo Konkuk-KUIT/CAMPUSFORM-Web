@@ -14,6 +14,7 @@ interface RecruitmentCardProps {
   dateRange: string;
   applicantCount: number;
   onDelete: (id: number) => void;
+  onClick?: () => void;
 }
 
 export default function RecruitmentCard({
@@ -24,6 +25,7 @@ export default function RecruitmentCard({
   dateRange,
   applicantCount,
   onDelete,
+  onClick,
 }: RecruitmentCardProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
@@ -77,7 +79,7 @@ export default function RecruitmentCard({
   });
 
   return (
-    <div className={cardClasses}>
+    <div className={cardClasses} onClick={onClick}>
       <h2 className={titleClasses}>{title}</h2>
 
       <div className="absolute top-[42px] left-[25px] flex flex-col">

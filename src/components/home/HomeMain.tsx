@@ -190,6 +190,11 @@ export default function HomeMain() {
                         dateRange={`${project.startAt} ~ ${project.endAt}`}
                         applicantCount={project.applicantCount}
                         onDelete={handleDeleteProject}
+                        onClick={() => router.push(
+                          project.state === 'DOCUMENT'
+                            ? `/document/${project.id}`
+                            : `/interview/${project.id}`
+                        )}
                       />
                     </div>
                   ))}
