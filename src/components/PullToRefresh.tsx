@@ -88,7 +88,7 @@ export default function PullToRefresh({ onRefresh, children }: PullToRefreshProp
       {/* 스크롤 컨테이너 */}
       <div
         ref={containerRef}
-        className="flex-1 overflow-y-auto transition-transform"
+        className="flex-1 overflow-y-auto overflow-x-hidden transition-transform no-scrollbar"
         style={{
           transform: `translateY(${pullDistance}px)`,
         }}

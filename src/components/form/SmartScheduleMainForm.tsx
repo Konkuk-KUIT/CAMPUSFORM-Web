@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useEffect } from 'react';
@@ -8,54 +8,487 @@ import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Btn from '@/components/ui/Btn';
 import ConfirmResetDialog from '@/components/ui/ConfirmResetDialog';
+import UnassignedApplicantsAlert from '@/components/ui/UnassignedApplicantsAlert';
 import AllAccordion from '@/components/ui/AllAccordion';
 import SmartScheduleButton from '@/components/ui/SmartScheduleButton';
 import SmartScheduleCalendarPreview from '@/components/ui/SmartScheduleCalendarPreview';
 import NotificationBell from '@/components/ui/NotificationBell';
+import { useCurrentProjectStore } from '@/store/currentProjectStore';
+import { useNewProjectStore } from '@/store/newProjectStore';
+import { projectService } from '@/services/projectService';
+import { authService } from '@/services/authService';
+import { documentResultService } from '@/services/documentResultService';
+import { toast } from '@/components/Toast';
+import type { ProjectAdminRaw } from '@/types/project';
 
 export default function SmartScheduleMainForm() {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const handleConfirm = () => {
-    setShowConfirmDialog(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [showInfoAlert, setShowInfoAlert] = useState(false);
+
+  const handleInfoAlertConfirm = () => {
+    setShowInfoAlert(false);
     router.push('/smart-schedule/result');
   };
+
+  // 서류 합격자 전화번호 복사 함수
+  const handleCopyPhoneNumbers = async () => {
+    if (!projectId) {
+      toast.error('프로젝트를 선택해주세요.');
+      return;
+    }
+
+    try {
+      const response = await documentResultService.getDocumentResults(projectId, 'PASS');
+      const applicants = response.applicants || [];
+
+      const phoneNumbers = applicants.map(a => a.phoneNumber).filter(Boolean) as string[];
+
+      if (phoneNumbers.length === 0) {
+        toast.error('복사할 전화번호가 없습니다.');
+        return;
+      }
+
+      const text = phoneNumbers.join(' ');
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.top = '0';
+      textarea.style.left = '0';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+
+      toast.success(`${phoneNumbers.length}명의 전화번호가 복사되었습니다.`);
+    } catch (error) {
+      console.error('전화번호 복사 실패:', error);
+      toast.error('전화번호 복사에 실패했습니다.');
+    }
+  };
+
+  const handleConfirm = async () => {
+    if (!projectId) {
+      toast.error('프로젝트를 선택해주세요');
+      return;
+    }
+
+    setShowConfirmDialog(false);
+    setIsGenerating(true);
+
+    try {
+      const result = await projectService.generateSmartSchedule(projectId);
+      toast.success('스마트 시간표가 생성되었습니다');
+      setIsGenerating(false);
+      router.push('/smart-schedule/result');
+    } catch (error: any) {
+      let errorMessage = '스마트 시간표 생성에 실패했습니다.';
+
+      if (error?.response?.data?.message?.includes('foreign key constraint')) {
+        errorMessage = '기존 스케줄 데이터가 있어 생성할 수 없습니다.\n관리자에게 문의해주세요.';
+      } else if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+
+      toast.error(errorMessage);
+      setIsGenerating(false);
+    }
+  };
+
   const [mounted, setMounted] = useState(false);
-  // useEffect to set mounted true after client hydration
+  const [isConfigured, setIsConfigured] = useState<boolean>(false);
+  const router = useRouter();
+  const projectId = useCurrentProjectStore(s => s.projectId);
+  const setProjectId = useCurrentProjectStore(s => s.setProjectId);
+  const createdProjectId = useNewProjectStore(s => s.createdProjectId);
+
+  const [interviewSetting, setInterviewSetting] = useState<{
+    startDate: string;
+    endDate: string;
+    startTime: string;
+    endTime: string;
+    slotDurationMin: number;
+    interviewDates?: string[];
+  } | null>(null);
+
   useEffect(() => {
     setMounted(true);
   }, []);
-  const router = useRouter();
+
+  useEffect(() => {
+    const initializeProjectId = async () => {
+      if (projectId) return;
+
+      if (createdProjectId) {
+        setProjectId(createdProjectId);
+        return;
+      }
+
+      try {
+        const projects = await projectService.getProjects();
+        if (projects.length > 0) {
+          setProjectId(projects[0].id);
+        }
+      } catch (error) {
+        console.error('[SmartSchedule] 프로젝트 목록 조회 실패:', error);
+      }
+    };
+
+    initializeProjectId();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const checkInterviewSetting = async () => {
+      if (!projectId) return;
+
+      try {
+        const setting = await projectService.getInterviewSetting(projectId);
+
+        const isValid =
+          setting &&
+          setting.interviewDates &&
+          Array.isArray(setting.interviewDates) &&
+          setting.interviewDates.length > 0 &&
+          setting.startTime &&
+          setting.endTime;
+
+        if (isValid) {
+          setInterviewSetting(setting);
+          setIsConfigured(true);
+        } else {
+          setInterviewSetting(null);
+          setIsConfigured(false);
+        }
+      } catch (error) {
+        console.error('[SmartSchedule] 면접 정보 설정 조회 실패:', error);
+        setInterviewSetting(null);
+        setIsConfigured(false);
+      }
+    };
+
+    checkInterviewSetting();
+  }, [projectId]);
+
+  useEffect(() => {
+    const fetchInvestigationLink = async () => {
+      if (!projectId) return;
+
+      try {
+        const linkData = await projectService.getInvestigationLink(projectId);
+
+        let link = linkData?.link || linkData?.url;
+
+        if (link) {
+          if (link.startsWith('/submit')) {
+            link = link.replace('/submit', '/smart-schedule/applicant-submit');
+          }
+
+          if (link.startsWith('/')) {
+            const origin = typeof window !== 'undefined' ? window.location.origin : '';
+            link = `${origin}${link}`;
+          }
+          setInvestigationLink(link);
+        }
+      } catch (error) {
+        console.log('[SmartSchedule] Investigation Link 조회 실패:', error);
+      }
+    };
+
+    fetchInvestigationLink();
+  }, [projectId]);
+
   const [selectedInterviewer, setSelectedInterviewer] = useState<number | null>(null);
   const [requiredInterviewers, setRequiredInterviewers] = useState<{ [key: number]: boolean }>({ 0: true });
-  const hasSchedule = true; // 스마트 시간표 생성 여부 (가정)
-  const isRepresentative = true; // 대표자 여부 (가정)
+  const hasSchedule = true;
+  const isRepresentative = true;
   const [showInterviewerView, setShowInterviewerView] = useState(false);
+  const [investigationLink, setInvestigationLink] = useState<string>('');
+  const [isGeneratingLink, setIsGeneratingLink] = useState(false);
+  const [overviewCalendarStartDate, setOverviewCalendarStartDate] = useState(new Date());
 
-  // 면접 정보 설정 완료 여부 확인
-  let isConfigured = null;
-  if (typeof window !== 'undefined') {
-    isConfigured = localStorage.getItem('interviewInfoConfigured');
-  }
+  const [interviewersCellActive, setInterviewersCellActive] = useState<{
+    [interviewerId: number]: { [key: string]: { top: boolean; bottom: boolean } };
+  }>({});
+
+  useEffect(() => {
+    if (!projectId || typeof window === 'undefined') return;
+
+    const storageKey = `interviewersCellActive_${projectId}`;
+    const saved = localStorage.getItem(storageKey);
+
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setInterviewersCellActive(parsed);
+      } catch (e) {
+        console.error('[SmartSchedule] localStorage 파싱 실패:', e);
+        setInterviewersCellActive({});
+      }
+    } else {
+      setInterviewersCellActive({});
+    }
+  }, [projectId]);
+
+  useEffect(() => {
+    if (!projectId || typeof window === 'undefined') return;
+
+    const storageKey = `interviewersCellActive_${projectId}`;
+    if (Object.keys(interviewersCellActive).length > 0) {
+      localStorage.setItem(storageKey, JSON.stringify(interviewersCellActive));
+    }
+  }, [interviewersCellActive, projectId]);
+
+  const [interviewers, setInterviewers] = useState<
+    Array<{
+      userId: number;
+      name: string;
+      email: string;
+      profileImageUrl?: string;
+      isLeader: boolean;
+    }>
+  >([]);
+
+  const handleSaveInterviewerTime = async (userId: number, interviewerName: string) => {
+    if (!projectId) {
+      toast.error('프로젝트가 선택되지 않았습니다.');
+      return;
+    }
+
+    if (!interviewSetting) {
+      toast.error('면접 설정을 먼저 완료해주세요.');
+      return;
+    }
+
+    const cellActive = interviewersCellActive[userId];
+    if (!cellActive || Object.keys(cellActive).length === 0) {
+      toast.error('선택된 시간이 없습니다.');
+      return;
+    }
+
+    const dateMap: { [date: string]: string[] } = {};
+
+    Object.entries(cellActive).forEach(([cellKey, value]) => {
+      const parts = cellKey.split('-');
+      if (parts.length < 4) return;
+
+      const date = `${parts[0]}-${parts[1]}-${parts[2]}`;
+      const timeIndex = parseInt(parts[3]);
+
+      if (!dateMap[date]) {
+        dateMap[date] = [];
+      }
+
+      const [startHour] = interviewSetting.startTime.split(':').map(Number);
+      const actualHour = startHour + timeIndex;
+
+      if (value.top) {
+        dateMap[date].push(`${actualHour.toString().padStart(2, '0')}:00`);
+      }
+
+      if (value.bottom) {
+        dateMap[date].push(`${actualHour.toString().padStart(2, '0')}:30`);
+      }
+    });
+
+    const availabilities = Object.entries(dateMap)
+      .map(([date, startTimes]) => ({
+        date,
+        startTimes: startTimes.sort(),
+      }))
+      .filter(item => item.startTimes.length > 0);
+
+    if (availabilities.length === 0) {
+      toast.error('선택된 시간이 없습니다.');
+      return;
+    }
+
+    try {
+      await projectService.updateInterviewerAvailability(projectId, userId, { availabilities });
+      toast.success(`${interviewerName}님의 시간이 저장되었습니다.`);
+      fetchInterviewers();
+    } catch (error) {
+      console.error('시간 저장 실패:', error);
+      toast.error('시간 저장에 실패했습니다.');
+    }
+  };
+
+  const fetchInterviewers = async () => {
+    if (!projectId) return;
+
+    try {
+      const auth = await authService.getCurrentUser();
+      const { admins } = await projectService.getProjectAdmins(projectId);
+
+      const adminList: Array<{
+        userId: number;
+        name: string;
+        email: string;
+        profileImageUrl?: string;
+        isLeader: boolean;
+        participated?: boolean;
+      }> = [];
+
+      const newInterviewersCellActive: {
+        [interviewerId: number]: { [key: string]: { top: boolean; bottom: boolean } };
+      } = {};
+
+      if (auth.isAuthenticated && auth.user) {
+        try {
+          const availability = await projectService.getInterviewerAvailability(projectId, auth.user.userId);
+
+          if (availability && availability.availabilities && interviewSetting) {
+            const cellActive: { [key: string]: { top: boolean; bottom: boolean } } = {};
+            const [startHour] = interviewSetting.startTime.split(':').map(Number);
+
+            availability.availabilities.forEach((dayAvail: any) => {
+              const date = dayAvail.date;
+              dayAvail.startTimes.forEach((startTime: string) => {
+                const [hour, min] = startTime.split(':').map(Number);
+                const timeIndex = hour - startHour;
+                const cellKey = `${date}-${timeIndex}`;
+
+                if (!cellActive[cellKey]) {
+                  cellActive[cellKey] = { top: false, bottom: false };
+                }
+
+                if (min === 0) cellActive[cellKey].top = true;
+                else if (min === 30) cellActive[cellKey].bottom = true;
+              });
+            });
+
+            if (Object.keys(cellActive).length > 0) {
+              newInterviewersCellActive[auth.user.userId] = cellActive;
+            }
+          }
+        } catch (error) {
+          console.log('OWNER availability 조회 실패 (미등록일 수 있음)');
+        }
+
+        adminList.push({
+          userId: auth.user.userId,
+          name: auth.user.nickname ?? '나(대표)',
+          email: auth.user.email ?? '',
+          profileImageUrl: auth.user.profileImageUrl ?? '',
+          isLeader: true,
+        });
+      }
+
+      for (const admin of admins) {
+        try {
+          const availability = await projectService.getInterviewerAvailability(projectId, admin.adminId);
+
+          if (availability && availability.availabilities && interviewSetting) {
+            const cellActive: { [key: string]: { top: boolean; bottom: boolean } } = {};
+            const [startHour] = interviewSetting.startTime.split(':').map(Number);
+
+            availability.availabilities.forEach((dayAvail: any) => {
+              const date = dayAvail.date;
+              dayAvail.startTimes.forEach((startTime: string) => {
+                const [hour, min] = startTime.split(':').map(Number);
+                const timeIndex = hour - startHour;
+                const cellKey = `${date}-${timeIndex}`;
+
+                if (!cellActive[cellKey]) {
+                  cellActive[cellKey] = { top: false, bottom: false };
+                }
+
+                if (min === 0) cellActive[cellKey].top = true;
+                else if (min === 30) cellActive[cellKey].bottom = true;
+              });
+            });
+
+            if (Object.keys(cellActive).length > 0) {
+              newInterviewersCellActive[admin.adminId] = cellActive;
+            }
+          }
+        } catch (error) {
+          console.log(`ADMIN ${admin.adminName} availability 조회 실패`);
+        }
+
+        adminList.push({
+          userId: admin.adminId,
+          name: admin.adminName,
+          email: admin.email,
+          profileImageUrl: admin.profileImageUrl ?? '',
+          isLeader: false,
+        });
+      }
+
+      setInterviewers(adminList);
+
+      setInterviewersCellActive(prev => {
+        if (Object.keys(prev).length === 0 && Object.keys(newInterviewersCellActive).length > 0) {
+          return newInterviewersCellActive;
+        }
+        return prev;
+      });
+    } catch (error) {
+      console.error('면접관 목록 조회 실패:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchInterviewers();
+  }, [projectId]);
+
   const showOverlay = !isConfigured;
 
-  // TODO: 실제 API에서 스마트 시간표 생성 여부와 대표자 여부를 가져와야 함
+  const interviewDates = useMemo(() => {
+    if (!interviewSetting || !interviewSetting.interviewDates) return [];
 
-  const interviewers = [
-    { name: '면접관 1', email: 'interview1@gmail.com', isLeader: true },
-    { name: '면접관 2', email: 'interview2@gmail.com', isLeader: false },
-    { name: '면접관 3', email: 'interview3@gmail.com', isLeader: false },
-  ];
+    return interviewSetting.interviewDates
+      .map((dateStr: string) => new Date(dateStr))
+      .sort((a, b) => a.getTime() - b.getTime());
+  }, [interviewSetting]);
 
-  // 생성된 스마트 시간표 가정: 면접 날짜 예시 (6일, 7일)
-  const interviewDates = [
-    new Date(2026, 1, 6), // 2월 6일
-    new Date(2026, 1, 7), // 2월 7일
-  ];
+  const timeSlots = useMemo(() => {
+    if (!interviewSetting || !interviewSetting.startTime || !interviewSetting.endTime) return [];
+
+    const [startHour] = interviewSetting.startTime.split(':').map(Number);
+    const [endHour, endMin] = interviewSetting.endTime.split(':').map(Number);
+
+    const actualStartHour = startHour;
+    const actualEndHour = endMin > 0 ? endHour : endHour - 1;
+
+    const slots: string[] = [];
+    for (let hour = actualStartHour; hour <= actualEndHour; hour++) {
+      slots.push(`${hour.toString().padStart(2, '0')}:00`);
+    }
+
+    return slots;
+  }, [interviewSetting]);
+
+  const combinedCellActive = useMemo(() => {
+    const combined: { [key: string]: { top: boolean; bottom: boolean } } = {};
+
+    Object.entries(interviewersCellActive).forEach(([userId, cellActive]) => {
+      Object.entries(cellActive).forEach(([key, value]) => {
+        if (!combined[key]) {
+          combined[key] = { top: false, bottom: false };
+        }
+        combined[key].top = combined[key].top || value.top;
+        combined[key].bottom = combined[key].bottom || value.bottom;
+      });
+    });
+
+    return combined;
+  }, [interviewersCellActive]);
+
+  const interviewersWithParticipation = useMemo(() => {
+    return interviewers.map(interviewer => ({
+      ...interviewer,
+      participated: interviewersCellActive[interviewer.userId]
+        ? Object.keys(interviewersCellActive[interviewer.userId]).length > 0
+        : false,
+    }));
+  }, [interviewers, interviewersCellActive]);
 
   return (
-    <main className="min-h-screen flex justify-center bg-white ">
+    <main className="min-h-screen flex justify-center bg-white">
       <div className="relative w-[375px] bg-white min-h-screen flex flex-col overflow-x-hidden">
-        {/* Top app bar with logo and alarm */}
         <header className="flex items-center justify-between h-12 px-4 bg-white">
           <Link href="/home" className="w-6 h-6">
             <Image src="/icons/logo.svg" alt="로고" width={22} height={22} className="w-[22px] h-[22px]" />
@@ -64,9 +497,7 @@ export default function SmartScheduleMainForm() {
           <NotificationBell />
         </header>
 
-        {/* Main content */}
         <div className="flex-1 px-4 pt-4 pb-4 overflow-y-auto">
-          {/* Step 1: Interview Info Setup */}
           <div className="mb-6">
             <button
               onClick={() => router.push('/smart-schedule/setting')}
@@ -82,34 +513,34 @@ export default function SmartScheduleMainForm() {
             </button>
           </div>
 
-          {/* Step 2: Interviewer Time Registration */}
           <div className="mb-6">
             <div className="text-left mb-3">
               <h3 className="text-subtitle-sm-sb text-gray-950 mb-1">2. 면접관 시간 등록</h3>
               <p className="text-body-xs text-gray-300">각 면접관 별 가능한 시간을 선택해 입력합니다.</p>
             </div>
 
-            {/* Calendar preview - 전체 시간표 (항상 표시) */}
             <div className="mb-3">
               <AllAccordion title="전체">
                 <SmartScheduleCalendarPreview
-                  seeds={[1, 2, 3]}
-                  interviewers={interviewers.map((int, idx) => ({
+                  seeds={interviewersWithParticipation.map((_, idx) => idx + 1)}
+                  interviewers={interviewersWithParticipation.map((int, idx) => ({
                     ...int,
                     isRequired: requiredInterviewers[idx] || false,
                   }))}
                   interviewDates={interviewDates}
+                  timeSlots={timeSlots}
                   showInterviewerView={showInterviewerView}
                   onShowInterviewerViewChange={setShowInterviewerView}
+                  interviewersCellActive={interviewersCellActive}
+                  currentStartDate={overviewCalendarStartDate}
+                  onCurrentStartDateChange={setOverviewCalendarStartDate}
                 />
               </AllAccordion>
             </div>
 
-            {/* Interviewer List (always visible) */}
             <div className="bg-white">
-              {interviewers.map((interviewer, idx) => (
+              {interviewersWithParticipation.map((interviewer, idx) => (
                 <div key={idx}>
-                  {/* 면접관 카드 */}
                   <button
                     onClick={() => {
                       if (selectedInterviewer === idx) {
@@ -121,7 +552,17 @@ export default function SmartScheduleMainForm() {
                     className="w-full h-[66px] px-0 py-[5px] flex items-center justify-between border-b border-gray-200 cursor-pointer"
                   >
                     <div className="flex items-center gap-[10px]">
-                      <div className="w-[35px] h-[35px] rounded-full bg-gray-200 flex-shrink-0" />
+                      {interviewer.profileImageUrl ? (
+                        <Image
+                          src={interviewer.profileImageUrl}
+                          alt={interviewer.name}
+                          width={35}
+                          height={35}
+                          className="w-[35px] h-[35px] rounded-full flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-[35px] h-[35px] rounded-full bg-gray-200 flex-shrink-0" />
+                      )}
                       <div className="text-left">
                         <div className="flex items-center gap-1.5">
                           <p className="text-[14px] text-black font-normal leading-[20px]">{interviewer.name}</p>
@@ -145,7 +586,6 @@ export default function SmartScheduleMainForm() {
                     />
                   </button>
 
-                  {/* Individual interviewer calendar directly below the card */}
                   {selectedInterviewer === idx && (
                     <div className="w-full bg-white border-b border-gray-200 pb-3">
                       <SmartScheduleCalendarPreview
@@ -158,6 +598,15 @@ export default function SmartScheduleMainForm() {
                           setRequiredInterviewers(prev => ({ ...prev, [idx]: value }))
                         }
                         interviewDates={interviewDates}
+                        timeSlots={timeSlots}
+                        cellActive={interviewersCellActive[interviewer.userId] || {}}
+                        onCellActiveChange={newCellActive => {
+                          setInterviewersCellActive(prev => ({
+                            ...prev,
+                            [interviewer.userId]: newCellActive,
+                          }));
+                          handleSaveInterviewerTime(interviewer.userId, interviewer.name);
+                        }}
                       />
                     </div>
                   )}
@@ -166,7 +615,6 @@ export default function SmartScheduleMainForm() {
             </div>
           </div>
 
-          {/* Step 3: Applicant Response */}
           <div className="mt-6">
             <div className="text-left mb-3">
               <h3 className="text-subtitle-sm-sb text-gray-950 mb-1">3. 지원자 면접 가능 시간 모집</h3>
@@ -176,28 +624,29 @@ export default function SmartScheduleMainForm() {
             </div>
 
             <div className="bg-white p-2.5 space-y-2.5">
-              {/* URL input with copy icon */}
               <div className="relative">
                 <input
                   type="text"
-                  value="https://www.campusform.com/interview/apply"
+                  value={investigationLink || '링크를 생성해주세요'}
                   readOnly
-                  onClick={() => router.push('/smart-schedule/applicant-submit')}
-                  className="w-full bg-gray-50 border border-gray-100 rounded-radius-5 px-3 py-3 pr-10 text-body-md text-gray-300 placeholder-gray-300 cursor-pointer hover:bg-gray-100 transition-colors"
+                  className="w-full bg-gray-50 border border-gray-100 rounded-radius-5 px-3 py-3 pr-10 text-body-md text-gray-300 placeholder-gray-300"
                 />
                 <button
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 hover:bg-gray-100 rounded transition-colors cursor-pointer"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 hover:bg-gray-100 rounded transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   aria-label="복사"
+                  disabled={!investigationLink}
                   onClick={e => {
                     e.stopPropagation();
-                    navigator.clipboard.writeText('https://www.campusform.com/interview/apply');
+                    if (investigationLink) {
+                      navigator.clipboard.writeText(investigationLink);
+                      toast.success('링크가 복사되었습니다.');
+                    }
                   }}
                 >
                   <Image src="/icons/copy-gray.svg" alt="copy" width={16} height={16} className="w-4 h-4" />
                 </button>
               </div>
 
-              {/* Info box - 지원자 시간 페이지 편집 */}
               <button
                 onClick={() => router.push('/smart-schedule/interview-schedule')}
                 className="w-full bg-blue-50 border-[0.5px] border-blue-200 rounded-[10px] px-2.5 py-2.5 flex items-center justify-center gap-1 hover:bg-blue-100 transition-colors cursor-pointer"
@@ -206,7 +655,6 @@ export default function SmartScheduleMainForm() {
                 <Image src="/icons/edit-blue.svg" alt="edit" width={14} height={13} className="w-[14px] h-[13px]" />
               </button>
 
-              {/* Action buttons */}
               <div className="flex gap-1.25">
                 <SmartScheduleButton
                   icon="/icons/graph.svg"
@@ -216,28 +664,35 @@ export default function SmartScheduleMainForm() {
                 >
                   응답 결과 확인
                 </SmartScheduleButton>
-                <SmartScheduleButton showHash={true}>지원자 전화번호 복사</SmartScheduleButton>
+                <SmartScheduleButton showHash={true} onClick={handleCopyPhoneNumbers}>
+                  지원자 전화번호 복사
+                </SmartScheduleButton>
               </div>
             </div>
           </div>
 
-          {/* CTA Button */}
           <div className="fixed bottom-20 left-0 right-0 px-5 max-w-93.75 mx-auto">
-            <Btn variant="primary" size="lg" className="w-full" onClick={() => setShowConfirmDialog(true)}>
-              스마트 시간표 생성
+            <Btn
+              variant="primary"
+              size="lg"
+              className="w-full"
+              onClick={() => setShowConfirmDialog(true)}
+              disabled={isGenerating}
+            >
+              {isGenerating ? '생성 중...' : '스마트 시간표 생성'}
             </Btn>
           </div>
-          {/* Confirm Reset Dialog for 스마트 시간표 생성 */}
+
           <ConfirmResetDialog
             isOpen={showConfirmDialog}
             onClose={() => setShowConfirmDialog(false)}
             onConfirm={handleConfirm}
           />
 
-          {/* Spacer for fixed button */}
+          <UnassignedApplicantsAlert isOpen={showInfoAlert} onConfirm={handleInfoAlertConfirm} />
+
           <div className="h-32" />
 
-          {/* Overlay message - 면접 정보 미설정 */}
           {mounted && showOverlay && (
             <div className="absolute left-0 right-0 top-[115px] bottom-20 flex items-center justify-center z-50 bg-white/85">
               <div className="text-center">
@@ -246,7 +701,6 @@ export default function SmartScheduleMainForm() {
             </div>
           )}
 
-          {/* Overlay message - 스마트 시간표 미생성 & 대표자 아님 */}
           {!hasSchedule && !isRepresentative && !showOverlay && (
             <div className="absolute bg-white/85 left-0 right-0 top-12 bottom-0 flex items-center justify-center z-40">
               <div className="text-center">
@@ -262,7 +716,6 @@ export default function SmartScheduleMainForm() {
           )}
         </div>
 
-        {/* Bottom navigation */}
         <Navbar />
       </div>
     </main>

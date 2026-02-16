@@ -156,10 +156,10 @@
   }
 
   /* 스크롤 바 숨기기 */
-  .scrollbar-hide::-webkit-scrollbar {
+  .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
-  .scrollbar-hide {
+  .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }

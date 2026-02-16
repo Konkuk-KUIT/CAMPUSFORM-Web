@@ -24,7 +24,6 @@ const GRAY1 = '#efefef'; // 그레이1 - gray-100
 const BLUE2 = '#bfcefe'; // 블루2 - blue-200
 
 const dayOfWeekLabels = ['일', '월', '화', '수', '목', '금', '토'];
-const hours = ['12', '13', '14', '15', '16', '17'];
 const weekDays = ['일', '월', '화', '수', '목', '금', '토'];
 
 interface DayData {
@@ -34,7 +33,7 @@ interface DayData {
 }
 
 // 샘플 데이터 생성
-const generateSampleData = (startDate: Date, seed: number = 0): DayData[] => {
+const generateSampleData = (startDate: Date, seed: number = 0, timeSlots: string[] = []): DayData[] => {
   const daysToShow = 3;
 
   const days: DayData[] = [];
@@ -51,7 +50,7 @@ const generateSampleData = (startDate: Date, seed: number = 0): DayData[] => {
     days.push({
       dayOfWeek: dayOfWeekLabels[date.getDay()],
       date: date.getDate(),
-      availability: hours.map((_, idx) => [
+      availability: timeSlots.map((_, idx) => [
         seededRandom(idx * 2), // 상반부 (위)
         seededRandom(idx * 2 + 1), // 하반부 (아래)
       ]),
@@ -64,6 +63,10 @@ interface Interviewer {
   name: string;
   isLeader?: boolean;
   isRequired?: boolean;
+  profileImageUrl?: string;
+  participated?: boolean; // 시간 등록 참여 여부
+  userId?: number; // 면접관 ID
+  email?: string; // 이메일
 }
 
 export default function SmartScheduleCalendarPreview({
@@ -76,8 +79,14 @@ export default function SmartScheduleCalendarPreview({
   requiredInterviewer,
   onRequiredInterviewerChange,
   interviewDates = [],
+  timeSlots = ['12:00', '13:00', '14:00', '15:00', '16:00', '17:00'],
   showInterviewerView: externalShowInterviewerView,
   onShowInterviewerViewChange,
+  cellActive: externalCellActive,
+  onCellActiveChange,
+  interviewersCellActive,
+  currentStartDate: externalCurrentStartDate,
+  onCurrentStartDateChange,
 }: {
   interviewerName?: string | null;
   seed?: number;
@@ -88,11 +97,17 @@ export default function SmartScheduleCalendarPreview({
   requiredInterviewer?: boolean;
   onRequiredInterviewerChange?: (value: boolean) => void;
   interviewDates?: Date[];
+  timeSlots?: string[];
   showInterviewerView?: boolean;
   onShowInterviewerViewChange?: (value: boolean) => void;
+  cellActive?: { [key: string]: { top: boolean; bottom: boolean } };
+  onCellActiveChange?: (cellActive: { [key: string]: { top: boolean; bottom: boolean } }) => void;
+  interviewersCellActive?: { [interviewerId: number]: { [key: string]: { top: boolean; bottom: boolean } } };
+  currentStartDate?: Date;
+  onCurrentStartDateChange?: (date: Date) => void;
 }) {
-  const [cellActive, setCellActive] = useState<{ [key: string]: { top: boolean; bottom: boolean } }>({});
-  const [currentStartDate, setCurrentStartDate] = useState(new Date());
+  const [internalCellActive, setInternalCellActive] = useState<{ [key: string]: { top: boolean; bottom: boolean } }>({});
+  const [internalCurrentStartDate, setInternalCurrentStartDate] = useState(new Date());
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date()); // 캘린더 모달 내부에서만 사용
   const [hoveredCell, setHoveredCell] = useState<{ day: number; time: number; half: 'top' | 'bottom' } | null>(null);
@@ -105,35 +120,43 @@ export default function SmartScheduleCalendarPreview({
   const showInterviewerView = externalShowInterviewerView !== undefined ? externalShowInterviewerView : internalShowInterviewerView;
   const setShowInterviewerView = onShowInterviewerViewChange || setInternalShowInterviewerView;
 
+  // currentStartDate도 외부/내부 상태 선택적 사용
+  const currentStartDate = externalCurrentStartDate !== undefined ? externalCurrentStartDate : internalCurrentStartDate;
+  const setCurrentStartDate = onCurrentStartDateChange || setInternalCurrentStartDate;
+
+  // cellActive도 외부/내부 상태 선택적 사용
+  const cellActive = externalCellActive !== undefined ? externalCellActive : internalCellActive;
+  const setCellActive = (newCellActive: { [key: string]: { top: boolean; bottom: boolean } } | ((prev: { [key: string]: { top: boolean; bottom: boolean } }) => { [key: string]: { top: boolean; bottom: boolean } })) => {
+    if (onCellActiveChange) {
+      // 외부 제어인 경우
+      if (typeof newCellActive === 'function') {
+        const computed = newCellActive(cellActive);
+        onCellActiveChange(computed);
+      } else {
+        onCellActiveChange(newCellActive);
+      }
+    } else {
+      // 내부 상태 사용
+      setInternalCellActive(newCellActive);
+    }
+  };
+
   // seeds가 있으면 모든 seed의 가용도를 합산, 아니면 단일 seed 사용
   const dayCols = useMemo(() => {
-    if (seeds && seeds.length > 0) {
-      // 모든 seed의 데이터를 생성하고 가용도 합산
-      const allData = seeds.map(s => generateSampleData(currentStartDate, s));
-      const daysToShow = 3;
-      const mergedDays: DayData[] = [];
-
-      for (let i = 0; i < daysToShow; i++) {
-        const date = new Date(currentStartDate);
-        date.setDate(date.getDate() + i);
-
-        // 각 타임별로 모든 면접관의 가용도를 합산 (가능한 면접관 수)
-        const combinedAvailability = hours.map((_, hourIdx) => [
-          allData.reduce((sum, data) => sum + data[i].availability[hourIdx][0], 0), // 상반부
-          allData.reduce((sum, data) => sum + data[i].availability[hourIdx][1], 0), // 하반부
-        ]);
-
-        mergedDays.push({
-          dayOfWeek: dayOfWeekLabels[date.getDay()],
-          date: date.getDate(),
-          availability: combinedAvailability as [number, number][],
-        });
-      }
-      return mergedDays;
-    } else {
-      return generateSampleData(currentStartDate, seed);
+    const daysToShow = 3;
+    const emptyDays: DayData[] = [];
+    
+    for (let i = 0; i < daysToShow; i++) {
+      const date = new Date(currentStartDate);
+      date.setDate(date.getDate() + i);
+      emptyDays.push({
+        dayOfWeek: dayOfWeekLabels[date.getDay()],
+        date: date.getDate(),
+        availability: timeSlots.map(() => [0, 0]) as [number, number][],
+      });
     }
-  }, [currentStartDate, seed, seeds]);
+    return emptyDays;
+  }, [currentStartDate, timeSlots]);
 
   // 현재 년월
   const currentMonthYear = useMemo(() => {
@@ -141,19 +164,35 @@ export default function SmartScheduleCalendarPreview({
   }, [currentStartDate]);
 
   const handlePrevDays = () => {
-    setCurrentStartDate(prev => {
-      const newDate = new Date(prev);
+    if (onCurrentStartDateChange) {
+      // 외부 제어인 경우 - 함수가 아닌 새 Date를 직접 전달
+      const newDate = new Date(currentStartDate);
       newDate.setDate(newDate.getDate() - 3);
-      return newDate;
-    });
+      onCurrentStartDateChange(newDate);
+    } else {
+      // 내부 상태인 경우 - 함수 형태 가능
+      setInternalCurrentStartDate((prev: Date) => {
+        const newDate = new Date(prev);
+        newDate.setDate(newDate.getDate() - 3);
+        return newDate;
+      });
+    }
   };
 
   const handleNextDays = () => {
-    setCurrentStartDate(prev => {
-      const newDate = new Date(prev);
+    if (onCurrentStartDateChange) {
+      // 외부 제어인 경우 - 함수가 아닌 새 Date를 직접 전달
+      const newDate = new Date(currentStartDate);
       newDate.setDate(newDate.getDate() + 3);
-      return newDate;
-    });
+      onCurrentStartDateChange(newDate);
+    } else {
+      // 내부 상태인 경우 - 함수 형태 가능
+      setInternalCurrentStartDate((prev: Date) => {
+        const newDate = new Date(prev);
+        newDate.setDate(newDate.getDate() + 3);
+        return newDate;
+      });
+    }
   };
 
   // 월간 캘린더 로직
@@ -275,70 +314,120 @@ export default function SmartScheduleCalendarPreview({
       <div className="p-0 pt-3 pr-2">
         {/* Calendar grid - Row by row */}
         <div className="flex flex-col gap-1">
-          {hours.map((hour, timeIdx) => (
-            <div key={hour} className="flex gap-2" style={{ height: '50px' }}>
+          {timeSlots.map((timeSlot, timeIdx) => (
+            <div key={timeSlot} className="flex gap-2" style={{ height: '50px' }}>
               {/* Time label */}
-              <div className="text-[14px] text-gray-950 font-normal flex items-center justify-start flex-shrink-0" style={{ width: '30px' }}>
-                {hour}
+              <div className="text-[14px] text-gray-950 font-normal flex items-start justify-start flex-shrink-0 pt" style={{ width: '30px' }}>
+                {timeSlot.split(':')[0]}
               </div>
 
               {/* Grid cells for this time slot */}
               <div className="flex-1 grid gap-1" style={{ gridTemplateColumns: `repeat(${dayCols.length}, 1fr)` }}>
                 {dayCols.map((day, dayIdx) => {
-                  const timeSlot = day.availability[timeIdx];
-                  const topCount = timeSlot[0];
-                  const bottomCount = timeSlot[1];
+                  const timeSlotData = day.availability[timeIdx];
+                  const topCount = timeSlotData[0];
+                  const bottomCount = timeSlotData[1];
 
                   let topColor: string;
                   let bottomColor: string;
 
-                  // 셀 활성/비활성 상태 적용 (interviewerName 있을 때만)
-                  const cellKey = `${dayIdx}-${timeIdx}`;
-                  const isTopActive = interviewerName ? (cellActive[cellKey]?.top ?? (topCount >= 1)) : undefined;
-                  const isBottomActive = interviewerName ? (cellActive[cellKey]?.bottom ?? (bottomCount >= 1)) : undefined;
+                  // 실제 날짜 계산 (currentStartDate + dayIdx)
+                  const actualDate = new Date(currentStartDate);
+                  actualDate.setDate(actualDate.getDate() + dayIdx);
+                  const dateKey = `${actualDate.getFullYear()}-${(actualDate.getMonth() + 1).toString().padStart(2, '0')}-${actualDate.getDate().toString().padStart(2, '0')}`;
+                  
+                  // cellKey를 날짜와 시간 인덱스로 생성
+                  const cellKey = `${dateKey}-${timeIdx}`;
+                  
+                  // 디버깅: 첫 번째 셀에서만 로그 출력
+                  if (dayIdx === 0 && timeIdx === 0 && interviewerName) {
+                    console.log(`[CalendarPreview] ${interviewerName} - cellKey 생성:`, cellKey);
+                    console.log(`[CalendarPreview] ${interviewerName} - cellActive 전체:`, cellActive);
+                    console.log(`[CalendarPreview] ${interviewerName} - cellActive[${cellKey}]:`, cellActive[cellKey]);
+                  }
+                  
+                  const isTopActive = interviewerName ? (cellActive[cellKey]?.top ?? false) : undefined;
+                  const isBottomActive = interviewerName ? (cellActive[cellKey]?.bottom ?? false) : undefined;
 
                   if (interviewerName) {
+                    // 개별 면접관: 선택된 셀만 파란색
                     topColor = isTopActive ? BLUE2 : GRAY1;
                     bottomColor = isBottomActive ? BLUE2 : GRAY1;
                   } else {
-                    topColor = BLUE_COLORS[Math.min(topCount, 10)];
-                    bottomColor = BLUE_COLORS[Math.min(bottomCount, 10)];
+                    // 전체 뷰: interviewersCellActive로 실제 면접관 수 계산
+                    if (interviewersCellActive && Object.keys(interviewersCellActive).length > 0) {
+                      let topInterviewerCount = 0;
+                      let bottomInterviewerCount = 0;
+                      
+                      // 각 면접관의 cellActive를 확인하여 카운트
+                      Object.values(interviewersCellActive).forEach(cellActiveData => {
+                        if (cellActiveData[cellKey]?.top) topInterviewerCount++;
+                        if (cellActiveData[cellKey]?.bottom) bottomInterviewerCount++;
+                      });
+                      
+                      // 디버깅 로그 (첫 번째 셀만)
+                      if (dayIdx === 0 && timeIdx === 0) {
+                        console.log('[CalendarPreview] 전체 뷰 - cellKey:', cellKey);
+                        console.log('[CalendarPreview] top 면접관 수:', topInterviewerCount, 'bottom 면접관 수:', bottomInterviewerCount);
+                      }
+                      
+                      // 면접관 수에 따라 색상 결정
+                      topColor = BLUE_COLORS[Math.min(topInterviewerCount, 10)];
+                      bottomColor = BLUE_COLORS[Math.min(bottomInterviewerCount, 10)];
+                    } else {
+                      // 데이터가 없으면 샘플 데이터 기반
+                      topColor = BLUE_COLORS[Math.min(topCount, 10)];
+                      bottomColor = BLUE_COLORS[Math.min(bottomCount, 10)];
+                    }
                   }
 
                   const getAvailableInterviewers = (half: 'top' | 'bottom') => {
-                    if (!seeds || !interviewers) return [];
-                    const count = half === 'top' ? topCount : bottomCount;
-                    if (count === 0) return [];
-
-                    const available: Interviewer[] = [];
-                    seeds.forEach((s, idx) => {
-                      const data = generateSampleData(currentStartDate, s);
-                      const isAvailable =
-                        half === 'top'
-                          ? data[dayIdx].availability[timeIdx][0] >= 1
-                          : data[dayIdx].availability[timeIdx][1] >= 1;
-                      if (isAvailable && interviewers[idx]) {
-                        available.push(interviewers[idx]);
-                      }
-                    });
-                    return available;
+                    if (!interviewers) return [];
+                    
+                    // interviewersCellActive가 있으면 실제 데이터 사용
+                    if (interviewersCellActive && Object.keys(interviewersCellActive).length > 0) {
+                      const available: Interviewer[] = [];
+                      interviewers.forEach((interviewer) => {
+                        if (!interviewer.userId) return;
+                        const cellActiveData = interviewersCellActive[interviewer.userId];
+                        if (!cellActiveData) return;
+                        
+                        const isAvailable = half === 'top' 
+                          ? cellActiveData[cellKey]?.top 
+                          : cellActiveData[cellKey]?.bottom;
+                        
+                        if (isAvailable) {
+                          available.push(interviewer);
+                        }
+                      });
+                      return available;
+                    }
+                    
+                    // 데이터가 없으면 빈 배열 반환
+                    return [];
                   };
 
                   return (
                     <div key={`${dayIdx}-${timeIdx}`} className="flex flex-col h-full w-full relative">
                       {/* Top half - solid border */}
                       <div
-                        className="flex-1 border-t border-white border-solid cursor-pointer hover:opacity-80"
-                        style={{ backgroundColor: topColor, cursor: 'pointer' }}
+                        className={`flex-1 border-t border-white border-solid ${interviewerName ? 'cursor-pointer hover:opacity-80' : ''}`}
+                        style={{ backgroundColor: topColor, cursor: interviewerName ? 'pointer' : 'default' }}
                         onClick={() => {
                           if (interviewerName) {
-                            setCellActive(prev => ({
-                              ...prev,
-                              [cellKey]: {
-                                top: !(prev[cellKey]?.top ?? (topCount >= 1)),
-                                bottom: prev[cellKey]?.bottom ?? (bottomCount >= 1),
-                              },
-                            }));
+                            const newTop = !(cellActive[cellKey]?.top ?? false);
+                            console.log(`[CalendarPreview] ${interviewerName} - 클릭 dateKey: ${dateKey}, cellKey: ${cellKey}, 현재 top: ${cellActive[cellKey]?.top}, 새 top: ${newTop}`);
+                            setCellActive(prev => {
+                              const updated = {
+                                ...prev,
+                                [cellKey]: {
+                                  top: newTop,
+                                  bottom: prev[cellKey]?.bottom ?? false,
+                                },
+                              };
+                              console.log(`[CalendarPreview] ${interviewerName} - 업데이트된 cellActive:`, updated);
+                              return updated;
+                            });
                           }
                         }}
                         onMouseEnter={() =>
@@ -348,17 +437,23 @@ export default function SmartScheduleCalendarPreview({
                       />
                       {/* Bottom half - dashed border */}
                       <div
-                        className="flex-1 border-t border-white cursor-pointer hover:opacity-80"
-                        style={{ backgroundColor: bottomColor, borderStyle: 'dashed', cursor: 'pointer' }}
+                        className={`flex-1 border-t border-white ${interviewerName ? 'cursor-pointer hover:opacity-80' : ''}`}
+                        style={{ backgroundColor: bottomColor, borderStyle: 'dashed', cursor: interviewerName ? 'pointer' : 'default' }}
                         onClick={() => {
                           if (interviewerName) {
-                            setCellActive(prev => ({
-                              ...prev,
-                              [cellKey]: {
-                                top: prev[cellKey]?.top ?? (topCount >= 1),
-                                bottom: !(prev[cellKey]?.bottom ?? (bottomCount >= 1)),
-                              },
-                            }));
+                            const newBottom = !(cellActive[cellKey]?.bottom ?? false);
+                            console.log(`[CalendarPreview] ${interviewerName} - 클릭 dateKey: ${dateKey}, cellKey: ${cellKey}, 현재 bottom: ${cellActive[cellKey]?.bottom}, 새 bottom: ${newBottom}`);
+                            setCellActive(prev => {
+                              const updated = {
+                                ...prev,
+                                [cellKey]: {
+                                  top: prev[cellKey]?.top ?? false,
+                                  bottom: newBottom,
+                                },
+                              };
+                              console.log(`[CalendarPreview] ${interviewerName} - 업데이트된 cellActive:`, updated);
+                              return updated;
+                            });
                           }
                         }}
                         onMouseEnter={() =>
@@ -368,7 +463,10 @@ export default function SmartScheduleCalendarPreview({
                       />
 
                       {/* Hover tooltip */}
-                      {!interviewerName && hoveredCell?.day === dayIdx && hoveredCell?.time === timeIdx && (
+                      {!interviewerName && 
+                        hoveredCell?.day === dayIdx && 
+                        hoveredCell?.time === timeIdx && 
+                        getAvailableInterviewers(hoveredCell.half).length > 0 && (
                         <div
                           className={`absolute ${dayIdx === dayCols.length - 1 ? 'right-full mr-2' : 'left-full ml-2'} bg-white rounded-[10px] px-[23px] py-[15px] w-[150px] z-50 flex flex-col gap-[10px] ${hoveredCell.half === 'top' ? 'top-0' : 'top-1/2'}`}
                         >
@@ -378,9 +476,6 @@ export default function SmartScheduleCalendarPreview({
                               {interviewer.isRequired && <span className="text-[14px]">(필수)</span>}
                             </div>
                           ))}
-                          {getAvailableInterviewers(hoveredCell.half).length === 0 && (
-                            <div className="text-[14px] text-gray-400 leading-[20px]">가능한 면접관 없음</div>
-                          )}
                         </div>
                       )}
                     </div>
@@ -419,54 +514,72 @@ export default function SmartScheduleCalendarPreview({
       {showInterviewerView && (
         <div className="bg-white border-b border-gray-200 w-full">
           {/* Tabs */}
-          <div className="flex border-b border-gray-200">
+          <div className="flex border-b border-gray-100">
             <button 
               onClick={() => setActiveTab('participated')}
-              className="flex-1 h-[54px] bg-white relative flex items-center justify-center"
+              className="flex-1 h-[48px] bg-white relative flex items-center justify-center transition-colors"
             >
-              <span className={`text-[15px] font-semibold leading-[21px] ${activeTab === 'participated' ? 'text-black' : 'text-gray-400'}`}>
+              <span className={`text-[14px] font-medium leading-[20px] ${activeTab === 'participated' ? 'text-gray-950' : 'text-gray-400'}`}>
                 참여
               </span>
               {activeTab === 'participated' && (
-                <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-black" />
+                <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gray-950" />
               )}
             </button>
             <button 
               onClick={() => setActiveTab('notParticipated')}
-              className="flex-1 h-[54px] bg-white relative flex items-center justify-center"
+              className="flex-1 h-[48px] bg-white relative flex items-center justify-center transition-colors"
             >
-              <span className={`text-[15px] font-semibold leading-[21px] ${activeTab === 'notParticipated' ? 'text-black' : 'text-gray-400'}`}>
+              <span className={`text-[14px] font-medium leading-[20px] ${activeTab === 'notParticipated' ? 'text-gray-950' : 'text-gray-400'}`}>
                 미참여
               </span>
               {activeTab === 'notParticipated' && (
-                <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-black" />
+                <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gray-950" />
               )}
             </button>
           </div>
 
           {/* Interviewer List */}
-          <div className="flex flex-col mt-[6px]">
-            {interviewers?.map((interviewer, idx) => (
-              <div key={idx} className="w-[343px] h-[55px] flex items-center px-[29px] relative">
-                <div className="w-9 h-9 rounded-full bg-gray-200" />
-                <span className="ml-[11px] text-[14px] leading-[20px] text-black">{interviewer.name}</span>
-                {interviewer.isRequired && (
-                  <div className="absolute left-[130px] bg-gray-100 w-[51px] h-[19.5px] px-[5px] py-px rounded-[10px] flex items-center justify-center gap-1">
-                    <span className="text-[12px] leading-[17px] tracking-[0.12px] text-black">필수</span>
-                  </div>
-                )}
-              </div>
-            ))}
+          <div className="flex flex-col py-2">
+            {interviewers
+              ?.filter(interviewer => {
+                if (activeTab === 'participated') {
+                  return interviewer.participated === true;
+                } else {
+                  return interviewer.participated === false || interviewer.participated === undefined;
+                }
+              })
+              .map((interviewer, idx) => (
+                <div key={idx} className="w-full h-[56px] flex items-center px-5 relative hover:bg-gray-50 transition-colors">
+                  {interviewer.profileImageUrl ? (
+                    <Image
+                      src={interviewer.profileImageUrl}
+                      alt={interviewer.name}
+                      width={36}
+                      height={36}
+                      className="w-9 h-9 rounded-full flex-shrink-0 object-cover"
+                    />
+                  ) : (
+                    <div className="w-9 h-9 rounded-full bg-gray-200 flex-shrink-0" />
+                  )}
+                  <span className="ml-3 text-[14px] leading-[20px] font-normal text-gray-950">{interviewer.name}</span>
+                  {interviewer.isRequired && (
+                    <div className="ml-2 bg-gray-100 h-5 px-2 rounded-[10px] flex items-center justify-center">
+                      <span className="text-[11px] leading-none font-medium text-gray-700">필수</span>
+                    </div>
+                  )}
+                </div>
+              ))}
           </div>
 
           {/* Back button */}
-          <div className="h-[63px] px-4 flex items-center justify-end">
+          <div className="h-[56px] px-4 flex items-center justify-end border-t border-gray-100">
             <button 
               onClick={() => setShowInterviewerView(false)}
-              className="flex items-center gap-0"
+              className="flex items-center gap-1 py-2 px-1 hover:opacity-70 transition-opacity"
             >
-              <span className="text-[14px] leading-[20px] text-gray-500 mr-1">시간으로 돌아가기</span>
-              <Image src="/icons/chevron-right.svg" alt="back" width={24} height={24} className="w-6 h-6" />
+              <span className="text-[13px] leading-[18px] font-medium text-gray-600">시간으로 돌아가기</span>
+              <Image src="/icons/chevron-right.svg" alt="back" width={20} height={20} className="w-5 h-5" />
             </button>
           </div>
         </div>
