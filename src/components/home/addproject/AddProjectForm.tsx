@@ -84,7 +84,7 @@ export default function AddProjectForm() {
   const handleTitleChange = (newValue: string) => {
     setTitle(newValue);
     setProjectForm({ title: newValue });
-    setIsTitleError(false);
+    setIsTitleError(newValue.length > 40);
   };
 
   const handleUrlChange = (newValue: string) => {
@@ -204,7 +204,7 @@ export default function AddProjectForm() {
               value={title}
               onChange={handleTitleChange}
               error={isTitleError}
-              errorMessage="공고명을 입력해주세요."
+              errorMessage="공고명은 40자 이내로 입력해주세요."
             />
           </div>
 
