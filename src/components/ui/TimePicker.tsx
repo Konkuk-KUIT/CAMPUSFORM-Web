@@ -33,15 +33,33 @@ export default function TimePicker({
     setTempEndMinute(parseInt(endMinute) || 0);
   }, [startHour, startMinute, endHour, endMinute]);
 
-  // 모달이 열렸을 때 body 스크롤 방지
+  // 모달이 열렸을 때 body 스크롤 완전 방지 (PC/모바일 모두)
   useEffect(() => {
+    let scrollY = 0;
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
+      scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.left = '0';
+      document.body.style.width = '100vw';
+      document.body.style.overflowY = 'scroll';
     } else {
-      document.body.style.overflow = '';
+      const top = document.body.style.top;
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.left = '';
+      document.body.style.width = '';
+      document.body.style.overflowY = '';
+      if (top) {
+        window.scrollTo(0, -parseInt(top));
+      }
     }
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.left = '';
+      document.body.style.width = '';
+      document.body.style.overflowY = '';
     };
   }, [isOpen]);
 
@@ -203,7 +221,10 @@ export default function TimePicker({
 
       {/* Time picker modal */}
       {isOpen && (
-        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
+        <div
+          className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4"
+          style={{ touchAction: 'none' }}
+        >
           <div className="w-[241px] bg-white rounded-[10px] p-6 flex flex-col items-center gap-6">
             {/* Hour and Minute wheels */}
             <div className="flex items-center justify-center gap-2">
