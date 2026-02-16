@@ -205,7 +205,9 @@ export default function InterviewInfoSettingForm() {
       localStorage.setItem('interviewInfoConfigured', 'true');
       console.log('[InterviewSetting] 면접 정보 설정 성공');
       alert('면접 정보가 설정되었습니다');
-      router.push('/smart-schedule');
+      if (targetProjectId) {
+        router.push(`/smart-schedule/${targetProjectId}`);
+      }
     } catch (e) {
       console.error('[InterviewSetting] 면접 정보 설정 실패:', e);
       alert('면접 정보 설정에 실패했습니다.');
@@ -216,7 +218,7 @@ export default function InterviewInfoSettingForm() {
     <main className="min-h-screen flex justify-center bg-white font-['Pretendard']">
       <div className="relative w-93.75 bg-white min-h-screen flex flex-col overflow-x-hidden">
         {/* Top bar */}
-        <Header title="면접 정보 설정" backTo="/smart-schedule" />
+        <Header title="면접 정보 설정" backTo={projectId ? `/smart-schedule/${projectId}` : '/smart-schedule'} />
 
         {/* Scrollable content */}
         <div className="flex-1 px-4 pb-24 overflow-y-auto">

@@ -150,7 +150,7 @@ export default function InterviewerAvailabilityForm() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
-      <Header title="면접관 가능 시간 등록" backTo="/smart-schedule" />
+      <Header title="면접관 가능 시간 등록" backTo={projectId ? `/smart-schedule/${projectId}` : '/smart-schedule'} />
       <div className="flex-1 px-6 py-8 pb-32">
         <h1 className="text-title text-gray-950">면접관 가능 시간 등록</h1>
         <p className="text-body-sm text-gray-500 mt-2 mb-6">면접 가능한 날짜와 시간을 선택하세요</p>

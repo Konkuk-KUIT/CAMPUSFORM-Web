@@ -225,7 +225,9 @@ export default function ApplicantInterviewSchedule() {
       console.log('Selected Slots:', selected);
 
       // 스마트 시간표 페이지로 이동
-      router.push('/smart-schedule');
+      if (projectId) {
+        router.push(`/smart-schedule/${projectId}`);
+      }
     } catch (error) {
       console.error('지원자 링크 설정 저장 실패:', error);
       alert('저장에 실패했습니다.');
