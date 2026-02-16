@@ -84,12 +84,7 @@ export default function AddProjectForm() {
   const handleTitleChange = (newValue: string) => {
     setTitle(newValue);
     setProjectForm({ title: newValue });
-    if (newValue === '') {
-      setIsTitleError(false);
-      return;
-    }
-    const regex = /^[ㄱ-ㅎㅏ-ㅣ가-힣a-zA-Z\s]*$/;
-    setIsTitleError(!regex.test(newValue));
+    setIsTitleError(false);
   };
 
   const handleUrlChange = (newValue: string) => {
@@ -209,7 +204,7 @@ export default function AddProjectForm() {
               value={title}
               onChange={handleTitleChange}
               error={isTitleError}
-              errorMessage="공고명에는 한글, 영문만 입력 가능합니다."
+              errorMessage="공고명을 입력해주세요."
             />
           </div>
 
