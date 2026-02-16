@@ -106,7 +106,6 @@ export default function TimePicker({
     };
 
     const handleWheel = (e: React.WheelEvent) => {
-      e.preventDefault();
       const delta = e.deltaY > 0 ? 1 : -1;
       let newIndex = selectedIndex + delta;
       
