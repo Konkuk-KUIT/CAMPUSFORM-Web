@@ -23,34 +23,54 @@ const statusMap: Record<string, '보류' | '합격' | '불합격'> = {
   FAIL: '불합격',
 };
 
+const formatInterviewDate = (raw: string | null | undefined): string => {
+  if (!raw) return '';
+  const date = new Date(raw);
+  if (isNaN(date.getTime())) return '';
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][date.getDay()];
+  return `${month}월 ${day}일 (${dayOfWeek})`;
+};
+
+const formatInterviewTime = (raw: string | null | undefined): string => {
+  if (!raw) return '';
+  return raw.length >= 5 ? raw.substring(0, 5) : raw;
+};
+
 interface InterviewDetailClientProps {
   projectId: number;
   applicantId: number;
+  initialDate?: string;
+  initialTime?: string;
 }
 
-export default function InterviewDetailClient({ projectId, applicantId }: InterviewDetailClientProps) {
+export default function InterviewDetailClient({
+  projectId, 
+  applicantId,
+  initialDate = '',
+  initialTime = '',
+}: InterviewDetailClientProps) {
   const [applicant, setApplicant] = useState<ApplicantDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCommentOpen, setCommentOpen] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [appointmentDate, setAppointmentDate] = useState('');
-  const [appointmentTime, setAppointmentTime] = useState('');
+  const [appointmentDate, setAppointmentDate] = useState(decodeURIComponent(initialDate));
+  const [appointmentTime, setAppointmentTime] = useState(decodeURIComponent(initialTime));
   const [currentUserId, setCurrentUserId] = useState<number>(0);
+  
 
   const formatPhoneNumber = (phone: string) => {
-  const cleaned = phone.replace(/\D/g, '');
-
-  if (cleaned.length === 11) {
-    return cleaned.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
-  }
-
-  if (cleaned.length === 10) {
-    return cleaned.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
-  }
-
-  return phone;
-};
+    const cleaned = phone.replace(/\D/g, '');
+    if (cleaned.length === 11) {
+      return cleaned.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+    }
+    if (cleaned.length === 10) {
+      return cleaned.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+    }
+    return phone;
+  };
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -68,6 +88,9 @@ export default function InterviewDetailClient({ projectId, applicantId }: Interv
       const data = await applicantService.getApplicant(projectId, applicantId, 'INTERVIEW');
       setApplicant(data);
       setIsFavorite(data.favorite);
+      // API가 날짜/시간을 돌려주면 덮어쓰고, 없으면 URL params 값 유지
+      if (data.interviewDate) setAppointmentDate(formatInterviewDate(data.interviewDate));
+      if (data.interviewStartTime) setAppointmentTime(formatInterviewTime(data.interviewStartTime));
     } catch (e) {
       console.error('지원자 상세 조회 실패:', e);
       toast.error('지원자 정보를 불러오지 못했습니다.');
@@ -84,10 +107,16 @@ export default function InterviewDetailClient({ projectId, applicantId }: Interv
     await fetchApplicant();
   };
 
-  const handleConfirm = (date: string, time: string, _rawDate: string) => {
-    setAppointmentDate(date);
-    setAppointmentTime(time);
-    setIsModalOpen(false);
+  const handleConfirm = async (date: string, time: string, rawDate: string) => {
+    try {
+      await applicantService.manualAssignInterview(projectId, applicantId, rawDate, time);
+      setAppointmentDate(date);
+      setAppointmentTime(time);
+    } catch (e) {
+      toast.error('면접 일정 저장에 실패했습니다.');
+    } finally {
+      setIsModalOpen(false);
+    }
   };
 
   const handleToggleFavorite = async () => {
@@ -138,7 +167,7 @@ export default function InterviewDetailClient({ projectId, applicantId }: Interv
               .filter(item => item.question !== '타임스탬프')
               .map((item, idx) => (
                 <QuestionSection key={idx} title={item.question} content={item.answer} />
-            ))}
+              ))}
           </div>
         </div>
       </PullToRefresh>
