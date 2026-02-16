@@ -130,7 +130,7 @@ export default function SmartScheduleMainForm() {
         // 현재 사용자의 role 확인 (오버레이 표시용)
         const auth = await authService.getCurrentUser();
         const { owner } = await projectService.getProjectAdmins(projectId);
-        const userIsOwner = auth.user.id === owner?.adminId;
+        const userIsOwner = auth.user && auth.user.userId === owner?.adminId;
         setIsOwner(userIsOwner);
 
         // 모든 사용자가 면접 설정 조회 가능
@@ -336,7 +336,7 @@ export default function SmartScheduleMainForm() {
       if (owner) {
         adminList.push({
           userId: owner.adminId,
-          name: (auth.user && auth.user.id === owner.adminId) ? '나(대표)' : owner.adminName,
+          name: (auth.user && auth.user.userId === owner.adminId) ? '나(대표)' : owner.adminName,
           email: owner.email,
           profileImageUrl: owner.profileImageUrl ?? '',
           isLeader: true,
