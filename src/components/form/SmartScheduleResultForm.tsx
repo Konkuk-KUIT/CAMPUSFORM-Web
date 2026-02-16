@@ -101,7 +101,9 @@ export default function SmartScheduleResultForm() {
       console.log('[ScheduleResult] ============================');
       
       alert('면접 시간이 확정되었습니다.');
-      router.push('/smart-schedule');
+      if (projectId) {
+        router.push(`/smart-schedule/${projectId}`);
+      }
     } catch (error: any) {
       console.error('[ScheduleResult] ===== 확정 실패 =====');
       console.error('[ScheduleResult] 에러:', error);
@@ -117,7 +119,7 @@ export default function SmartScheduleResultForm() {
     <div className="min-h-screen bg-white">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-white border-b border-gray-100">
-        <Header title="스마트 시간표 결과" backTo="/smart-schedule" />
+        <Header title="스마트 시간표 결과" backTo={projectId ? `/smart-schedule/${projectId}` : '/smart-schedule'} />
       </div>
 
       {/* Content */}

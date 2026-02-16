@@ -27,7 +27,9 @@ export default function SmartScheduleMainForm() {
   
   const handleInfoAlertConfirm = () => {
     setShowInfoAlert(false);
-    router.push('/smart-schedule/result');
+    if (projectId) {
+      router.push(`/smart-schedule/${projectId}/result`);
+    }
   };
 
   // 서류 합격자 전화번호 복사 함수
@@ -96,7 +98,9 @@ export default function SmartScheduleMainForm() {
       toast.success('스마트 시간표가 생성되었습니다');
       
       setIsGenerating(false);
-      router.push('/smart-schedule/result');
+      if (projectId) {
+        router.push(`/smart-schedule/${projectId}/result`);
+      }
     } catch (error: any) {
       console.error('[SmartSchedule] ===== 생성 실패 =====');
       console.error('[SmartSchedule] 에러:', error);
@@ -227,7 +231,7 @@ export default function SmartScheduleMainForm() {
         if (link) {
           // /submit 경로를 실제 페이지 경로로 변환
           if (link.startsWith('/submit')) {
-            link = link.replace('/submit', '/smart-schedule/applicant-submit');
+            link = link.replace('/submit', `/smart-schedule/${projectId}/applicant-submit`);
           }
           
           // 상대 경로인 경우 전체 URL로 변환
@@ -620,7 +624,7 @@ export default function SmartScheduleMainForm() {
           {/* Step 1: Interview Info Setup */}
           <div className="mb-6">
             <button
-              onClick={() => router.push('/smart-schedule/setting')}
+              onClick={() => projectId && router.push(`/smart-schedule/${projectId}/setting`)}
               className="w-full flex items-start justify-between mb-2 group cursor-pointer"
             >
               <div className="text-left">
@@ -781,7 +785,7 @@ export default function SmartScheduleMainForm() {
 
               {/* Info box - 지원자 시간 페이지 편집 */}
               <button
-                onClick={() => router.push('/smart-schedule/interview-schedule')}
+                onClick={() => projectId && router.push(`/smart-schedule/${projectId}/interview-schedule`)}
                 className="w-full bg-blue-50 border-[0.5px] border-blue-200 rounded-[10px] px-2.5 py-2.5 flex items-center justify-center gap-1 hover:bg-blue-100 transition-colors cursor-pointer"
               >
                 <span className="text-body-sm text-gray-950">지원자 시간 페이지 편집</span>
@@ -794,7 +798,7 @@ export default function SmartScheduleMainForm() {
                   icon="/icons/graph.svg"
                   iconWidth={7}
                   iconHeight={9.3}
-                  onClick={() => router.push('/smart-schedule/response-result')}
+                  onClick={() => projectId && router.push(`/smart-schedule/${projectId}/response-result`)}
                 >
                   응답 결과 확인
                 </SmartScheduleButton>

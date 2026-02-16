@@ -293,7 +293,7 @@ export default function SmartScheduleResponseResultForm() {
     <div className="min-h-screen bg-white">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-white border-b border-gray-100">
-        <Header title="지원자 가능 시간 확인" backTo="/smart-schedule" />
+        <Header title="지원자 가능 시간 확인" backTo={projectId ? `/smart-schedule/${projectId}` : '/smart-schedule'} />
       </div>
 
       {/* Content */}
