@@ -19,21 +19,26 @@ function toTimeAgo(isoString: string): string {
   if (hours < 24) return `${hours}시간 전`;
   return `${Math.floor(hours / 24)}일 전`;
 }
+function extractName(message?: string): string {
+  if (!message) return '누군가';
+  const match = message.match(/^(.+?) 님이/);
+  return match ? match[1] : '누군가';
+}
 
 function buildMessage(noti: Notification): string {
   const { type, payload } = noti;
+  const name = extractName(payload.message as string);
   switch (type) {
     case 'COMMENT_CREATED':
-      return `${payload.commenter ?? '누군가'} 님이 댓글을 작성했어요.`;
+      return `${name} 님이 댓글을 작성했어요.`;
     case 'NEW_APPLICANT':
-      return `${payload.commenter ?? '새 지원자'} 님이 새롭게 지원했어요.`;
+      return `${name} 님이 새롭게 지원했어요.`;
     case 'ADMIN_ADDED':
       return '새 관리자가 추가되었어요.';
     default:
-      return (payload.content as string) ?? '';
+      return (payload.message as string) ?? '';
   }
 }
-
 export default function NotificationForm() {
   const [activeTab, setActiveTab] = useState<'all' | 'unread'>('all');
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -133,8 +138,8 @@ export default function NotificationForm() {
               <NotificationCard
                 key={noti.id}
                 type={noti.type}
-                title={`프로젝트 ${noti.projectId}`}
-                subContent={noti.type === 'COMMENT_CREATED' ? (noti.payload.content as string) : undefined}
+                title={(noti.payload.projectTitle as string) ?? `프로젝트 ${noti.projectId}`}
+                subContent={noti.type === 'COMMENT_CREATED' ? `- ${noti.payload.title as string}` : undefined} // 여기
                 content={buildMessage(noti)}
                 timeAgo={toTimeAgo(noti.createdAt)}
                 isUnread={!noti.read}

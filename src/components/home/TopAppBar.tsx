@@ -1,7 +1,8 @@
-"use client";
+'use client';
 
-import Image from "next/image";
-import Link from "next/link";
+import Image from 'next/image';
+import Link from 'next/link';
+import NotificationBell from '@/components/ui/NotificationBell';
 
 export default function TopAppBar() {
   return (
@@ -14,9 +15,7 @@ export default function TopAppBar() {
         <Link href="/home/mypage" className="w-6 h-6">
           <Image src="/icons/user.svg" alt="프로필" width={26} height={26} />
         </Link>
-        <Link href="/home/notification" className="w-6 h-6">
-          <Image src="/icons/notification.svg" alt="알림" width={24} height={24} />
-        </Link>
+        <NotificationBell />
       </div>
     </header>
   );

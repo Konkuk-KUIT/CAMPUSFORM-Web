@@ -7,13 +7,23 @@ import type {
   NotificationSetting,
 } from '@/types/notification';
 
+function parsePayload(notifications: Notification[]): Notification[] {
+  return notifications.map(n => ({
+    ...n,
+    payload: typeof n.payload === 'string' ? JSON.parse(n.payload) : n.payload,
+  }));
+}
+
 class NotificationService {
   // GET : 알림 목록 조회 (페이지네이션)
   async getNotifications(page = 0, size = 20): Promise<NotificationsResponse> {
     const response = await apiClient.get<NotificationsResponse>('/notifications', {
       params: { page, size },
     });
-    return response.data;
+    return {
+      ...response.data,
+      notifications: parsePayload(response.data.notifications),
+    };
   }
 
   // GET : 안 읽은 알림 개수 조회

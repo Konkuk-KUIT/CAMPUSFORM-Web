@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import type { Project } from '@/types/project';
+import NotificationBell from '@/components/ui/NotificationBell';
 
 interface ResultPageHeaderProps {
   projectId: number;
@@ -13,12 +14,7 @@ interface ResultPageHeaderProps {
   showSubtitle?: boolean;
 }
 
-export default function ResultPageHeader({
-  projectId,
-  title,
-  backHref,
-  showSubtitle = true,
-}: ResultPageHeaderProps) {
+export default function ResultPageHeader({ projectId, title, backHref, showSubtitle = true }: ResultPageHeaderProps) {
   const [projectTitle, setProjectTitle] = useState<string>('');
 
   useEffect(() => {
@@ -39,9 +35,7 @@ export default function ResultPageHeader({
           <Image src="/icons/back.svg" alt="뒤로가기" width={24} height={24} />
         </Link>
         <span className="text-title">{title}</span>
-        <button className="w-6 h-6">
-          <Image src="/icons/notification.svg" alt="알림" width={24} height={24} />
-        </button>
+        <NotificationBell />
       </header>
       {showSubtitle && (
         <div className="bg-blue-50 h-10.75 flex items-center justify-center">

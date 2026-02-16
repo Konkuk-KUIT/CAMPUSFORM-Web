@@ -14,6 +14,7 @@ import RecruitmentCard from '@/components/home/RecruitmentCard';
 import Image from 'next/image';
 import Link from 'next/link';
 import { toast, ToastContainer } from '@/components/Toast';
+import Loading from '@/components/ui/Loading';
 
 export default function HomeMain() {
   const router = useRouter();
@@ -138,7 +139,7 @@ export default function HomeMain() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="text-gray-500">로딩 중...</div>
+        <Loading />
       </div>
     );
   }
