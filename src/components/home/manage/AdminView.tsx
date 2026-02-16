@@ -1,0 +1,92 @@
+'use client';
+
+import { useEffect } from 'react';
+import Image from 'next/image';
+import ProfileCross from '@/components/ui/ProfileCross';
+import Navbar from '@/components/Navbar';
+import NotificationBell from '@/components/ui/NotificationBell';
+import type { ManageViewProps } from './ManageApplicationForm';
+import Link from 'next/link';
+
+export default function AdminView({ project, adminList, ownerUserId, status, startDate, endDate }: ManageViewProps) {
+  useEffect(() => {
+    console.log('ownerUserId:', ownerUserId);
+    console.log('adminList:', adminList);
+  }, [ownerUserId, adminList]);
+
+  const formatDate = (date: Date | null) => {
+    if (!date) return '';
+    return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date
+      .getDate()
+      .toString()
+      .padStart(2, '0')}`;
+  };
+
+  return (
+    <div className="flex justify-center min-h-screen bg-white">
+      <div className="relative w-[375px] bg-white min-h-screen flex flex-col">
+        <div className="flex items-center justify-between h-12 px-4 bg-white border-b border-gray-100">
+          <Link href="/home" className="w-6 h-6 flex items-center justify-center">
+            <Image src="/icons/logo.svg" alt="logo" width={21} height={22} />
+          </Link>
+          <span className="text-[15px] font-semibold text-gray-950">지원서 관리</span>
+          <NotificationBell />
+        </div>
+
+        <div className="flex-1 px-5 py-6 flex flex-col gap-6 overflow-y-auto scrollbar-hide pb-16">
+          <div className="flex flex-col gap-2">
+            <label className="text-subtitle-sm-md text-gray-950">모집 상태</label>
+            <div className="w-full h-12.5 px-4 flex items-center rounded-10 border border-gray-100 bg-gray-100 text-body-rg text-gray-300">
+              <span>{status}</span>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="text-subtitle-sm-md text-gray-950">구글폼 스프레드 시트 URL</label>
+            <input
+              value={project.sheetUrl ?? ''}
+              disabled
+              placeholder="https://docs.google.com/spreadsheets..."
+              className="w-full h-12.5 px-4 rounded-10 border border-gray-100 bg-gray-100 text-body-rg text-gray-300 placeholder:text-gray-300 cursor-not-allowed"
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="text-subtitle-sm-md text-gray-950">모집 기간</label>
+            <div className="w-full flex items-center justify-between rounded-10 text-body-rg text-gray-500">
+              <span>{startDate && endDate ? `${formatDate(startDate)} — ${formatDate(endDate)}` : '-'}</span>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-1">
+              <span className="text-subtitle-sm-md text-gray-950">관리자</span>
+              <span className="text-body-rg text-gray-500">({adminList.length}명)</span>
+              <div className="relative group">
+                <Image src="/icons/info-2.svg" alt="info" width={13.5} height={13.5} />
+                <div className="absolute left-0 top-6 z-20 hidden group-hover:block">
+                  <div className="bg-blue-300 text-white text-body-xs-rg px-1 py-1 rounded-5 whitespace-nowrap min-w-[220px] text-center">
+                    다음 단계 이동은 대표자만 가능합니다.
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col mt-2 gap-2">
+              {adminList.map(admin => (
+                <ProfileCross
+                  key={admin.userId}
+                  nickname={admin.nickname}
+                  email={admin.email}
+                  profileImageUrl={admin.profileImageUrl}
+                  isLeader={admin.userId === ownerUserId}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <Navbar />
+      </div>
+    </div>
+  );
+}
