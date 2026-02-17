@@ -20,7 +20,7 @@ export default function ApplicantCountHeader({ type, list }: ApplicantCountHeade
   const handleCopyList = () => {
     const text = list
       .map(a => `${a.name} (${a.school} / ${a.major} / ${a.position})`)
-      .join('\n');
+      .join(', ');
     navigator.clipboard.writeText(text);
   };
 
