@@ -4,6 +4,7 @@ import { persist } from 'zustand/middleware';
 interface ManualCloseStore {
   closedProjectIds: number[];
   closeProject: (id: number) => void;
+  openProject: (id: number) => void;
 }
 
 export const useManualCloseStore = create<ManualCloseStore>()(
@@ -11,11 +12,9 @@ export const useManualCloseStore = create<ManualCloseStore>()(
     (set) => ({
       closedProjectIds: [],
       closeProject: (id) =>
-        set(state => ({
-          closedProjectIds: state.closedProjectIds.includes(id)
-            ? state.closedProjectIds
-            : [...state.closedProjectIds, id],
-        })),
+        set((state) => ({ closedProjectIds: [...state.closedProjectIds, id] })),
+      openProject: (id) =>
+        set((state) => ({ closedProjectIds: state.closedProjectIds.filter((v) => v !== id) })),
     }),
     { name: 'manual-close-store' }
   )
