@@ -24,7 +24,7 @@ export default function HomeMain() {
   const [isOnlyRecruiting, setIsOnlyRecruiting] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [projects, setProjects] = useState<Project[]>([]);
-  const { closedProjectIds } = useManualCloseStore();
+  const { closedProjectIds, openedProjectIds } = useManualCloseStore();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -181,10 +181,11 @@ export default function HomeMain() {
 
               <section className="mt-[10px] flex flex-col items-center gap-3 pb-5 w-full px-4">
                 {projects
-                  .filter(p => !isOnlyRecruiting || (p.state === 'DOCUMENT' && !closedProjectIds.includes(p.id)))
+                  .filter(p => !isOnlyRecruiting || openedProjectIds.includes(p.id) || (p.state === 'DOCUMENT' && !closedProjectIds.includes(p.id)))
                   .map(project => {
                     const isManuallyClosed = closedProjectIds.includes(project.id);
-                    const isActive = project.state === 'DOCUMENT' && !isManuallyClosed;
+                    const isManuallyOpened = openedProjectIds.includes(project.id);
+                    const isActive = isManuallyOpened || (project.state === 'DOCUMENT' && !isManuallyClosed);
 
                     return (
                       <div key={project.id} className="w-full flex justify-center">
