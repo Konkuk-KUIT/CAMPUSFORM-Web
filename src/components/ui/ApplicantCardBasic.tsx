@@ -29,7 +29,7 @@ export default function ApplicantCard({
 }: ApplicantCardProps) {
   const statusColors: { [key: string]: string } = {
     합격: 'bg-point-green',
-    보류: 'bg-point-yellow',
+    보류: 'bg-gray-400',
     불합격: 'bg-point-red',
   };
 
