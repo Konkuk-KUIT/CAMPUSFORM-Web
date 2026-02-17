@@ -547,7 +547,7 @@ export default function SmartScheduleMainForm() {
                           alt={interviewer.name}
                           width={35}
                           height={35}
-                          className="w-8.75 h-8.75 rounded-full shrink-0"
+                          className="w-8.75 h-8.75 rounded-full shrink-0 object-cover"
                         />
                       ) : (
                         <div className="w-8.75 h-8.75 rounded-full bg-gray-200 shrink-0" />
