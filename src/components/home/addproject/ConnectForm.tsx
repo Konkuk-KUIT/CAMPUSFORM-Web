@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Header from '@/components/ui/Header';
 import Button from '@/components/ui/Btn';
 import SheetDropdown from '@/components/home/addproject/SheetDropdown';
-import { getSheetHeaders } from '@/services/googleSheetService';
+import { projectService } from '@/services/projectService';
 import { toast, ToastContainer } from '@/components/Toast';
 import Loading from '@/components/ui/Loading';
 import { useNewProjectStore } from '@/store/newProjectStore';
@@ -42,9 +42,9 @@ export default function ConnectForm({ sheetUrl: sheetUrlProp }: { sheetUrl: stri
       setProjectForm({ sheetUrl });
     }
 
-    getSheetHeaders(sheetUrl)
-      .then((data: SheetHeader[]) => {
-        setSheetHeaders(data);
+    projectService.getSheetHeaders(sheetUrl)
+      .then((data) => {
+        setSheetHeaders(data.headers.map((name, index) => ({ name, index })));
       })
       .catch(() => {
         toast.error('시트 헤더를 불러오지 못했습니다.');

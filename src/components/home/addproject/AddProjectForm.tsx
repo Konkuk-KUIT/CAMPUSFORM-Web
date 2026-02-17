@@ -10,12 +10,10 @@ import Button from '@/components/ui/Btn';
 import ProfileCross from '@/components/ui/ProfileCross';
 import DateRangePickerModal from '@/components/home/addproject/DateRangePickerModal';
 import InfoModal from '@/components/ui/InfoModal';
-import { getGoogleAuthorizeUrl } from '@/services/googleSheetService';
 import { toast, ToastContainer } from '@/components/Toast';
 import { useNewProjectStore } from '@/store/newProjectStore';
 import { projectService } from '@/services/projectService';
 import { authService } from '@/services/authService';
-import { syncSheet } from '@/services/googleSheetService';
 
 interface Admin {
   id: number;
@@ -71,7 +69,7 @@ export default function AddProjectForm() {
   const handleConnectClick = async () => {
     if (!url.trim()) return;
     try {
-      const authorizeUrl = await getGoogleAuthorizeUrl();
+      const authorizeUrl = await projectService.getGoogleAuthorizeUrl();
       sessionStorage.setItem('pendingSheetUrl', url);
       sessionStorage.setItem('pendingTitle', title); // 추가
       window.location.href = authorizeUrl;
@@ -160,7 +158,7 @@ export default function AddProjectForm() {
         updatedForm as Parameters<typeof projectService.createProject>[0]
       );
 
-      await syncSheet(createdProject.id); // 추가
+      await projectService.syncSheet(createdProject.id); // 추가
 
       setCreatedProjectId(createdProject.id);
       reset();
