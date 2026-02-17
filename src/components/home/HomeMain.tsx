@@ -99,13 +99,48 @@ export default function HomeMain() {
         const interviewProjects = projects
           .filter(p => p.state === 'INTERVIEW' || p.state === 'INTERVIEW_COMPLETE');
 
+        console.log('면접 단계 프로젝트:', interviewProjects.length, interviewProjects);
+
         if (interviewProjects.length > 0) {
-          // 프로젝트 ID와 이름의 Map 생성
-          const projectsMap = new Map(
-            interviewProjects.map(p => [p.id, p.title])
-          );
-          const interviewEvents = await scheduleService.getAllSchedulesAsEvents(projectsMap);
-          events.push(...interviewEvents);
+          // 각 프로젝트의 스마트 시간표를 조회하여 CalendarEvent로 변환
+          for (const project of interviewProjects) {
+            try {
+              console.log(`프로젝트 ${project.id}의 스마트 시간표 조회 중...`);
+              const schedule = await scheduleService.getSmartSchedule(project.id);
+              console.log(`프로젝트 ${project.id} 스케줄:`, schedule);
+              
+              if (schedule.days && schedule.days.length > 0) {
+                schedule.days.forEach(day => {
+                  day.slots.forEach(slot => {
+                    if (slot.applicants && slot.applicants.length > 0) {
+                      slot.applicants.forEach(applicant => {
+                        events.push({
+                          date: new Date(day.date),
+                          title: `${project.title} - ${applicant.name} 면접`,
+                          timeRange: `${slot.startTime} - ${slot.endTime}`,
+                        });
+                      });
+                    } else {
+                      // 지원자가 없는 슬롯도 표시
+                      events.push({
+                        date: new Date(day.date),
+                        title: `${project.title} - 면접 슬롯`,
+                        timeRange: `${slot.startTime} - ${slot.endTime}`,
+                      });
+                    }
+                  });
+                });
+              }
+            } catch (error: any) {
+              // 404나 500 에러는 스마트 시간표가 아직 생성되지 않은 것으로 간주
+              if (error.response?.status === 404 || error.response?.status === 500) {
+                console.log(`프로젝트 ${project.id}: 스마트 시간표가 아직 생성되지 않았습니다.`);
+              } else {
+                console.error(`프로젝트 ${project.id}의 스케줄 조회 실패:`, error);
+              }
+              // 오류가 발생해도 다른 프로젝트들은 계속 조회
+            }
+          }
         }
 
         setCalendarEvents(events);
