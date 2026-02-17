@@ -248,7 +248,7 @@ export default function SmartScheduleMainForm() {
     }>
   >([]);
 
-  const handleSaveInterviewerTime = async (userId: number, interviewerName: string) => {
+  const handleSaveInterviewerTime = async (userId: number, interviewerName: string, cellActive: { [key: string]: { top: boolean; bottom: boolean } }) => {
     if (!projectId) {
       toast.error('프로젝트가 선택되지 않았습니다.');
       return;
@@ -259,7 +259,6 @@ export default function SmartScheduleMainForm() {
       return;
     }
 
-    const cellActive = interviewersCellActive[userId];
     if (!cellActive || Object.keys(cellActive).length === 0) {
       toast.error('선택된 시간이 없습니다.');
       return;
@@ -604,7 +603,7 @@ export default function SmartScheduleMainForm() {
                             ...prev,
                             [interviewer.userId]: newCellActive,
                           }));
-                          handleSaveInterviewerTime(interviewer.userId, interviewer.name);
+                          handleSaveInterviewerTime(interviewer.userId, interviewer.name, newCellActive);
                         }}
                       />
                     </div>
