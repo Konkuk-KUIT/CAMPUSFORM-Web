@@ -162,7 +162,7 @@ export default function AppointmentModal({
           </div>
 
           {/* 시/분 그룹 */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             {/* 시간 선택 */}
             <div
               className="relative flex-1 h-24"
