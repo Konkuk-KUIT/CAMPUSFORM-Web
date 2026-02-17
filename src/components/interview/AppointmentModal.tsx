@@ -80,7 +80,8 @@ export default function AppointmentModal({
     const container = e.currentTarget;
     const scrollTop = container.scrollTop;
     const itemHeight = 32;
-    const centerIndex = Math.round(scrollTop / itemHeight);
+    const containerHeight = container.clientHeight; // 96px (h-24)
+    const centerIndex = Math.round((scrollTop + containerHeight / 2 - itemHeight / 2) / itemHeight);
     const actualIndex = centerIndex % items.length;
     setSelected(items[actualIndex]);
   };
