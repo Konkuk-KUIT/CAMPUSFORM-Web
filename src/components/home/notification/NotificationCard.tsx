@@ -52,9 +52,9 @@ export default function NotificationCard({
           />
         </div>
 
-        <h4 className="ml-2 text-body-sm text-gray-950 flex-1 font-bold">{title}</h4>
+        <h4 className="ml-2 text-body-sm text-gray-950 flex-1 truncate">{title}</h4>
 
-        <span className="text-body-sm text-gray-500 shrink-0">{timeAgo}</span>
+        <span className="text-body-sm text-gray-500 shrink-0 ml-4">{timeAgo}</span>
       </div>
 
       <div className="ml-8.75 mt-0.5 flex flex-col gap-0.5">

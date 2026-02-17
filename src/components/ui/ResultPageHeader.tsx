@@ -39,7 +39,7 @@ export default function ResultPageHeader({ projectId, title, backHref, showSubti
       </header>
       {showSubtitle && (
         <div className="bg-blue-50 h-10.75 flex items-center justify-center">
-          <span className="text-subtitle-sm-md">{projectTitle}</span>
+          <span className="text-subtitle-sm-md truncate flex-1 min-w-0 text-center mx-2">{projectTitle}</span>
         </div>
       )}
     </>
