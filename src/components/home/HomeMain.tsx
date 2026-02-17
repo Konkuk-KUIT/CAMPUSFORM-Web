@@ -4,7 +4,9 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { authService } from '@/services/authService';
 import { projectService } from '@/services/projectService';
+import { scheduleService } from '@/services/scheduleService';
 import type { Project } from '@/types/project';
+import type { CalendarEvent } from '@/types/schedule';
 import TopAppBar from '@/components/home/TopAppBar';
 import SegmentedControl from '@/components/ui/SegmentedControl';
 import Calendar from '@/components/home/Calendar';
@@ -24,6 +26,8 @@ export default function HomeMain() {
   const [isOnlyRecruiting, setIsOnlyRecruiting] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [projects, setProjects] = useState<Project[]>([]);
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
+  const [isLoadingSchedules, setIsLoadingSchedules] = useState(false);
   const { closedProjectIds } = useManualCloseStore();
 
   useEffect(() => {
@@ -66,6 +70,69 @@ export default function HomeMain() {
     if (!isLoading) fetchProjects();
   }, [isLoading]);
 
+  // 프로젝트 일정 조회
+  useEffect(() => {
+    const fetchSchedules = async () => {
+      if (projects.length === 0) return;
+      
+      setIsLoadingSchedules(true);
+      try {
+        const events: CalendarEvent[] = [];
+        
+        // 1. 프로젝트 모집 기간 추가
+        projects.forEach(project => {
+          // 모집 시작일
+          events.push({
+            date: new Date(project.startAt),
+            title: `${project.title} - 모집 시작`,
+            timeRange: '종일',
+          });
+          // 모집 종료일
+          events.push({
+            date: new Date(project.endAt),
+            title: `${project.title} - 모집 마감`,
+            timeRange: '종일',
+          });
+        });
+
+        // 2. 면접 일정 추가 (면접 단계 프로젝트만)
+        const interviewProjects = projects
+          .filter(p => p.state === 'INTERVIEW' || p.state === 'INTERVIEW_COMPLETE');
+
+        if (interviewProjects.length > 0) {
+          // 프로젝트 ID와 이름의 Map 생성
+          const projectsMap = new Map(
+            interviewProjects.map(p => [p.id, p.title])
+          );
+          const interviewEvents = await scheduleService.getAllSchedulesAsEvents(projectsMap);
+          events.push(...interviewEvents);
+        }
+
+        setCalendarEvents(events);
+      } catch (e) {
+        console.error('일정 조회 오류:', e);
+        // 일정 조회 실패해도 프로젝트 기간은 표시
+        const fallbackEvents = projects.flatMap(project => [
+          {
+            date: new Date(project.startAt),
+            title: `${project.title} - 모집 시작`,
+            timeRange: '종일',
+          },
+          {
+            date: new Date(project.endAt),
+            title: `${project.title} - 모집 마감`,
+            timeRange: '종일',
+          },
+        ]);
+        setCalendarEvents(fallbackEvents);
+      } finally {
+        setIsLoadingSchedules(false);
+      }
+    };
+
+    fetchSchedules();
+  }, [projects]);
+
   const handleDeleteProject = async (id: number) => {
     try {
       await projectService.deleteProject(id);
@@ -77,66 +144,15 @@ export default function HomeMain() {
     }
   };
 
-  const [schedules] = useState([
-    {
-      date: new Date(2026, 0, 18),
-      title: '요리퐁 6기 신입부원 모집 - 면접',
-      timeRange: '오후 2:00 - 오후 2:30',
-      isChecked: true,
-    },
-    {
-      date: new Date(2026, 0, 18),
-      title: '요리퐁 6기 신입부원 모집 - 면접',
-      timeRange: '오후 2:00 - 오후 2:30',
+  // 선택된 날짜의 일정 필터링
+  const todaySchedules = calendarEvents
+    .filter(event => event.date.toDateString() === selectedDate.toDateString())
+    .map(event => ({
+      date: event.date,
+      title: event.title,
+      timeRange: event.timeRange,
       isChecked: false,
-    },
-    {
-      date: new Date(2026, 0, 18),
-      title: '요리퐁 6기 신입부원 모집 - 면접',
-      timeRange: '오후 2:00 - 오후 2:30',
-      isChecked: false,
-    },
-  ]);
-
-  const calendarEvents = [
-    {
-      date: new Date(2026, 0, 22),
-      title: '요리퐁 신입부원 면접',
-      timeRange: '오후 2:00 - 오후 3:00',
-    },
-    {
-      date: new Date(2026, 0, 22),
-      title: 'KUIT 동아리 설명회',
-      timeRange: '오후 4:00 - 오후 5:00',
-    },
-    {
-      date: new Date(2026, 0, 22),
-      title: '학생회 정기 회의',
-      timeRange: '오후 7:00 - 오후 9:00',
-    },
-    {
-      date: new Date(2026, 0, 25),
-      title: 'KUIT 신입부원 면접',
-      timeRange: '오후 1:00 - 오후 2:00',
-    },
-    {
-      date: new Date(2026, 0, 28),
-      title: '동아리 정기 모임',
-      timeRange: '오후 6:00 - 오후 8:00',
-    },
-  ];
-
-  const allSchedules = [
-    ...schedules.map(s => ({ ...s, isChecked: s.isChecked })),
-    ...calendarEvents.map(e => ({
-      date: e.date,
-      title: e.title,
-      timeRange: e.timeRange,
-      isChecked: false,
-    })),
-  ];
-
-  const todaySchedules = allSchedules.filter(schedule => schedule.date.toDateString() === selectedDate.toDateString());
+    }));
 
   if (isLoading) {
     return (
