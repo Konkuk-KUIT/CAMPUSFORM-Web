@@ -116,7 +116,6 @@ export default function AppointmentModal({
                   {infiniteMonths.map((month, idx) => (
                     <button
                       key={`month-${idx}`}
-                      onClick={() => setSelectedMonth(month)}
                       className={`py-0.2 text-center whitespace-nowrap ${
                         selectedMonth === month
                           ? 'text-primary text-[22px] font-normal leading-normal tracking-[0.4px]'
@@ -147,7 +146,6 @@ export default function AppointmentModal({
                   {infiniteDays.map((day, idx) => (
                     <button
                       key={`day-${idx}`}
-                      onClick={() => setSelectedDay(day)}
                       className={`py-0.2 text-center whitespace-nowrap ${
                         selectedDay === day
                           ? 'text-primary text-[22px] font-normal leading-normal tracking-[0.4px]'
@@ -181,7 +179,6 @@ export default function AppointmentModal({
                   {infiniteHours.map((hour, idx) => (
                     <button
                       key={`hour-${idx}`}
-                      onClick={() => setSelectedHour(hour)}
                       className={`py-0.2 text-center whitespace-nowrap ${
                         selectedHour === hour
                           ? 'text-primary text-[22px] font-normal leading-normal tracking-[0.4px]'
@@ -214,7 +211,6 @@ export default function AppointmentModal({
                   {infiniteMinutes.map((minute, idx) => (
                     <button
                       key={`minute-${idx}`}
-                      onClick={() => setSelectedMinute(minute)}
                       className={`py-0.2 text-center whitespace-nowrap ${
                         selectedMinute === minute
                           ? 'text-primary text-[22px] font-normal leading-normal tracking-[0.4px]'
