@@ -57,7 +57,7 @@ export default function RecruitmentCard({
 
   // 모집마감일 때만 group-hover/active로 텍스트 색 변경
   const titleClasses = clsx(
-    'absolute top-[16px] left-[25px] w-[160px] h-[22px] text-subtitle-sb whitespace-nowrap truncate',
+    'w-[160px] h-[22px] text-subtitle-sb whitespace-nowrap truncate',
     {
       'text-gray-950': isActive,
       'text-[#D1D1D1] group-hover:text-[#B0B0B0] group-active:text-[#888888]': !isActive,
@@ -69,7 +69,7 @@ export default function RecruitmentCard({
     'text-[#D1D1D1] group-hover:text-[#B0B0B0] group-active:text-[#888888]': !isActive,
   });
 
-  const dateRangeClasses = clsx('text-subtitle-sm-rg mb-[16px]', {
+  const dateRangeClasses = clsx('text-subtitle-sm-rg', {
     'text-gray-400': isActive,
     'text-[#D1D1D1] group-hover:text-[#B0B0B0] group-active:text-[#888888]': !isActive,
   });
@@ -85,16 +85,16 @@ export default function RecruitmentCard({
 
   return (
     <div className={cardClasses} onClick={onClick}>
-      <h2 className={titleClasses}>{title}</h2>
+      <div className="flex flex-col justify-between h-full py-[16px] pl-[25px] pr-[16px]">
+        <h2 className={titleClasses}>{title}</h2>
 
-      <div className="absolute top-[42px] left-[25px] flex flex-col">
-        <p className={recruitmentStatusClasses}>{recruitmentStatus}</p>
-
-        <p className={dateRangeClasses}>{dateRange}</p>
-
-        <p className={applicantCountClasses}>
-          <span className={applicantCountSpanClasses}>{applicantCount}명</span> 지원
-        </p>
+        <div className="flex flex-col gap-[2px]">
+          <p className={recruitmentStatusClasses}>{recruitmentStatus}</p>
+          <p className={dateRangeClasses}>{dateRange}</p>
+          <p className={applicantCountClasses}>
+            <span className={applicantCountSpanClasses}>{applicantCount}명</span> 지원
+          </p>
+        </div>
       </div>
 
       <button
@@ -102,7 +102,7 @@ export default function RecruitmentCard({
           e.stopPropagation();
           setIsMenuOpen(!isMenuOpen);
         }}
-        className="absolute top-[20px] right-[16px] w-[24px] h-[24px] flex flex-col items-center justify-center gap-[3px] rounded-full text-gray-950 z-10 cursor-pointer"
+        className="absolute top-[16px] right-[16px] w-[24px] h-[24px] flex flex-col items-center justify-center gap-[3px] rounded-full text-gray-950 z-10 cursor-pointer"
       >
         <span className="w-[3.5px] h-[3.5px] bg-current rounded-full" />
         <span className="w-[3.5px] h-[3.5px] bg-current rounded-full" />
