@@ -44,7 +44,7 @@ export default function ProfileCross({
         <div className="flex items-center gap-2.5">
           <div className="w-8.75 h-8.75 rounded-full shrink-0 overflow-hidden bg-[#D9D9D9]">
             {profileImageUrl && (
-              <Image src={profileImageUrl} alt={nickname} width={35} height={35} className="object-cover" />
+              <Image src={profileImageUrl} alt={nickname} width={35} height={35} className="w-full h-full object-cover" />
             )}
           </div>
 

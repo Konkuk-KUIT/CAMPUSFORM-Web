@@ -114,6 +114,8 @@ export default function OwnerView({
     }
   };
 
+  const positionEditHref = `/home/addproject/connect/edit-position?from=manage&projectId=${projectId}&sheetUrl=${encodeURIComponent(project.sheetUrl ?? '')}`;
+
   return (
     <div className="flex justify-center min-h-screen bg-white">
       <style jsx global>{`
@@ -133,7 +135,6 @@ export default function OwnerView({
       `}</style>
 
       <div className="relative w-[375px] bg-white min-h-screen flex flex-col pb-10">
-        {/* 헤더 */}
         <div className="flex items-center justify-between h-12 px-4 bg-white border-b border-gray-100">
           <Link href="/home" className="w-6 h-6 flex items-center justify-center">
             <Image src="/icons/logo.svg" alt="logo" width={21} height={22} />
@@ -143,7 +144,6 @@ export default function OwnerView({
         </div>
 
         <div className="flex-1 px-5 py-6 flex flex-col gap-6 overflow-y-auto scrollbar-hide pb-10">
-          {/* 프로젝트 이름 */}
           <div className="flex flex-col gap-2">
             <label className="text-[14px] font-bold text-gray-950">프로젝트 이름</label>
             <div className="flex gap-2 items-start">
@@ -169,7 +169,6 @@ export default function OwnerView({
             </div>
           </div>
 
-          {/* 모집 상태 */}
           <div className="flex flex-col gap-2">
             <label className="text-[14px] font-bold text-gray-950">모집 상태</label>
             <SheetDropdown
@@ -190,7 +189,7 @@ export default function OwnerView({
               showNoneOption={false}
             />
           </div>
-
+            
           {/* 구글폼 URL */}
           <div className="flex flex-col gap-2">
             <label className="text-[14px] font-bold text-gray-950">구글폼 스프레드 시트 URL</label>
@@ -204,7 +203,6 @@ export default function OwnerView({
             />
           </div>
 
-          {/* 모집 기간 */}
           <div className="flex flex-col gap-2">
             <label className="text-[14px] font-bold text-gray-950">모집 기간 설정</label>
             <button
@@ -219,7 +217,6 @@ export default function OwnerView({
             </button>
           </div>
 
-          {/* 포지션 설정 */}
           <div className="flex flex-col gap-2">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-1">
@@ -255,7 +252,7 @@ export default function OwnerView({
                 </div>
               </div>
               <Link
-                href={`/home/addproject/connect/edit-position?from=manage&projectId=${projectId}`}
+                href={positionEditHref}
                 className="flex items-center gap-1 text-[13px] font-normal leading-[18px] tracking-[0.13px] text-[var(--color-primary)] underline decoration-solid"
               >
                 편집하기
@@ -272,7 +269,6 @@ export default function OwnerView({
             </div>
           </div>
 
-          {/* 관리자 추가 */}
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2">
               <span className="text-[14px] font-bold text-gray-950">관리자 추가</span>
@@ -311,7 +307,6 @@ export default function OwnerView({
           </div>
         </div>
 
-        {/* 모달들 */}
         {isDateModalOpen && (
           <DateRangePickerModal
             onClose={() => setIsDateModalOpen(false)}

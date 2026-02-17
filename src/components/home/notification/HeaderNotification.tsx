@@ -1,7 +1,8 @@
 'use client';
 
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 
 interface HeaderNotificationProps {
   title: string;
@@ -12,20 +13,23 @@ interface HeaderNotificationProps {
 
 export default function HeaderNotification({
   title,
-  backTo = '/home',
+  backTo,
   hideNotification = false,
   rightElement,
 }: HeaderNotificationProps) {
+  const router = useRouter();
+
   return (
     <header className="flex items-center justify-between h-12 px-4 bg-white">
-      {backTo ? (
-        <Link href={backTo} className="w-6 h-6 flex items-center justify-center">
-          <Image src="/icons/back.svg" alt="뒤로가기" width={24} height={24} />
-        </Link>
-      ) : (
-        <div className="w-6 h-6" />
-      )}
+      <button
+        onClick={() => (backTo ? router.push(backTo) : router.back())}
+        className="w-6 h-6 flex items-center justify-center"
+      >
+        <Image src="/icons/back.svg" alt="뒤로가기" width={24} height={24} />
+      </button>
+
       <span className="text-title">{title}</span>
+
       {rightElement ? (
         <div className="w-6 h-6 flex items-center justify-center">{rightElement}</div>
       ) : hideNotification ? (

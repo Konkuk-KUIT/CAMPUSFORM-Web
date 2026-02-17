@@ -10,12 +10,10 @@ import Button from '@/components/ui/Btn';
 import ProfileCross from '@/components/ui/ProfileCross';
 import DateRangePickerModal from '@/components/home/addproject/DateRangePickerModal';
 import InfoModal from '@/components/ui/InfoModal';
-import { getGoogleAuthorizeUrl } from '@/services/googleSheetService';
 import { toast, ToastContainer } from '@/components/Toast';
 import { useNewProjectStore } from '@/store/newProjectStore';
 import { projectService } from '@/services/projectService';
 import { authService } from '@/services/authService';
-import { syncSheet } from '@/services/googleSheetService';
 
 interface Admin {
   id: number;
@@ -27,7 +25,7 @@ interface Admin {
 
 export default function AddProjectForm() {
   const router = useRouter();
-  const { setProjectForm, projectForm, reset, setCreatedProjectId } = useNewProjectStore();
+  const { setProjectForm, projectForm, reset, setCreatedProjectId, setCachedSheetHeaders } = useNewProjectStore();
   const [showWarningModal, setShowWarningModal] = useState(true);
   const [isDateModalOpen, setIsDateModalOpen] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
@@ -39,12 +37,8 @@ export default function AddProjectForm() {
   });
   const [isTitleError, setIsTitleError] = useState(false);
   const [url, setUrl] = useState(projectForm.sheetUrl ?? '');
-  const [startDate, setStartDate] = useState<Date | null>(
-    projectForm.startAt ? new Date(projectForm.startAt) : null
-  );
-  const [endDate, setEndDate] = useState<Date | null>(
-    projectForm.endAt ? new Date(projectForm.endAt) : null
-  );
+  const [startDate, setStartDate] = useState<Date | null>(projectForm.startAt ? new Date(projectForm.startAt) : null);
+  const [endDate, setEndDate] = useState<Date | null>(projectForm.endAt ? new Date(projectForm.endAt) : null);
   const [adminInput, setAdminInput] = useState('');
   const [isAdminError, setIsAdminError] = useState(false);
   const [adminList, setAdminList] = useState<Admin[]>([]);
@@ -52,7 +46,6 @@ export default function AddProjectForm() {
   useEffect(() => {
     const fetchCurrentUser = async () => {
       const auth = await authService.getCurrentUser();
-      console.log('auth.user:', auth.user);
       if (auth.isAuthenticated && auth.user) {
         setAdminList([
           {
@@ -70,14 +63,22 @@ export default function AddProjectForm() {
 
   const handleConnectClick = async () => {
     if (!url.trim()) return;
+
+    sessionStorage.setItem('pendingSheetUrl', url);
+    sessionStorage.setItem('pendingTitle', title);
+
     try {
-      const authorizeUrl = await getGoogleAuthorizeUrl();
-      sessionStorage.setItem('pendingSheetUrl', url);
-      sessionStorage.setItem('pendingTitle', title); // 추가
-      window.location.href = authorizeUrl;
-    } catch (e) {
-      console.error('OAuth URL 오류:', e);
-      toast.error('Google 인증 URL을 불러오지 못했습니다.');
+      const data = await projectService.getSheetHeaders(url);
+      sessionStorage.setItem('cachedSheetHeaders', JSON.stringify(data));
+      window.location.href = `/home/addproject/connect?sheetUrl=${encodeURIComponent(url)}`;
+    } catch {
+      try {
+        const authorizeUrl = await projectService.getGoogleAuthorizeUrl();
+        window.location.href = authorizeUrl;
+      } catch (e) {
+        console.error('OAuth URL 오류:', e);
+        toast.error('Google 인증 URL을 불러오지 못했습니다.');
+      }
     }
   };
 
@@ -160,7 +161,12 @@ export default function AddProjectForm() {
         updatedForm as Parameters<typeof projectService.createProject>[0]
       );
 
-      await syncSheet(createdProject.id); // 추가
+      sessionStorage.setItem(
+        `positionIdx-${createdProject.id}`,
+        String(updatedForm.requiredMappings?.positionIdx ?? -1)
+      );
+
+      await projectService.syncSheet(createdProject.id);
 
       setCreatedProjectId(createdProject.id);
       reset();

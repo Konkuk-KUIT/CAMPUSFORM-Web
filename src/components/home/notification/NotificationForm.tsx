@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import HeaderNotification from './HeaderNotification';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -19,6 +20,7 @@ function toTimeAgo(isoString: string): string {
   if (hours < 24) return `${hours}시간 전`;
   return `${Math.floor(hours / 24)}일 전`;
 }
+
 function extractName(message?: string): string {
   if (!message) return '누군가';
   const match = message.match(/^(.+?) 님이/);
@@ -39,7 +41,9 @@ function buildMessage(noti: Notification): string {
       return (payload.message as string) ?? '';
   }
 }
+
 export default function NotificationForm() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<'all' | 'unread'>('all');
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -78,15 +82,25 @@ export default function NotificationForm() {
     }
   };
 
-  const handleMarkRead = async (id: number) => {
-    if (notifications.find(n => n.id === id)?.read) return;
-    try {
-      await notificationService.markAsRead(id);
-      setNotifications(prev => prev.map(n => (n.id === id ? { ...n, read: true } : n)));
-      setUnreadCount(prev => Math.max(0, prev - 1));
-    } catch (error) {
-      console.error('읽음 처리 실패:', error);
-      toast.error('읽음 처리에 실패했습니다.');
+  const handleCardClick = async (noti: Notification) => {
+    if (!noti.read) {
+      try {
+        await notificationService.markAsRead(noti.id);
+        setNotifications(prev => prev.map(n => (n.id === noti.id ? { ...n, read: true } : n)));
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      } catch (error) {
+        console.error('읽음 처리 실패:', error);
+      }
+    }
+
+    switch (noti.type) {
+      case 'COMMENT_CREATED':
+      case 'NEW_APPLICANT':
+        router.push(`/document/${noti.projectId}/${noti.payload.applicantId}`);
+        break;
+      case 'ADMIN_ADDED':
+        router.push(`/manage`);
+        break;
     }
   };
 
@@ -139,11 +153,11 @@ export default function NotificationForm() {
                 key={noti.id}
                 type={noti.type}
                 title={(noti.payload.projectTitle as string) ?? `프로젝트 ${noti.projectId}`}
-                subContent={noti.type === 'COMMENT_CREATED' ? `- ${noti.payload.title as string}` : undefined} // 여기
+                subContent={noti.type === 'COMMENT_CREATED' ? `- ${noti.payload.title as string}` : undefined}
                 content={buildMessage(noti)}
                 timeAgo={toTimeAgo(noti.createdAt)}
                 isUnread={!noti.read}
-                onClick={() => handleMarkRead(noti.id)}
+                onClick={() => handleCardClick(noti)}
               />
             ))
           ) : (
