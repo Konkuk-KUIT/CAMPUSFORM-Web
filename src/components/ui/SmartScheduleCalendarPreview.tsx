@@ -344,6 +344,12 @@ export default function SmartScheduleCalendarPreview({
                   actualDate.setDate(actualDate.getDate() + dayIdx);
                   const dateKey = `${actualDate.getFullYear()}-${(actualDate.getMonth() + 1).toString().padStart(2, '0')}-${actualDate.getDate().toString().padStart(2, '0')}`;
                   
+                  // 면접 날짜인지 확인
+                  const isInterviewDate = interviewDates.some(interviewDate => {
+                    const dateStr = `${interviewDate.getFullYear()}-${(interviewDate.getMonth() + 1).toString().padStart(2, '0')}-${interviewDate.getDate().toString().padStart(2, '0')}`;
+                    return dateStr === dateKey;
+                  });
+                  
                   // cellKey를 날짜와 시간 인덱스로 생성
                   const cellKey = `${dateKey}-${timeIdx}`;
                   
@@ -361,6 +367,12 @@ export default function SmartScheduleCalendarPreview({
                     // 개별 면접관: 선택된 셀만 파란색
                     topColor = isTopActive ? BLUE2 : GRAY1;
                     bottomColor = isBottomActive ? BLUE2 : GRAY1;
+                    
+                    // 면접 날짜가 아니면 더 어둡게 표시
+                    if (!isInterviewDate) {
+                      topColor = '#d1d1d1'; // 더 어두운 회색
+                      bottomColor = '#d1d1d1';
+                    }
                   } else {
                     // 전체 뷰: interviewersCellActive로 실제 면접관 수 계산
                     if (interviewersCellActive && Object.keys(interviewersCellActive).length > 0) {
@@ -419,10 +431,10 @@ export default function SmartScheduleCalendarPreview({
                     <div key={`${dayIdx}-${timeIdx}`} className="flex flex-col h-full w-full relative">
                       {/* Top half - solid border */}
                       <div
-                        className={`flex-1 border-t border-white border-solid ${interviewerName ? 'cursor-pointer hover:opacity-80' : ''}`}
-                        style={{ backgroundColor: topColor, cursor: interviewerName ? 'pointer' : 'default' }}
+                        className={`flex-1 border-t border-white border-solid ${interviewerName && isInterviewDate ? 'cursor-pointer hover:opacity-80' : interviewerName ? 'cursor-not-allowed' : ''}`}
+                        style={{ backgroundColor: topColor, cursor: interviewerName && isInterviewDate ? 'pointer' : interviewerName ? 'not-allowed' : 'default' }}
                         onClick={() => {
-                          if (interviewerName) {
+                          if (interviewerName && isInterviewDate) {
                             const newTop = !(cellActive[cellKey]?.top ?? false);
                             console.log(`[CalendarPreview] ${interviewerName} - 클릭 dateKey: ${dateKey}, cellKey: ${cellKey}, 현재 top: ${cellActive[cellKey]?.top}, 새 top: ${newTop}`);
                             setCellActive(prev => {
@@ -445,10 +457,10 @@ export default function SmartScheduleCalendarPreview({
                       />
                       {/* Bottom half - dashed border */}
                       <div
-                        className={`flex-1 border-t border-white ${interviewerName ? 'cursor-pointer hover:opacity-80' : ''}`}
-                        style={{ backgroundColor: bottomColor, borderStyle: 'dashed', cursor: interviewerName ? 'pointer' : 'default' }}
+                        className={`flex-1 border-t border-white ${interviewerName && isInterviewDate ? 'cursor-pointer hover:opacity-80' : interviewerName ? 'cursor-not-allowed' : ''}`}
+                        style={{ backgroundColor: bottomColor, borderStyle: 'dashed', cursor: interviewerName && isInterviewDate ? 'pointer' : interviewerName ? 'not-allowed' : 'default' }}
                         onClick={() => {
-                          if (interviewerName) {
+                          if (interviewerName && isInterviewDate) {
                             const newBottom = !(cellActive[cellKey]?.bottom ?? false);
                             console.log(`[CalendarPreview] ${interviewerName} - 클릭 dateKey: ${dateKey}, cellKey: ${cellKey}, 현재 bottom: ${cellActive[cellKey]?.bottom}, 새 bottom: ${newBottom}`);
                             setCellActive(prev => {
