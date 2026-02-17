@@ -161,6 +161,11 @@ export default function AddProjectForm() {
         updatedForm as Parameters<typeof projectService.createProject>[0]
       );
 
+      sessionStorage.setItem(
+        `positionIdx-${createdProject.id}`,
+        String(updatedForm.requiredMappings?.positionIdx ?? -1)
+      );
+
       await projectService.syncSheet(createdProject.id);
 
       setCreatedProjectId(createdProject.id);
