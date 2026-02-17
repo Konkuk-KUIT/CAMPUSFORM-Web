@@ -14,6 +14,7 @@ interface RecruitmentCardProps {
   dateRange: string;
   applicantCount: number;
   onDelete: (id: number) => void;
+  onClick?: () => void;
 }
 
 export default function RecruitmentCard({
@@ -24,6 +25,7 @@ export default function RecruitmentCard({
   dateRange,
   applicantCount,
   onDelete,
+  onClick,
 }: RecruitmentCardProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
@@ -77,7 +79,7 @@ export default function RecruitmentCard({
   });
 
   return (
-    <div className={cardClasses}>
+    <div className={cardClasses} onClick={onClick}>
       <h2 className={titleClasses}>{title}</h2>
 
       <div className="absolute top-[42px] left-[25px] flex flex-col">
@@ -103,7 +105,10 @@ export default function RecruitmentCard({
       </button>
 
       {isMenuOpen && (
-        <div className="absolute top-[48px] right-[16px] z-20 shadow-[0_2px_8px_rgba(0,0,0,0.1)] rounded-10">
+        <div
+          className="absolute top-[48px] right-[16px] z-20 shadow-[0_2px_8px_rgba(0,0,0,0.1)] rounded-10"
+          onClick={e => e.stopPropagation()}  // 추가
+        >
           <SelectModal options={modalOptions} onChange={handleMenuSelect} backgroundColor="white" width="w-[102px]" />
         </div>
       )}
