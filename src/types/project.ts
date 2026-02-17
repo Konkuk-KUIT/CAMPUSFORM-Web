@@ -101,5 +101,6 @@ export interface ProjectAdminRaw {
 }
 
 export interface GetProjectAdminsResponse {
+  owner: ProjectAdminRaw;
   admins: ProjectAdminRaw[];
 }
