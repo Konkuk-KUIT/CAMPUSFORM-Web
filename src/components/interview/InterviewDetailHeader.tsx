@@ -35,7 +35,7 @@ export default function InterviewDetailHeader({ projectId }: InterviewDetailHead
         <Link href={`/interview/${projectId}`} className="w-6 h-6">
           <Image src="/icons/back.svg" alt="뒤로가기" width={24} height={24} />
         </Link>
-        <span className="text-title">{projectName}</span>
+        <span className="text-title truncate flex-1 min-w-0 text-center mx-2">{projectName}</span>
         <NotificationBell />
       </header>
     </>

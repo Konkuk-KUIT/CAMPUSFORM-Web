@@ -12,6 +12,8 @@ interface SearchBarProps {
   sortValue?: string;
   onSortChange?: (value: string) => void;
   onRefresh?: () => Promise<void>;
+  selectedFilter?: string;
+  onFilterClear?: () => void;
 }
 
 export default function SearchBar({
@@ -22,6 +24,8 @@ export default function SearchBar({
   sortValue,
   onSortChange,
   onRefresh,
+  selectedFilter,
+  onFilterClear,
 }: SearchBarProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [lastRefreshTime, setLastRefreshTime] = useState<Date>(new Date());
@@ -33,7 +37,6 @@ export default function SearchBar({
     { id: 'star', label: '별표 순' },
   ];
 
-  // 새로고침 시간 계산 및 표시
   useEffect(() => {
     const updateElapsedTime = () => {
       const now = new Date();
@@ -48,8 +51,8 @@ export default function SearchBar({
       }
     };
 
-    updateElapsedTime(); // 초기 실행
-    const interval = setInterval(updateElapsedTime, 60000); // 1분마다 업데이트
+    updateElapsedTime();
+    const interval = setInterval(updateElapsedTime, 60000);
 
     return () => clearInterval(interval);
   }, [lastRefreshTime]);
@@ -82,6 +85,18 @@ export default function SearchBar({
           <Image src="/icons/filter.svg" alt="필터" width={15} height={15} />
         </button>
       </div>
+
+      {/* 선택된 필터 칩 */}
+      {selectedFilter && selectedFilter !== '전체' && (
+        <div className="px-4 pb-1 flex flex-wrap gap-2 text-gray-600 text-body-sm">
+          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-[13px] bg-blue-50 ">
+            {selectedFilter}
+            <button onClick={onFilterClear} className="cursor-pointer">
+              ×
+            </button>
+          </span>
+        </div>
+      )}
 
       {/* 새로고침, 정렬 */}
       {showSort && (
