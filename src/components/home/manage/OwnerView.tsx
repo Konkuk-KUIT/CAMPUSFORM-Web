@@ -39,7 +39,7 @@ export default function OwnerView({
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [showWarningModal, setShowWarningModal] = useState(false);
   const [showPositionTooltip, setShowPositionTooltip] = useState(false);
-  const { closedProjectIds, closeProject } = useManualCloseStore();
+  const { closedProjectIds, closeProject, openProject } = useManualCloseStore();
   const isManuallyClosed = closedProjectIds.includes(projectId);
 
   const formatDate = (date: Date | null) => {
@@ -169,24 +169,23 @@ export default function OwnerView({
           {/* 모집 상태 */}
           <div className="flex flex-col gap-2">
             <label className="text-[14px] font-bold text-gray-950">모집 상태</label>
-            {isManuallyClosed ? (
-              <div className="w-full h-12.5 px-4 flex items-center rounded-10 border border-gray-100 bg-gray-100 text-body-rg text-gray-300">
-                모집 마감
-              </div>
-            ) : (
-              <SheetDropdown
-                options={['모집 중', '모집 마감']}
-                value={status}
-                onChange={(val) => {
-                  if (val === '모집 마감') {
-                    closeProject(projectId);
-                    toast.success('모집이 마감되었습니다.');
-                  }
-                }}
-                placeholder="모집 상태를 선택하세요"
-                showNoneOption={false}
-              />
-            )}
+            <SheetDropdown
+              options={['모집 중', '모집 완료']}
+              value={isManuallyClosed ? '모집 완료' : status}
+              onChange={(val) => {
+                if (val === '모집 완료') {
+                  closeProject(projectId);
+                  setStatus('모집 완료');
+                  //toast.success('모집이 마감되었습니다.');
+                } else {
+                  openProject(projectId);
+                  setStatus('모집 중');
+                  //toast.success('모집 중으로 변경되었습니다.');
+                }
+              }}
+              placeholder="모집 상태를 선택하세요"
+              showNoneOption={false}
+            />
           </div>
 
           {/* 구글폼 URL */}

@@ -7,6 +7,7 @@ import AdminView from './AdminView';
 import { projectService } from '@/services/projectService';
 import { authService } from '@/services/authService';
 import type { Project, ProjectAdmin, ProjectAdminRaw } from '@/types/project';
+import { useManualCloseStore } from '@/store/manualCloseStore';
 
 export interface ManageViewProps {
   projectId: number;
@@ -14,11 +15,13 @@ export interface ManageViewProps {
   adminList: ProjectAdmin[];
   ownerUserId: number;
   status: string;
+  onStatusChange?: (newStatus: string) => void;
   startDate: Date | null;
   endDate: Date | null;
 }
 
 export default function ManageApplicationForm({ projectId }: { projectId: number }) {
+  const { closedProjectIds, closeProject, openProject } = useManualCloseStore(); // 수정
   const [isOwner, setIsOwner] = useState<boolean | null>(null);
   const [viewProps, setViewProps] = useState<ManageViewProps | null>(null);
 
@@ -34,8 +37,10 @@ export default function ManageApplicationForm({ projectId }: { projectId: number
         ]);
 
         const found = projects.find(p => p.id === projectId);
-
         if (!found || !auth.isAuthenticated || !auth.user) return;
+
+        const isManuallyClosed = closedProjectIds.includes(projectId);
+        const isActive = found.state === 'DOCUMENT' && !isManuallyClosed;
 
         const currentUserId = auth.user.userId;
         const ownerIsMe = currentUserId === owner.adminId;
@@ -60,7 +65,14 @@ export default function ManageApplicationForm({ projectId }: { projectId: number
           project: found,
           adminList: [ownerAdmin, ...mappedAdmins],
           ownerUserId: owner.adminId,
-          status: found.state === 'DOCUMENT' ? '모집 중' : '모집 마감',
+          status: isActive ? '모집 중' : '모집 완료',
+          onStatusChange: (newStatus: string) => {
+            if (newStatus === '모집 완료') {
+              closeProject(projectId);
+            } else {
+              openProject(projectId);
+            }
+          },
           startDate: new Date(found.startAt),
           endDate: new Date(found.endAt),
         });
