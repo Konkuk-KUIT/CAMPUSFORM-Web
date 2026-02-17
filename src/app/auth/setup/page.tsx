@@ -6,7 +6,7 @@ import Header from '@/components/ui/Header';
 export default function SetupPage() {
   return (
     <div>
-      <Header title="프로필 설정" backTo="/auth/login" />
+      <Header title="프로필 설정" backTo="/auth/login" hideNotification />
       <ProfileSetupForm />
     </div>
   );

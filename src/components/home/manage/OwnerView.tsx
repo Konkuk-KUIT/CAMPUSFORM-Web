@@ -16,6 +16,7 @@ import { projectService } from '@/services/projectService';
 import { authService } from '@/services/authService';
 import type { ProjectAdmin } from '@/types/project';
 import type { ManageViewProps } from './ManageApplicationForm';
+import { useManualCloseStore } from '@/store/manualCloseStore';
 
 export default function OwnerView({
   projectId,
@@ -38,6 +39,8 @@ export default function OwnerView({
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [showWarningModal, setShowWarningModal] = useState(false);
   const [showPositionTooltip, setShowPositionTooltip] = useState(false);
+  const { closedProjectIds, closeProject } = useManualCloseStore();
+  const isManuallyClosed = closedProjectIds.includes(projectId);
 
   const formatDate = (date: Date | null) => {
     if (!date) return '';
@@ -166,13 +169,24 @@ export default function OwnerView({
           {/* 모집 상태 */}
           <div className="flex flex-col gap-2">
             <label className="text-[14px] font-bold text-gray-950">모집 상태</label>
-            <SheetDropdown
-              options={['모집 중', '모집 마감']}
-              value={status}
-              onChange={val => setStatus(val)}
-              placeholder="모집 상태를 선택하세요"
-              showNoneOption={false}
-            />
+            {isManuallyClosed ? (
+              <div className="w-full h-12.5 px-4 flex items-center rounded-10 border border-gray-100 bg-gray-100 text-body-rg text-gray-300">
+                모집 마감
+              </div>
+            ) : (
+              <SheetDropdown
+                options={['모집 중', '모집 마감']}
+                value={status}
+                onChange={(val) => {
+                  if (val === '모집 마감') {
+                    closeProject(projectId);
+                    toast.success('모집이 마감되었습니다.');
+                  }
+                }}
+                placeholder="모집 상태를 선택하세요"
+                showNoneOption={false}
+              />
+            )}
           </div>
 
           {/* 구글폼 URL */}

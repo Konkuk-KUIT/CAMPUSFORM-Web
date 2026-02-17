@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Header from '@/components/ui/Header';
 import Button from '@/components/ui/Btn';
 import SheetDropdown from '@/components/home/addproject/SheetDropdown';
-import { getSheetHeaders } from '@/services/googleSheetService';
+import { projectService } from '@/services/projectService';
 import { toast, ToastContainer } from '@/components/Toast';
 import Loading from '@/components/ui/Loading';
 import { useNewProjectStore } from '@/store/newProjectStore';
@@ -30,11 +30,26 @@ export default function ConnectForm({ sheetUrl: sheetUrlProp }: { sheetUrl: stri
   const [mappings, setMappings] = useState(mappingFields);
 
   useEffect(() => {
+    const cached = sessionStorage.getItem('cachedSheetHeaders');
+    if (cached) {
+      try {
+        const headers = JSON.parse(cached) as SheetHeader[];
+        sessionStorage.removeItem('cachedSheetHeaders');
+        setTimeout(() => {
+          setSheetHeaders(headers);
+          setIsLoading(false);
+        }, 0);
+        return;
+      } catch {
+        sessionStorage.removeItem('cachedSheetHeaders');
+      }
+    }
+
     if (!sheetUrl) {
-      Promise.resolve().then(() => {
+      setTimeout(() => {
         toast.error('시트 URL이 없습니다.');
         setIsLoading(false);
-      });
+      }, 0);
       return;
     }
 
@@ -42,9 +57,10 @@ export default function ConnectForm({ sheetUrl: sheetUrlProp }: { sheetUrl: stri
       setProjectForm({ sheetUrl });
     }
 
-    getSheetHeaders(sheetUrl)
-      .then((data: SheetHeader[]) => {
-        setSheetHeaders(data);
+    projectService
+      .getSheetHeaders(sheetUrl)
+      .then(data => {
+        setSheetHeaders(data as unknown as SheetHeader[]);
       })
       .catch(() => {
         toast.error('시트 헤더를 불러오지 못했습니다.');
@@ -103,7 +119,7 @@ export default function ConnectForm({ sheetUrl: sheetUrlProp }: { sheetUrl: stri
       <div className="relative w-93.75 bg-white min-h-screen flex flex-col">
         <Header title="스프레드 시트 연동" backTo="/home/addproject" />
 
-        <div className="flex-1 px-5 py-6 flex flex-col gap-6 overflow-y-auto scrollbar-hide pb-24">
+        <div className="flex-1 px-5 py-6 flex flex-col gap-6 overflow-y-auto scrollbar-hide pb-5">
           <p className="text-12 text-gray-500 leading-4.5">
             스프레드 시트의 질문을 서비스 표준 항목과 연결해 주세요.
             <br />

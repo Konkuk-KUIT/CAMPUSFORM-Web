@@ -4,7 +4,9 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { authService } from '@/services/authService';
 import { projectService } from '@/services/projectService';
+import { scheduleService } from '@/services/scheduleService';
 import type { Project } from '@/types/project';
+import type { CalendarEvent } from '@/types/schedule';
 import TopAppBar from '@/components/home/TopAppBar';
 import SegmentedControl from '@/components/ui/SegmentedControl';
 import Calendar from '@/components/home/Calendar';
@@ -15,6 +17,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { toast, ToastContainer } from '@/components/Toast';
 import Loading from '@/components/ui/Loading';
+import { useManualCloseStore } from '@/store/manualCloseStore';
 
 export default function HomeMain() {
   const router = useRouter();
@@ -23,6 +26,9 @@ export default function HomeMain() {
   const [isOnlyRecruiting, setIsOnlyRecruiting] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [projects, setProjects] = useState<Project[]>([]);
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
+  const [isLoadingSchedules, setIsLoadingSchedules] = useState(false);
+  const { closedProjectIds } = useManualCloseStore();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -64,6 +70,104 @@ export default function HomeMain() {
     if (!isLoading) fetchProjects();
   }, [isLoading]);
 
+  // 프로젝트 일정 조회
+  useEffect(() => {
+    const fetchSchedules = async () => {
+      if (projects.length === 0) return;
+      
+      setIsLoadingSchedules(true);
+      try {
+        const events: CalendarEvent[] = [];
+        
+        // 1. 프로젝트 모집 기간 추가
+        projects.forEach(project => {
+          // 모집 시작일
+          events.push({
+            date: new Date(project.startAt),
+            title: `${project.title} - 모집 시작`,
+            timeRange: '종일',
+          });
+          // 모집 종료일
+          events.push({
+            date: new Date(project.endAt),
+            title: `${project.title} - 모집 마감`,
+            timeRange: '종일',
+          });
+        });
+
+        // 2. 면접 일정 추가 (면접 단계 프로젝트만)
+        const interviewProjects = projects
+          .filter(p => p.state === 'INTERVIEW' || p.state === 'INTERVIEW_COMPLETE');
+
+        console.log('면접 단계 프로젝트:', interviewProjects.length, interviewProjects);
+
+        if (interviewProjects.length > 0) {
+          // 각 프로젝트의 스마트 시간표를 조회하여 CalendarEvent로 변환
+          for (const project of interviewProjects) {
+            try {
+              console.log(`프로젝트 ${project.id}의 스마트 시간표 조회 중...`);
+              const schedule = await scheduleService.getSmartSchedule(project.id);
+              console.log(`프로젝트 ${project.id} 스케줄:`, schedule);
+              
+              if (schedule.days && schedule.days.length > 0) {
+                schedule.days.forEach(day => {
+                  day.slots.forEach(slot => {
+                    if (slot.applicants && slot.applicants.length > 0) {
+                      slot.applicants.forEach(applicant => {
+                        events.push({
+                          date: new Date(day.date),
+                          title: `${project.title} - ${applicant.name} 면접`,
+                          timeRange: `${slot.startTime} - ${slot.endTime}`,
+                        });
+                      });
+                    } else {
+                      // 지원자가 없는 슬롯도 표시
+                      events.push({
+                        date: new Date(day.date),
+                        title: `${project.title} - 면접 슬롯`,
+                        timeRange: `${slot.startTime} - ${slot.endTime}`,
+                      });
+                    }
+                  });
+                });
+              }
+            } catch (error: any) {
+              // 404나 500 에러는 스마트 시간표가 아직 생성되지 않은 것으로 간주
+              if (error.response?.status === 404 || error.response?.status === 500) {
+                console.log(`프로젝트 ${project.id}: 스마트 시간표가 아직 생성되지 않았습니다.`);
+              } else {
+                console.error(`프로젝트 ${project.id}의 스케줄 조회 실패:`, error);
+              }
+              // 오류가 발생해도 다른 프로젝트들은 계속 조회
+            }
+          }
+        }
+
+        setCalendarEvents(events);
+      } catch (e) {
+        console.error('일정 조회 오류:', e);
+        // 일정 조회 실패해도 프로젝트 기간은 표시
+        const fallbackEvents = projects.flatMap(project => [
+          {
+            date: new Date(project.startAt),
+            title: `${project.title} - 모집 시작`,
+            timeRange: '종일',
+          },
+          {
+            date: new Date(project.endAt),
+            title: `${project.title} - 모집 마감`,
+            timeRange: '종일',
+          },
+        ]);
+        setCalendarEvents(fallbackEvents);
+      } finally {
+        setIsLoadingSchedules(false);
+      }
+    };
+
+    fetchSchedules();
+  }, [projects]);
+
   const handleDeleteProject = async (id: number) => {
     try {
       await projectService.deleteProject(id);
@@ -75,66 +179,15 @@ export default function HomeMain() {
     }
   };
 
-  const [schedules] = useState([
-    {
-      date: new Date(2026, 0, 18),
-      title: '요리퐁 6기 신입부원 모집 - 면접',
-      timeRange: '오후 2:00 - 오후 2:30',
-      isChecked: true,
-    },
-    {
-      date: new Date(2026, 0, 18),
-      title: '요리퐁 6기 신입부원 모집 - 면접',
-      timeRange: '오후 2:00 - 오후 2:30',
+  // 선택된 날짜의 일정 필터링
+  const todaySchedules = calendarEvents
+    .filter(event => event.date.toDateString() === selectedDate.toDateString())
+    .map(event => ({
+      date: event.date,
+      title: event.title,
+      timeRange: event.timeRange,
       isChecked: false,
-    },
-    {
-      date: new Date(2026, 0, 18),
-      title: '요리퐁 6기 신입부원 모집 - 면접',
-      timeRange: '오후 2:00 - 오후 2:30',
-      isChecked: false,
-    },
-  ]);
-
-  const calendarEvents = [
-    {
-      date: new Date(2026, 0, 22),
-      title: '요리퐁 신입부원 면접',
-      timeRange: '오후 2:00 - 오후 3:00',
-    },
-    {
-      date: new Date(2026, 0, 22),
-      title: 'KUIT 동아리 설명회',
-      timeRange: '오후 4:00 - 오후 5:00',
-    },
-    {
-      date: new Date(2026, 0, 22),
-      title: '학생회 정기 회의',
-      timeRange: '오후 7:00 - 오후 9:00',
-    },
-    {
-      date: new Date(2026, 0, 25),
-      title: 'KUIT 신입부원 면접',
-      timeRange: '오후 1:00 - 오후 2:00',
-    },
-    {
-      date: new Date(2026, 0, 28),
-      title: '동아리 정기 모임',
-      timeRange: '오후 6:00 - 오후 8:00',
-    },
-  ];
-
-  const allSchedules = [
-    ...schedules.map(s => ({ ...s, isChecked: s.isChecked })),
-    ...calendarEvents.map(e => ({
-      date: e.date,
-      title: e.title,
-      timeRange: e.timeRange,
-      isChecked: false,
-    })),
-  ];
-
-  const todaySchedules = allSchedules.filter(schedule => schedule.date.toDateString() === selectedDate.toDateString());
+    }));
 
   if (isLoading) {
     return (
@@ -179,27 +232,39 @@ export default function HomeMain() {
 
               <section className="mt-7 flex flex-col items-center gap-3 pb-5 w-full px-4">
                 {projects
-                  .filter(p => !isOnlyRecruiting || p.state === 'DOCUMENT')
-                  .map(project => (
-                    <div key={project.id} className="w-full flex justify-center">
-                      <RecruitmentCard
-                        id={project.id}
-                        status={project.state === 'DOCUMENT' ? 'on' : 'off'}
-                        title={project.title}
-                        recruitmentStatus={project.state === 'DOCUMENT' ? '모집 중' : '모집 완료'}
-                        dateRange={`${project.startAt} ~ ${project.endAt}`}
-                        applicantCount={project.applicantCount}
-                        onDelete={handleDeleteProject}
-                      />
-                    </div>
-                  ))}
+                  .filter(p => !isOnlyRecruiting || (p.state === 'DOCUMENT' && !closedProjectIds.includes(p.id)))
+                  .map(project => {
+                    const isManuallyClosed = closedProjectIds.includes(project.id);
+                    const isActive = project.state === 'DOCUMENT' && !isManuallyClosed;
+
+                    return (
+                      <div key={project.id} className="w-full flex justify-center">
+                        <RecruitmentCard
+                          id={project.id}
+                          status={isActive ? 'on' : 'off'}
+                          title={project.title}
+                          recruitmentStatus={isActive ? '모집 중' : '모집 완료'}
+                          dateRange={`${project.startAt} ~ ${project.endAt}`}
+                          applicantCount={project.applicantCount}
+                          onDelete={handleDeleteProject}
+                          onClick={() => router.push(
+                            project.state === 'DOCUMENT'
+                              ? `/document/${project.id}`
+                              : `/interview/${project.id}`
+                          )}
+                        />
+                      </div>
+                    );
+                  })}
               </section>
               <div className="flex justify-center w-full">
                 <Link
                   href="/home/addproject"
                   className="flex items-center justify-center active:scale-95 transition-transform cursor-pointer"
                 >
-                  <Image src="/icons/plus-blue.svg" alt="add" width={65} height={65} className="drop-shadow-lg" />
+                  <div style={{ filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))' }}>
+                    <Image src="/icons/plus-blue.svg" alt="add" width={65} height={65} />
+                  </div>
                 </Link>
               </div>
             </div>

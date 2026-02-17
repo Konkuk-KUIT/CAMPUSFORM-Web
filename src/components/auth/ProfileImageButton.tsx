@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react';
 import Image from 'next/image';
 import SelectModal from '../ui/SelectModal';
+import { toast } from '@/components/Toast';
 
 interface ProfileImageButtonProps {
   profileImageUrl?: string | null;
@@ -10,9 +11,11 @@ interface ProfileImageButtonProps {
   onImageDelete?: () => void;
 }
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
 export default function ProfileImageButton({ profileImageUrl, onImageChange, onImageDelete }: ProfileImageButtonProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [previewSrc, setPreviewSrc] = useState<string>(''); // 미리보기 전용
+  const [previewSrc, setPreviewSrc] = useState<string>('');
   const inputRef = useRef<HTMLInputElement>(null);
 
   const profileOptions = [
@@ -34,14 +37,19 @@ export default function ProfileImageButton({ profileImageUrl, onImageChange, onI
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      alert('이미지 파일만 업로드 가능합니다.');
+      toast.error('이미지 파일만 업로드 가능합니다.');
+      if (inputRef.current) inputRef.current.value = '';
       return;
     }
 
-    // 미리보기 표시
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error('이미지 크기는 10MB 이하여야 합니다.');
+      if (inputRef.current) inputRef.current.value = '';
+      return;
+    }
+
     const reader = new FileReader();
     reader.readAsDataURL(file);
-
     reader.onload = (e: ProgressEvent<FileReader>) => {
       if (reader.readyState === 2 && e.target?.result) {
         setPreviewSrc(e.target.result as string);
@@ -59,7 +67,6 @@ export default function ProfileImageButton({ profileImageUrl, onImageChange, onI
     onImageDelete?.();
   };
 
-  // 표시할 이미지: 미리보기 > 기존 프로필 이미지 > 기본 아이콘
   const displayImage = previewSrc || profileImageUrl;
 
   return (
