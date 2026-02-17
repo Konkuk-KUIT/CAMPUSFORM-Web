@@ -202,6 +202,14 @@ export default function SmartScheduleMainForm() {
     [interviewerId: number]: { [key: string]: { top: boolean; bottom: boolean } };
   }>({});
 
+  // 면접 설정이 로드되면 캘린더 시작 날짜를 면접 시작일로 설정
+  useEffect(() => {
+    if (interviewSetting && interviewSetting.interviewDates && interviewSetting.interviewDates.length > 0) {
+      const firstDate = new Date(interviewSetting.interviewDates[0]);
+      setOverviewCalendarStartDate(firstDate);
+    }
+  }, [interviewSetting]);
+
   useEffect(() => {
     if (!projectId || typeof window === 'undefined') return;
 

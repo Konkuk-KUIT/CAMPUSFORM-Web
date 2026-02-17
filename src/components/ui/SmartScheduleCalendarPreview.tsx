@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import Toggle from '@/components/ui/Toggle';
 import ConfirmResetDialog from '@/components/ui/ConfirmResetDialog';
@@ -115,6 +115,14 @@ export default function SmartScheduleCalendarPreview({
   const [activeTab, setActiveTab] = useState<'participated' | 'notParticipated'>('participated');
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [pendingDate, setPendingDate] = useState<Date | null>(null);
+
+  // 면접 날짜가 로드되면 내부 시작 날짜를 면접 시작일로 설정 (외부 제어가 아닐 때만)
+  useEffect(() => {
+    if (!externalCurrentStartDate && interviewDates && interviewDates.length > 0) {
+      const firstDate = new Date(interviewDates[0]);
+      setInternalCurrentStartDate(firstDate);
+    }
+  }, [interviewDates, externalCurrentStartDate]);
 
   // Use external state if provided, otherwise use internal state
   const showInterviewerView = externalShowInterviewerView !== undefined ? externalShowInterviewerView : internalShowInterviewerView;
