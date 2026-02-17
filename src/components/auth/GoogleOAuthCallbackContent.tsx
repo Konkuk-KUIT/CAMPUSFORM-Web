@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { exchangeGoogleCode } from '@/services/googleSheetService';
+import { projectService } from '@/services/projectService';
 import Loading from '@/components/ui/Loading';
 
 export default function GoogleOAuthCallbackContent({ code }: { code: string }) {
@@ -14,7 +14,7 @@ export default function GoogleOAuthCallbackContent({ code }: { code: string }) {
       return;
     }
 
-    exchangeGoogleCode(code)
+    projectService.exchangeGoogleCode(code)
       .then(() => {
         const sheetUrl = sessionStorage.getItem('pendingSheetUrl') ?? '';
         sessionStorage.removeItem('pendingSheetUrl');
