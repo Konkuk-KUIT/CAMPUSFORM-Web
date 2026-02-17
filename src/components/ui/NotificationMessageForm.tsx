@@ -37,7 +37,6 @@ export default function NotificationMessageForm({
   const title = type === '합격자' ? '합격자 문자 템플릿 입력' : '불합격자 문자 템플릿 입력';
   const modalTitle = type === '합격자' ? '합격자' : '불합격자';
 
-  // debounce 자동저장
   useEffect(() => {
     if (!template) return;
     const timer = setTimeout(async () => {
@@ -54,14 +53,21 @@ export default function NotificationMessageForm({
     setTemplate(value);
     setIsVariableEnabled(false);
     onTemplateChange?.(value);
+    onTemplateApply?.(value, false); // 실시간 반영
   };
 
   const handleApplyVariables = () => {
     setIsVariableEnabled(true);
+    onTemplateApply?.(template, true); // 변수 치환 반영
   };
 
-  const handleApplyTemplate = () => {
-    if (onTemplateApply) onTemplateApply(template, isVariableEnabled);
+  const handleCopyTemplate = async () => {
+    try {
+      await navigator.clipboard.writeText(template);
+      //toast.success('템플릿이 클립보드에 복사되었습니다.');
+    } catch {
+      //toast.error('복사에 실패했습니다.');
+    }
   };
 
   const handleEditableInput = () => {
@@ -154,12 +160,14 @@ export default function NotificationMessageForm({
       )}
 
       <div className="flex gap-3 justify-end">
-        <Button variant="neutral" size="sm" onClick={handleApplyVariables}>
-          변수 적용하기
-        </Button>
-        <Button variant="neutral" size="sm" onClick={handleApplyTemplate}>
-          템플릿 복사하기
-        </Button>
+        <div className="flex gap-3 justify-end">
+          <Button variant="neutral" size="sm" onClick={handleApplyVariables}>
+            변수 적용하기
+          </Button>
+          <Button variant="neutral" size="sm" onClick={handleCopyTemplate}>
+            템플릿 복사하기
+          </Button>
+        </div>
       </div>
     </div>
   );
