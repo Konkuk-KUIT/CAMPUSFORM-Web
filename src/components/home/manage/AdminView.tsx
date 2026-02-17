@@ -32,8 +32,14 @@ export default function AdminView({ project, adminList, ownerUserId, status, sta
           <span className="text-[15px] font-semibold text-gray-950">지원서 관리</span>
           <NotificationBell />
         </div>
-
         <div className="flex-1 px-5 py-6 flex flex-col gap-6 overflow-y-auto scrollbar-hide pb-16">
+          <div className="flex flex-col gap-2">
+            <label className="text-subtitle-sm-md text-gray-950">프로젝트 이름</label>
+            <div className="w-full h-12.5 px-4 flex items-center rounded-10 border border-gray-100 bg-gray-100 text-body-rg text-gray-300">
+              <span>{project.title}</span>
+            </div>
+          </div>
+
           <div className="flex flex-col gap-2">
             <label className="text-subtitle-sm-md text-gray-950">모집 상태</label>
             <div className="w-full h-12.5 px-4 flex items-center rounded-10 border border-gray-100 bg-gray-100 text-body-rg text-gray-300">
