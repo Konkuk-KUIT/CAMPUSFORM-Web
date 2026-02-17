@@ -44,7 +44,7 @@ export default function InterviewResultContent({ projectId }: InterviewResultCon
   }, [projectId]);
 
   // 결과가 없을 때 빈 화면
-  if (isLoaded && passedList.length === 0 && failedList.length === 0) {
+  if (isLoaded && !stats) {
     return (
       <>
         <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)] px-5 bg-white">
