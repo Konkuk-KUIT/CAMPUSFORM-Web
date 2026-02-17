@@ -512,9 +512,27 @@ export default function SmartScheduleCalendarPreview({
         <div className="flex items-center justify-end py-2 pr-2 border-b border-gray-300">
           {/* Profile avatars (30px, overlap) */}
           <div className="flex items-center -space-x-2">
-            <div className="w-[30px] h-[30px] rounded-full bg-gray-200 border-2 border-white" />
-            <div className="w-[30px] h-[30px] rounded-full bg-gray-200 border-2 border-white" />
-            <div className="w-[30px] h-[30px] rounded-full bg-gray-200 border-2 border-white" />
+            {interviewers
+              ?.filter(int => int.participated)
+              .slice(0, 3)
+              .map((interviewer, idx) => (
+                <div 
+                  key={interviewer.userId || idx}
+                  className="w-[30px] h-[30px] rounded-full bg-gray-200 border-2 border-white overflow-hidden"
+                >
+                  {interviewer.profileImageUrl ? (
+                    <Image 
+                      src={interviewer.profileImageUrl} 
+                      alt={interviewer.name} 
+                      width={30} 
+                      height={30}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gray-200" />
+                  )}
+                </div>
+              ))}
           </div>
           {/* More chevron (24px hit area) */}
           <button
