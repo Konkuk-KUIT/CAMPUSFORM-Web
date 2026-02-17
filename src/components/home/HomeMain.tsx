@@ -15,6 +15,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { toast, ToastContainer } from '@/components/Toast';
 import Loading from '@/components/ui/Loading';
+import { useManualCloseStore } from '@/store/manualCloseStore';
 
 export default function HomeMain() {
   const router = useRouter();
@@ -23,6 +24,7 @@ export default function HomeMain() {
   const [isOnlyRecruiting, setIsOnlyRecruiting] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [projects, setProjects] = useState<Project[]>([]);
+  const { closedProjectIds } = useManualCloseStore();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -179,20 +181,30 @@ export default function HomeMain() {
 
               <section className="mt-7 flex flex-col items-center gap-3 pb-5 w-full px-4">
                 {projects
-                  .filter(p => !isOnlyRecruiting || p.state === 'DOCUMENT')
-                  .map(project => (
-                    <div key={project.id} className="w-full flex justify-center">
-                      <RecruitmentCard
-                        id={project.id}
-                        status={project.state === 'DOCUMENT' ? 'on' : 'off'}
-                        title={project.title}
-                        recruitmentStatus={project.state === 'DOCUMENT' ? '모집 중' : '모집 완료'}
-                        dateRange={`${project.startAt} ~ ${project.endAt}`}
-                        applicantCount={project.applicantCount}
-                        onDelete={handleDeleteProject}
-                      />
-                    </div>
-                  ))}
+                  .filter(p => !isOnlyRecruiting || (p.state === 'DOCUMENT' && !closedProjectIds.includes(p.id)))
+                  .map(project => {
+                    const isManuallyClosed = closedProjectIds.includes(project.id);
+                    const isActive = project.state === 'DOCUMENT' && !isManuallyClosed;
+
+                    return (
+                      <div key={project.id} className="w-full flex justify-center">
+                        <RecruitmentCard
+                          id={project.id}
+                          status={isActive ? 'on' : 'off'}
+                          title={project.title}
+                          recruitmentStatus={isActive ? '모집 중' : '모집 완료'}
+                          dateRange={`${project.startAt} ~ ${project.endAt}`}
+                          applicantCount={project.applicantCount}
+                          onDelete={handleDeleteProject}
+                          onClick={() => router.push(
+                            project.state === 'DOCUMENT'
+                              ? `/document/${project.id}`
+                              : `/interview/${project.id}`
+                          )}
+                        />
+                      </div>
+                    );
+                  })}
               </section>
               <div className="flex justify-center w-full">
                 <Link
