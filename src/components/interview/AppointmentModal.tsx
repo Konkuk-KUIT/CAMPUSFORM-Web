@@ -117,7 +117,7 @@ export default function AppointmentModal({
                     <button
                       key={`month-${idx}`}
                       onClick={() => setSelectedMonth(month)}
-                      className={`py-1 text-center whitespace-nowrap ${
+                      className={`py-0.2 text-center whitespace-nowrap ${
                         selectedMonth === month
                           ? 'text-primary text-[22px] font-normal leading-normal tracking-[0.4px]'
                           : 'text-gray-300 text-[22px] font-normal leading-normal tracking-[0.4px]'
@@ -148,7 +148,7 @@ export default function AppointmentModal({
                     <button
                       key={`day-${idx}`}
                       onClick={() => setSelectedDay(day)}
-                      className={`py-1 text-center whitespace-nowrap ${
+                      className={`py-0.2 text-center whitespace-nowrap ${
                         selectedDay === day
                           ? 'text-primary text-[22px] font-normal leading-normal tracking-[0.4px]'
                           : 'text-gray-300 text-[22px] font-normal leading-normal tracking-[0.4px]'
@@ -182,7 +182,7 @@ export default function AppointmentModal({
                     <button
                       key={`hour-${idx}`}
                       onClick={() => setSelectedHour(hour)}
-                      className={`py-1 text-center whitespace-nowrap ${
+                      className={`py-0.2 text-center whitespace-nowrap ${
                         selectedHour === hour
                           ? 'text-primary text-[22px] font-normal leading-normal tracking-[0.4px]'
                           : 'text-gray-300 text-[22px] font-normal leading-normal tracking-[0.4px]'
@@ -215,7 +215,7 @@ export default function AppointmentModal({
                     <button
                       key={`minute-${idx}`}
                       onClick={() => setSelectedMinute(minute)}
-                      className={`py-1 text-center whitespace-nowrap ${
+                      className={`py-0.2 text-center whitespace-nowrap ${
                         selectedMinute === minute
                           ? 'text-primary text-[22px] font-normal leading-normal tracking-[0.4px]'
                           : 'text-gray-300 text-[22px] font-normal leading-normal tracking-[0.4px]'
