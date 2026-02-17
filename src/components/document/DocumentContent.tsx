@@ -187,6 +187,8 @@ export default function DocumentContent({ projectId }: { projectId: number }) {
           showSort={true}
           sortValue={sortBy}
           onSortChange={setSortBy}
+          selectedFilter={selectedPosition}
+          onFilterClear={() => setSelectedPosition('전체')}
         />
       </div>
 
@@ -202,7 +204,7 @@ export default function DocumentContent({ projectId }: { projectId: number }) {
             filteredApplicants.map((applicant, index) => (
               <ApplicantFileCard
                 key={applicant.applicantId ?? index}
-                href={`/document/${projectId}/${applicant.applicantId}`} // ✅ 수정
+                href={`/document/${projectId}/${applicant.applicantId}`}
                 id={applicant.applicantId}
                 name={applicant.name}
                 info={[applicant.university, applicant.major, applicant.position].filter(Boolean).join(' / ')}
@@ -218,7 +220,7 @@ export default function DocumentContent({ projectId }: { projectId: number }) {
         </div>
       </PullToRefresh>
 
-      <BottomSheet isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)}>
+      <BottomSheet isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} className="h-[40vh] pb-8">
         <h2 className="text-subtitle-md">지원 포지션</h2>
         <div className="mt-4 flex flex-wrap gap-2">
           {positions.map(position => (

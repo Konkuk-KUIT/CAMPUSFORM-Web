@@ -12,10 +12,10 @@ export default function Schedule({ title, timeRange, initialChecked = false }: S
   return (
     <div
     onClick={() => setIsChecked(!isChecked)}
-    className="relative w-[311px] h-[54px] bg-blue-50 rounded-[10px] flex items-center overflow-hidden">
-      <div className="absolute left-[6px] top-[8px] w-[7px] h-[38px] bg-primary rounded-[10px]" />
+    className="w-[311px] min-h-[54px] bg-blue-50 rounded-[10px] flex items-center gap-[14px] px-[6px] py-2">
+      <div className="w-[7px] h-[38px] bg-primary rounded-[10px] flex-shrink-0" />
 
-      <div className="flex flex-col ml-[27px]">
+      <div className="flex flex-col flex-1 min-w-0">
         <h4 className="text-body-rg text-gray-950">
           {title}
         </h4>
@@ -24,7 +24,7 @@ export default function Schedule({ title, timeRange, initialChecked = false }: S
         </p>
       </div>
 
-      <div className="absolute left-[276px] top-[17px] w-[20px] h-[20px] flex items-center justify-center">
+      <div className="w-[20px] h-[20px] flex items-center justify-center flex-shrink-0">
         {isChecked ? (
           <Image 
             src="/icons/checked.svg" 

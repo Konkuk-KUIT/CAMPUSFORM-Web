@@ -139,6 +139,71 @@ export default function InterviewInfoSettingForm() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // 기존 면접 설정 불러오기
+  useEffect(() => {
+    const loadExistingSetting = async () => {
+      if (!projectId) return;
+
+      try {
+        const setting = await projectService.getInterviewSetting(projectId);
+        
+        if (!setting || !setting.interviewDates || setting.interviewDates.length === 0) {
+          return; // 설정이 없으면 기본값 유지
+        }
+
+        // 면접 날짜 설정
+        if (setting.interviewDates && Array.isArray(setting.interviewDates)) {
+          const dates = setting.interviewDates.map((dateStr: string) => new Date(dateStr));
+          setSelectedDates(dates);
+        }
+
+        // 시작 시간 설정
+        if (setting.startTime) {
+          const [sHour, sMin] = setting.startTime.split(':');
+          setStartHour(sHour);
+          setStartMinute(sMin);
+        }
+
+        // 종료 시간 설정
+        if (setting.endTime) {
+          const [eHour, eMin] = setting.endTime.split(':');
+          setEndHour(eHour);
+          setEndMinute(eMin);
+        }
+
+        // 슬롯당 최대 지원자 수
+        if (setting.maxApplicantsPerSlot !== undefined) {
+          setMaxApplicantsPerSlot(setting.maxApplicantsPerSlot);
+        }
+
+        // 슬롯당 최소 면접관 수
+        if (setting.minInterviewersPerSlot !== undefined) {
+          setMinInterviewersPerSlot(setting.minInterviewersPerSlot);
+        }
+
+        // 슬롯당 최대 면접관 수
+        if (setting.maxInterviewersPerSlot !== undefined) {
+          setMaxInterviewersPerSlot(setting.maxInterviewersPerSlot);
+        }
+
+        // 예상 소요 시간
+        if (setting.slotDurationMin !== undefined) {
+          setEstimatedDuration(setting.slotDurationMin.toString());
+        }
+
+        // 휴식 시간
+        if (setting.slotBreakMin !== undefined) {
+          setRestDuration(setting.slotBreakMin.toString());
+        }
+      } catch (error) {
+        console.error('[InterviewSetting] 기존 설정 불러오기 실패:', error);
+        // 에러가 나도 계속 진행 (새로 설정하면 됨)
+      }
+    };
+
+    loadExistingSetting();
+  }, [projectId]);
+
   const handleSubmit = async () => {
     console.log('[InterviewSetting] 제출 시도 - projectId:', projectId);
     console.log('[InterviewSetting] createdProjectId:', createdProjectId);
