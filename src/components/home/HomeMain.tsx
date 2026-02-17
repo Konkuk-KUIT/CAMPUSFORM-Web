@@ -26,13 +26,9 @@ export default function HomeMain() {
   const [isOnlyRecruiting, setIsOnlyRecruiting] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [projects, setProjects] = useState<Project[]>([]);
-<<<<<<< HEAD
-  const { closedProjectIds, openedProjectIds } = useManualCloseStore();
-=======
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
   const [isLoadingSchedules, setIsLoadingSchedules] = useState(false);
-  const { closedProjectIds } = useManualCloseStore();
->>>>>>> e86d0c6e4b8f5b2c15e5d65ae0cab6ba351d47bd
+  const { closedProjectIds, openedProjectIds } = useManualCloseStore();
 
   useEffect(() => {
     const checkAuth = async () => {
