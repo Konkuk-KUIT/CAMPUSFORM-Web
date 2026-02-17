@@ -289,6 +289,15 @@ export default function SmartScheduleMainForm() {
       const auth = await authService.getCurrentUser();
       const { owner, admins } = await projectService.getProjectAdmins(projectId);
 
+      // 필수 면접관 목록 조회
+      let requiredAdminIds: number[] = [];
+      try {
+        const requiredData = await projectService.getRequiredInterviewers(projectId);
+        requiredAdminIds = requiredData.adminIds || [];
+      } catch (error) {
+        console.error('필수 면접관 목록 조회 실패:', error);
+      }
+
       const adminList: Array<{
         userId: number;
         name: string;
@@ -397,6 +406,13 @@ export default function SmartScheduleMainForm() {
 
       setInterviewers(adminList);
       setInterviewersCellActive(newInterviewersCellActive);
+
+      // 필수 면접관 상태 설정 (adminList의 인덱스 기반)
+      const newRequiredInterviewers: { [key: number]: boolean } = {};
+      adminList.forEach((admin, idx) => {
+        newRequiredInterviewers[idx] = requiredAdminIds.includes(admin.userId);
+      });
+      setRequiredInterviewers(newRequiredInterviewers);
     } catch (error) {
       console.error('면접관 목록 조회 실패:', error);
     }
@@ -450,13 +466,14 @@ export default function SmartScheduleMainForm() {
   }, [interviewersCellActive]);
 
   const interviewersWithParticipation = useMemo(() => {
-    return interviewers.map(interviewer => ({
+    return interviewers.map((interviewer, idx) => ({
       ...interviewer,
       participated: interviewersCellActive[interviewer.userId]
         ? Object.keys(interviewersCellActive[interviewer.userId]).length > 0
         : false,
+      isRequired: requiredInterviewers[idx] || false,
     }));
-  }, [interviewers, interviewersCellActive]);
+  }, [interviewers, interviewersCellActive, requiredInterviewers]);
 
   return (
     <main className="min-h-screen flex justify-center bg-white">
@@ -566,9 +583,17 @@ export default function SmartScheduleMainForm() {
                         showProfiles={false}
                         showRequiredSection={true}
                         requiredInterviewer={requiredInterviewers[idx] || false}
-                        onRequiredInterviewerChange={value =>
-                          setRequiredInterviewers(prev => ({ ...prev, [idx]: value }))
-                        }
+                        onRequiredInterviewerChange={async (value) => {
+                          if (!projectId) return;
+                          try {
+                            await projectService.updateRequiredInterviewer(projectId, interviewer.userId, value);
+                            setRequiredInterviewers(prev => ({ ...prev, [idx]: value }));
+                            toast.success(value ? '필수 면접관으로 설정되었습니다.' : '필수 면접관에서 해제되었습니다.');
+                          } catch (error) {
+                            console.error('필수 면접관 설정 실패:', error);
+                            toast.error('필수 면접관 설정에 실패했습니다.');
+                          }
+                        }}
                         interviewDates={interviewDates}
                         timeSlots={timeSlots}
                         cellActive={interviewersCellActive[interviewer.userId] || {}}

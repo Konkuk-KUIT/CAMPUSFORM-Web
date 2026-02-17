@@ -135,6 +135,24 @@ class ProjectService {
     return response.data;
   }
 
+  // GET : 필수 면접관 목록 조회
+  async getRequiredInterviewers(projectId: number): Promise<{ adminIds: number[] }> {
+    const response = await apiClient.get(`/recruiting/projects/${projectId}/required-interviewers`);
+    return response.data;
+  }
+
+  // PUT : 필수 면접관 전체 설정
+  async updateRequiredInterviewers(projectId: number, adminIds: number[]): Promise<{ adminIds: number[] }> {
+    const response = await apiClient.put(`/recruiting/projects/${projectId}/required-interviewers`, { adminIds });
+    return response.data;
+  }
+
+  // PUT : 특정 면접관 필수 여부 설정/해제
+  async updateRequiredInterviewer(projectId: number, adminId: number, required: boolean): Promise<{ adminIds: number[] }> {
+    const response = await apiClient.put(`/recruiting/projects/${projectId}/required-interviewers/${adminId}`, { required });
+    return response.data;
+  }
+
   // GET : 지원자 시간 제출 페이지 설정 조회
   async getApplicantLinkConfig(projectId: number): Promise<any> {
     const response = await apiClient.get(`/recruiting/projects/${projectId}/investigation-link/config`);
