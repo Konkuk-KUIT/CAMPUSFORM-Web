@@ -138,10 +138,11 @@ export default function InterviewContent({ projectId }: { projectId: number }) {
     result.sort((a, b) => {
       if (sortBy === 'name-asc') return a.name.localeCompare(b.name, 'ko');
       if (sortBy === 'name-desc') return b.name.localeCompare(a.name, 'ko');
+      if (sortBy === 'star') return (favorites.has(b.applicantId) ? 1 : 0) - (favorites.has(a.applicantId) ? 1 : 0);
       return 0;
     });
     return result;
-  }, [applicants, selectedTab, searchQuery, selectedPosition, sortBy]);
+  }, [applicants, selectedTab, searchQuery, selectedPosition, sortBy, favorites]);
 
   const counts = useMemo(() => ({
     전체: applicants.length,
