@@ -1,9 +1,8 @@
 ﻿'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { useEffect } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Btn from '@/components/ui/Btn';
@@ -202,33 +201,13 @@ export default function SmartScheduleMainForm() {
     [interviewerId: number]: { [key: string]: { top: boolean; bottom: boolean } };
   }>({});
 
+  // 면접 설정이 로드되면 캘린더 시작 날짜를 면접 시작일로 설정
   useEffect(() => {
-    if (!projectId || typeof window === 'undefined') return;
-
-    const storageKey = `interviewersCellActive_${projectId}`;
-    const saved = localStorage.getItem(storageKey);
-
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setInterviewersCellActive(parsed);
-      } catch (e) {
-        console.error('[SmartSchedule] localStorage 파싱 실패:', e);
-        setInterviewersCellActive({});
-      }
-    } else {
-      setInterviewersCellActive({});
+    if (interviewSetting && interviewSetting.interviewDates && interviewSetting.interviewDates.length > 0) {
+      const firstDate = new Date(interviewSetting.interviewDates[0]);
+      setOverviewCalendarStartDate(firstDate);
     }
-  }, [projectId]);
-
-  useEffect(() => {
-    if (!projectId || typeof window === 'undefined') return;
-
-    const storageKey = `interviewersCellActive_${projectId}`;
-    if (Object.keys(interviewersCellActive).length > 0) {
-      localStorage.setItem(storageKey, JSON.stringify(interviewersCellActive));
-    }
-  }, [interviewersCellActive, projectId]);
+  }, [interviewSetting]);
 
   const [interviewers, setInterviewers] = useState<
     Array<{
@@ -240,7 +219,7 @@ export default function SmartScheduleMainForm() {
     }>
   >([]);
 
-  const handleSaveInterviewerTime = async (userId: number, interviewerName: string) => {
+  const handleSaveInterviewerTime = async (userId: number, interviewerName: string, cellActive: { [key: string]: { top: boolean; bottom: boolean } }) => {
     if (!projectId) {
       toast.error('프로젝트가 선택되지 않았습니다.');
       return;
@@ -251,7 +230,6 @@ export default function SmartScheduleMainForm() {
       return;
     }
 
-    const cellActive = interviewersCellActive[userId];
     if (!cellActive || Object.keys(cellActive).length === 0) {
       toast.error('선택된 시간이 없습니다.');
       return;
@@ -295,16 +273,10 @@ export default function SmartScheduleMainForm() {
     }
 
     try {
-      if (isOwner) {
-        // OWNER: 기존 방식
-        await projectService.updateInterviewerAvailability(projectId, userId, { availabilities });
-      } else {
-        // ADMIN: 동일 API 사용 (명확히 분기)
-        await projectService.updateInterviewerAvailability(projectId, userId, { availabilities });
-      }
+      await projectService.updateInterviewerAvailability(projectId, userId, { availabilities });
       toast.success(`${interviewerName}님의 시간이 저장되었습니다.`);
-      fetchInterviewers();
-    } catch (error) {
+      await fetchInterviewers();
+    } catch (error: any) {
       console.error('시간 저장 실패:', error);
       toast.error('시간 저장에 실패했습니다.');
     }
@@ -317,6 +289,14 @@ export default function SmartScheduleMainForm() {
       const auth = await authService.getCurrentUser();
       const { owner, admins } = await projectService.getProjectAdmins(projectId);
 
+      // 필수 면접관 목록 조회
+      let requiredAdminIds: number[] = [];
+      try {
+        const requiredData = await projectService.getRequiredInterviewers(projectId);
+        requiredAdminIds = requiredData.adminIds || [];
+      } catch (error) {
+        console.error('필수 면접관 목록 조회 실패:', error);
+      }
 
       const adminList: Array<{
         userId: number;
@@ -345,13 +325,20 @@ export default function SmartScheduleMainForm() {
         // owner availability
         try {
           const availability = await projectService.getInterviewerAvailability(projectId, owner.adminId);
-          if (availability && availability.availabilities && interviewSetting) {
+          const availabilities = availability?.availabilities || availability?.data?.availabilities || [];
+          
+          if (availabilities && Array.isArray(availabilities) && availabilities.length > 0 && interviewSetting) {
             const cellActive: { [key: string]: { top: boolean; bottom: boolean } } = {};
             const [startHour] = interviewSetting.startTime.split(':').map(Number);
-            availability.availabilities.forEach((dayAvail: any) => {
+            
+            availabilities.forEach((dayAvail: any) => {
               const date = dayAvail.date;
-              dayAvail.startTimes.forEach((startTime: string) => {
-                const [hour, min] = startTime.split(':').map(Number);
+              const startTimes = dayAvail.startTimes || dayAvail.timeBlocks || [];
+              
+              startTimes.forEach((startTime: any) => {
+                const timeString = typeof startTime === 'string' ? startTime : (startTime?.time || startTime?.startTime);
+                if (!timeString || typeof timeString !== 'string') return;
+                const [hour, min] = timeString.split(':').map(Number);
                 const timeIndex = hour - startHour;
                 const cellKey = `${date}-${timeIndex}`;
                 if (!cellActive[cellKey]) {
@@ -361,12 +348,13 @@ export default function SmartScheduleMainForm() {
                 else if (min === 30) cellActive[cellKey].bottom = true;
               });
             });
+            
             if (Object.keys(cellActive).length > 0) {
               newInterviewersCellActive[owner.adminId] = cellActive;
             }
           }
-        } catch (error) {
-          console.log('OWNER availability 조회 실패 (미등록일 수 있음)');
+        } catch (error: any) {
+          console.error('면접관 가능시간 조회 실패:', error);
         }
       }
 
@@ -383,13 +371,20 @@ export default function SmartScheduleMainForm() {
         // admin availability
         try {
           const availability = await projectService.getInterviewerAvailability(projectId, admin.adminId);
-          if (availability && availability.availabilities && interviewSetting) {
+          const availabilities = availability?.availabilities || availability?.data?.availabilities || [];
+          
+          if (availabilities && Array.isArray(availabilities) && availabilities.length > 0 && interviewSetting) {
             const cellActive: { [key: string]: { top: boolean; bottom: boolean } } = {};
             const [startHour] = interviewSetting.startTime.split(':').map(Number);
-            availability.availabilities.forEach((dayAvail: any) => {
+            
+            availabilities.forEach((dayAvail: any) => {
               const date = dayAvail.date;
-              dayAvail.startTimes.forEach((startTime: string) => {
-                const [hour, min] = startTime.split(':').map(Number);
+              const startTimes = dayAvail.startTimes || dayAvail.timeBlocks || [];
+              
+              startTimes.forEach((startTime: any) => {
+                const timeString = typeof startTime === 'string' ? startTime : (startTime?.time || startTime?.startTime);
+                if (!timeString || typeof timeString !== 'string') return;
+                const [hour, min] = timeString.split(':').map(Number);
                 const timeIndex = hour - startHour;
                 const cellKey = `${date}-${timeIndex}`;
                 if (!cellActive[cellKey]) {
@@ -399,23 +394,25 @@ export default function SmartScheduleMainForm() {
                 else if (min === 30) cellActive[cellKey].bottom = true;
               });
             });
+            
             if (Object.keys(cellActive).length > 0) {
               newInterviewersCellActive[admin.adminId] = cellActive;
             }
           }
-        } catch (error) {
-          console.log(`ADMIN ${admin.adminName} availability 조회 실패`);
+        } catch (error: any) {
+          console.error('면접관 가능시간 조회 실패:', error);
         }
       }
 
       setInterviewers(adminList);
+      setInterviewersCellActive(newInterviewersCellActive);
 
-      setInterviewersCellActive(prev => {
-        if (Object.keys(prev).length === 0 && Object.keys(newInterviewersCellActive).length > 0) {
-          return newInterviewersCellActive;
-        }
-        return prev;
+      // 필수 면접관 상태 설정 (adminList의 인덱스 기반)
+      const newRequiredInterviewers: { [key: number]: boolean } = {};
+      adminList.forEach((admin, idx) => {
+        newRequiredInterviewers[idx] = requiredAdminIds.includes(admin.userId);
       });
+      setRequiredInterviewers(newRequiredInterviewers);
     } catch (error) {
       console.error('면접관 목록 조회 실패:', error);
     }
@@ -423,7 +420,7 @@ export default function SmartScheduleMainForm() {
 
   useEffect(() => {
     fetchInterviewers();
-  }, [projectId]);
+  }, [projectId, interviewSetting]);
 
   const showOverlay = !isConfigured;
 
@@ -469,13 +466,14 @@ export default function SmartScheduleMainForm() {
   }, [interviewersCellActive]);
 
   const interviewersWithParticipation = useMemo(() => {
-    return interviewers.map(interviewer => ({
+    return interviewers.map((interviewer, idx) => ({
       ...interviewer,
       participated: interviewersCellActive[interviewer.userId]
         ? Object.keys(interviewersCellActive[interviewer.userId]).length > 0
         : false,
+      isRequired: requiredInterviewers[idx] || false,
     }));
-  }, [interviewers, interviewersCellActive]);
+  }, [interviewers, interviewersCellActive, requiredInterviewers]);
 
   return (
     <main className="min-h-screen flex justify-center bg-white">
@@ -549,7 +547,7 @@ export default function SmartScheduleMainForm() {
                           alt={interviewer.name}
                           width={35}
                           height={35}
-                          className="w-8.75 h-8.75 rounded-full shrink-0"
+                          className="w-8.75 h-8.75 rounded-full shrink-0 object-cover"
                         />
                       ) : (
                         <div className="w-8.75 h-8.75 rounded-full bg-gray-200 shrink-0" />
@@ -585,18 +583,31 @@ export default function SmartScheduleMainForm() {
                         showProfiles={false}
                         showRequiredSection={true}
                         requiredInterviewer={requiredInterviewers[idx] || false}
-                        onRequiredInterviewerChange={value =>
-                          setRequiredInterviewers(prev => ({ ...prev, [idx]: value }))
-                        }
+                        onRequiredInterviewerChange={async (value) => {
+                          if (!projectId) return;
+                          try {
+                            await projectService.updateRequiredInterviewer(projectId, interviewer.userId, value);
+                            setRequiredInterviewers(prev => ({ ...prev, [idx]: value }));
+                            toast.success(value ? '필수 면접관으로 설정되었습니다.' : '필수 면접관에서 해제되었습니다.');
+                          } catch (error) {
+                            console.error('필수 면접관 설정 실패:', error);
+                            toast.error('필수 면접관 설정에 실패했습니다.');
+                          }
+                        }}
                         interviewDates={interviewDates}
                         timeSlots={timeSlots}
                         cellActive={interviewersCellActive[interviewer.userId] || {}}
                         onCellActiveChange={newCellActive => {
-                          setInterviewersCellActive(prev => ({
-                            ...prev,
-                            [interviewer.userId]: newCellActive,
-                          }));
-                          handleSaveInterviewerTime(interviewer.userId, interviewer.name);
+                          console.log('[UI] onCellActiveChange -', interviewer.name, 'userId:', interviewer.userId, 'newCellActive:', newCellActive);
+                          setInterviewersCellActive(prev => {
+                            const updated = {
+                              ...prev,
+                              [interviewer.userId]: newCellActive,
+                            };
+                            console.log('[UI] setInterviewersCellActive 호출, 업데이트된 값:', updated);
+                            return updated;
+                          });
+                          handleSaveInterviewerTime(interviewer.userId, interviewer.name, newCellActive);
                         }}
                       />
                     </div>

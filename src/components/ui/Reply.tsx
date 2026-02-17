@@ -100,7 +100,7 @@ export default function Reply({
               alt={authorNickname ?? '프로필'}
               width={35}
               height={35}
-              className="rounded-full"
+              className="w-8.75 h-8.75 rounded-full object-cover"
             />
           ) : (
             <div className="w-11 h-11 bg-gray-300 rounded-full" />

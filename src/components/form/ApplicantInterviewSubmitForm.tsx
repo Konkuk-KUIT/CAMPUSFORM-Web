@@ -385,10 +385,10 @@ export default function ApplicantInterviewSubmitForm() {
           </div>
           <h2 className="text-subtitle-sb text-gray-950 mb-2 text-center">면접 가능 시간 제출이 완료되었습니다.</h2>
           <p className="text-body-rg text-gray-400 text-center mb-1">
-            제출하신 시간을 바탕으로 면접 일정을 알려져 이후
+            제출하신 시간을 바탕으로 면접 일정을 확인한 이후
           </p>
           <p className="text-body-rg text-gray-400 text-center mb-6">개별 안내드리겠습니다.</p>
-          <p className="text-body-sm text-gray-400 text-center">*시간 변경을 원할 시, 품을 새로 제출해주세요</p>
+          <p className="text-body-sm text-gray-400 text-center">*시간 변경을 원할 시, 폼을 새로 제출해주세요</p>
         </div>
 
         {/* 종료 버튼 */}
