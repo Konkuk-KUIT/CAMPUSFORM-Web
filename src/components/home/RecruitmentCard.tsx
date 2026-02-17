@@ -105,7 +105,10 @@ export default function RecruitmentCard({
       </button>
 
       {isMenuOpen && (
-        <div className="absolute top-[48px] right-[16px] z-20 shadow-[0_2px_8px_rgba(0,0,0,0.1)] rounded-10">
+        <div
+          className="absolute top-[48px] right-[16px] z-20 shadow-[0_2px_8px_rgba(0,0,0,0.1)] rounded-10"
+          onClick={e => e.stopPropagation()}  // 추가
+        >
           <SelectModal options={modalOptions} onChange={handleMenuSelect} backgroundColor="white" width="w-[102px]" />
         </div>
       )}
