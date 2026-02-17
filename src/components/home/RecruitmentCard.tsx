@@ -46,32 +46,37 @@ export default function RecruitmentCard({
 
   const isActive = status === 'on';
 
-  const cardClasses = clsx('relative w-[343px] h-[130px] rounded-10 overflow-hidden', {
-    'bg-white border border-gray-100': isActive,
-    'bg-gray-100 border border-gray-100': !isActive,
-  });
+  // 카드에 group 추가
+  const cardClasses = clsx(
+    'group relative w-[343px] h-[130px] rounded-10 overflow-hidden cursor-pointer transition-colors',
+    {
+      'bg-[#FFFFFF] hover:bg-[#DBE3FE] active:bg-[#BFCEFE] border border-gray-100': isActive,
+      'bg-[#EFEFEF] hover:bg-[#D1D1D1] active:bg-[#B0B0B0] border border-gray-100': !isActive,
+    }
+  );
 
+  // 모집마감일 때만 group-hover/active로 텍스트 색 변경
   const titleClasses = clsx(
     'absolute top-[16px] left-[25px] w-[160px] h-[22px] text-subtitle-sb whitespace-nowrap truncate',
     {
       'text-gray-950': isActive,
-      'text-gray-200': !isActive,
+      'text-[#D1D1D1] group-hover:text-[#B0B0B0] group-active:text-[#888888]': !isActive,
     }
   );
 
   const recruitmentStatusClasses = clsx('text-body-sm mb-[2px]', {
     'text-gray-600': isActive,
-    'text-gray-200': !isActive,
+    'text-[#D1D1D1] group-hover:text-[#B0B0B0] group-active:text-[#888888]': !isActive,
   });
 
   const dateRangeClasses = clsx('text-subtitle-sm-rg mb-[16px]', {
     'text-gray-400': isActive,
-    'text-gray-200': !isActive,
+    'text-[#D1D1D1] group-hover:text-[#B0B0B0] group-active:text-[#888888]': !isActive,
   });
 
   const applicantCountClasses = clsx('text-body-rg', {
     'text-gray-950': isActive,
-    'text-gray-200': !isActive,
+    'text-[#D1D1D1] group-hover:text-[#B0B0B0] group-active:text-[#888888]': !isActive,
   });
 
   const applicantCountSpanClasses = clsx('font-semibold', {
