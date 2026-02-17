@@ -179,7 +179,7 @@ export default function HomeMain() {
             <div className="flex flex-col animate-in fade-in duration-200">
               <ProjectFilter isOnlyRecruiting={isOnlyRecruiting} onChange={setIsOnlyRecruiting} />
 
-              <section className="mt-7 flex flex-col items-center gap-3 pb-5 w-full px-4">
+              <section className="mt-[10px] flex flex-col items-center gap-3 pb-5 w-full px-4">
                 {projects
                   .filter(p => !isOnlyRecruiting || (p.state === 'DOCUMENT' && !closedProjectIds.includes(p.id)))
                   .map(project => {
