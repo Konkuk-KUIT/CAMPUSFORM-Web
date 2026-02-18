@@ -19,7 +19,7 @@ export default function DocumentCompleteButtons({ projectId }: { projectId: numb
     try {
       setIsLoading(true);
       await projectService.startInterview(projectId);
-      router.push(`/interview/${projectId}`);
+      router.push('/interview');
     } catch (e) {
       console.error('면접 단계 전환 실패:', e);
       toast.error('면접 단계 전환에 실패했습니다.');
