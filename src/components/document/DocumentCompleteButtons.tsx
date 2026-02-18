@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/Btn';
 import ConfirmModal from '@/components/document/ConfirmModal';
 import { projectService } from '@/services/projectService';
+import { toast } from '@/components/Toast';
 
 export default function DocumentCompleteButtons({ projectId }: { projectId: number }) {
   const router = useRouter();
@@ -21,7 +22,7 @@ export default function DocumentCompleteButtons({ projectId }: { projectId: numb
       router.push(`/interview/${projectId}`);
     } catch (e) {
       console.error('면접 단계 전환 실패:', e);
-      alert('면접 단계 전환에 실패했습니다. 다시 시도해주세요.');
+      toast.error('면접 단계 전환에 실패했습니다.');
     } finally {
       setIsLoading(false);
       setIsModalOpen(false);
@@ -37,7 +38,7 @@ export default function DocumentCompleteButtons({ projectId }: { projectId: numb
       router.push('/home');
     } catch (e) {
       console.error('서류 마감 실패:', e);
-      alert('서류 마감에 실패했습니다. 다시 시도해주세요.');
+      toast.error('서류 마감에 실패했습니다.');
     } finally {
       setIsLoading(false);
       setIsEndModalOpen(false);
@@ -57,11 +58,7 @@ export default function DocumentCompleteButtons({ projectId }: { projectId: numb
       </div>
 
       {/* 파란 버튼 확인 모달 */}
-      <ConfirmModal
-        isOpen={isModalOpen}
-        onCancel={() => setIsModalOpen(false)}
-        onConfirm={handleStartInterview}
-      />
+      <ConfirmModal isOpen={isModalOpen} onCancel={() => setIsModalOpen(false)} onConfirm={handleStartInterview} />
 
       {/* 흰색 버튼 확인 모달 */}
       <ConfirmModal
