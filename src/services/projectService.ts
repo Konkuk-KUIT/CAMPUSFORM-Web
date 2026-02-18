@@ -22,7 +22,7 @@ class ProjectService {
   // GET : 구글 OAuth 동의 URL 조회
   async getGoogleAuthorizeUrl(): Promise<string> {
     const response = await apiClient.get('/projects/google-oauth/authorize-url', {
-      params: { useLocalhost: true },
+      params: { useLocalhost: false },
     });
     return response.data.authorizeUrl;
   }
