@@ -1,4 +1,3 @@
-// components/Toast.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -39,7 +38,7 @@ const ToastItem = ({ toast }: { toast: ToastMessage }) => {
 
   return (
     <div
-      className={`flex items-center gap-3 bg-gray-700 px-3 py-2 rounded-full mb-3 
+      className={`flex items-center gap-3 bg-gray-700 px-3 py-2 rounded-full mb-3 whitespace-nowrap
         transition-all duration-500 ease-out
         ${toast.isLeaving ? 'opacity-0 -translate-y-2' : 'opacity-100 translate-y-0'}`}
     >
@@ -74,7 +73,7 @@ export const ToastContainer = () => {
   }, []);
 
   return (
-    <div className="fixed top-12 left-1/2 -translate-x-1/2 z-50">
+    <div className="fixed top-12 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center">
       {toasts.map(toast => (
         <ToastItem key={toast.id} toast={toast} />
       ))}

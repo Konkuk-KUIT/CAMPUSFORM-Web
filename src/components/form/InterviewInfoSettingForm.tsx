@@ -12,6 +12,7 @@ import Btn from '@/components/ui/Btn';
 import SmartScheduleDropdown from '@/components/ui/SmartScheduleDropdown';
 import TimePicker from '@/components/ui/TimePicker';
 import MultiSelectCalendar from '@/components/home/MultiSelectCalendar';
+import { toast } from '@/components/Toast';
 
 type TimeOption = { label: string; value: string };
 
@@ -89,9 +90,7 @@ export default function InterviewInfoSettingForm() {
 
   // 날짜 배열을 YYYY-MM-DD 형식으로 변환 및 정렬
   const getFormattedDates = (): string[] => {
-    return selectedDates
-      .map(date => date.toISOString().slice(0, 10))
-      .sort();
+    return selectedDates.map(date => date.toISOString().slice(0, 10)).sort();
   };
 
   // zustand store에서 현재 projectId 받아오기
@@ -104,26 +103,26 @@ export default function InterviewInfoSettingForm() {
     const initializeProjectId = async () => {
       console.log('[InterviewSetting] 현재 projectId:', projectId);
       console.log('[InterviewSetting] 생성된 projectId:', createdProjectId);
-      
+
       // 1순위: 이미 currentStore에 projectId가 있으면 사용
       if (projectId) {
         console.log('[InterviewSetting] 기존 projectId 사용:', projectId);
         return;
       }
-      
+
       // 2순위: 방금 생성한 프로젝트 ID가 있으면 사용
       if (createdProjectId) {
         console.log('[InterviewSetting] 생성된 projectId 설정:', createdProjectId);
         setProjectId(createdProjectId);
         return;
       }
-      
+
       // 3순위: 프로젝트 목록에서 가져오기
       try {
         console.log('[InterviewSetting] 프로젝트 목록 조회 중...');
         const projects = await projectService.getProjects();
         console.log('[InterviewSetting] 프로젝트 목록:', projects);
-        
+
         if (projects.length > 0) {
           console.log('[InterviewSetting] 첫 번째 프로젝트 사용:', projects[0].id);
           setProjectId(projects[0].id);
@@ -134,7 +133,7 @@ export default function InterviewInfoSettingForm() {
         console.error('[InterviewSetting] 프로젝트 목록 조회 실패:', error);
       }
     };
-    
+
     initializeProjectId();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -146,7 +145,7 @@ export default function InterviewInfoSettingForm() {
 
       try {
         const setting = await projectService.getInterviewSetting(projectId);
-        
+
         if (!setting || !setting.interviewDates || setting.interviewDates.length === 0) {
           return; // 설정이 없으면 기본값 유지
         }
@@ -207,16 +206,16 @@ export default function InterviewInfoSettingForm() {
   const handleSubmit = async () => {
     console.log('[InterviewSetting] 제출 시도 - projectId:', projectId);
     console.log('[InterviewSetting] createdProjectId:', createdProjectId);
-    
+
     // projectId 가져오기 (우선순위: projectId > createdProjectId > 프로젝트 목록)
     let targetProjectId = projectId;
-    
+
     if (!targetProjectId && createdProjectId) {
       console.log('[InterviewSetting] createdProjectId 사용:', createdProjectId);
       targetProjectId = createdProjectId;
       setProjectId(createdProjectId); // store에도 저장
     }
-    
+
     if (!targetProjectId) {
       console.log('[InterviewSetting] 프로젝트 목록에서 가져오기 시도');
       try {
@@ -230,25 +229,25 @@ export default function InterviewInfoSettingForm() {
         console.error('[InterviewSetting] 프로젝트 목록 조회 실패:', error);
       }
     }
-    
+
     if (!targetProjectId) {
       console.error('[InterviewSetting] projectId를 가져올 수 없습니다');
-      alert('프로젝트를 찾을 수 없습니다.\n프로젝트를 먼저 생성해주세요.');
+      toast.error('프로젝트를 찾을 수 없습니다. 먼저 생성해주세요.');
       return;
     }
-    
+
     console.log('[InterviewSetting] 최종 사용 projectId:', targetProjectId);
-    
+
     if (selectedDates.length === 0) {
-      alert('면접 날짜를 선택해주세요');
+      toast.warning('면접 날짜를 선택해주세요.');
       return;
     }
     if (!isTimeValid()) {
-      alert('종료 시간이 시작 시간보다 늦어야 합니다');
+      toast.warning('종료 시간이 시작 시간보다 늦어야 합니다.');
       return;
     }
     if (!estimatedDuration) {
-      alert('예상 소요 시간을 선택해주세요');
+      toast.warning('예상 소요 시간을 선택해주세요.');
       return;
     }
 
@@ -262,19 +261,19 @@ export default function InterviewInfoSettingForm() {
       slotDurationMin: estimatedDuration ? parseInt(estimatedDuration) : 0,
       slotBreakMin: restDuration ? parseInt(restDuration) : 0,
     };
-    
+
     console.log('[InterviewSetting] API 호출 - projectId:', targetProjectId, 'payload:', payload);
-    
+
     try {
       await projectService.updateInterviewSetting(targetProjectId, payload);
       console.log('[InterviewSetting] 면접 정보 설정 성공');
-      alert('면접 정보가 설정되었습니다');
+      toast.success('면접 정보가 설정되었습니다.');
       if (targetProjectId) {
         router.push(`/smart-schedule/${targetProjectId}`);
       }
     } catch (e) {
       console.error('[InterviewSetting] 면접 정보 설정 실패:', e);
-      alert('면접 정보 설정에 실패했습니다.');
+      toast.error('면접 정보 설정에 실패했습니다.');
     }
   };
 
@@ -293,10 +292,7 @@ export default function InterviewInfoSettingForm() {
               <span className="text-[15px] font-medium text-gray-950">면접 날짜</span>
             </div>
 
-            <MultiSelectCalendar
-              selectedDates={selectedDates}
-              onDateChange={handleMultiDateChange}
-            />
+            <MultiSelectCalendar selectedDates={selectedDates} onDateChange={handleMultiDateChange} />
           </div>
 
           {/* 면접 시간대 */}
@@ -427,7 +423,7 @@ export default function InterviewInfoSettingForm() {
               설정하기
             </Btn>
           </div>
-          
+
           {/* Spacer for fixed button */}
           <div className="h-32" />
         </div>

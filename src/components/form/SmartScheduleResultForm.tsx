@@ -9,6 +9,7 @@ import Header from '@/components/ui/Header';
 import Navbar from '@/components/Navbar';
 import Btn from '@/components/ui/Btn';
 import { useCurrentProjectStore } from '@/store/currentProjectStore';
+import { toast } from '@/components/Toast';
 
 interface Applicant {
   id: number;
@@ -45,11 +46,10 @@ export default function SmartScheduleResultForm() {
   const [showInfo, setShowInfo] = useState(false);
   // selectedDate는 useEffect에서 최초 세팅됨
 
-
   // 실제 API 데이터 연동
   const [scheduleData, setScheduleData] = useState<DateSchedule[]>([]);
   const [unassignedApplicants, setUnassignedApplicants] = useState<UnassignedApplicant[]>([]);
-  
+
   useEffect(() => {
     const fetchData = async () => {
       if (!projectId) return;
@@ -87,7 +87,7 @@ export default function SmartScheduleResultForm() {
 
   const handleConfirm = async () => {
     if (!projectId) {
-      alert('프로젝트를 선택해주세요.');
+      toast.warning('프로젝트를 선택해주세요.');
       return;
     }
 
@@ -99,8 +99,8 @@ export default function SmartScheduleResultForm() {
       console.log('[ScheduleResult] ===== 확정 성공 =====');
       console.log('[ScheduleResult] 서버 응답:', result);
       console.log('[ScheduleResult] ============================');
-      
-      alert('면접 시간이 확정되었습니다.');
+
+      toast.success('면접 시간이 확정되었습니다.');
       if (projectId) {
         router.push(`/smart-schedule/${projectId}`);
       }
@@ -110,8 +110,8 @@ export default function SmartScheduleResultForm() {
       console.error('[ScheduleResult] 에러 메시지:', error?.message);
       console.error('[ScheduleResult] 에러 응답:', error?.response?.data);
       console.error('[ScheduleResult] ============================');
-      
-      alert('면접 시간 확정에 실패했습니다.');
+
+      toast.error('면접 시간 확정에 실패했습니다.');
     }
   };
 
@@ -154,52 +154,51 @@ export default function SmartScheduleResultForm() {
         )}
 
         {/* Date Sections */}
-        {scheduleData.map((dateSchedule, dateIndex) => (
-          dateSchedule.slots.length > 0 && (
-            <div key={dateIndex} className="mb-4">
-              {/* Date Header */}
-              <div className="px-4 pb-3">
-                <h2 className="text-subtitle-sm-sb text-gray-950">
-                  {formatDateToKorean(dateSchedule.date)}
-                </h2>
-              </div>
+        {scheduleData.map(
+          (dateSchedule, dateIndex) =>
+            dateSchedule.slots.length > 0 && (
+              <div key={dateIndex} className="mb-4">
+                {/* Date Header */}
+                <div className="px-4 pb-3">
+                  <h2 className="text-subtitle-sm-sb text-gray-950">{formatDateToKorean(dateSchedule.date)}</h2>
+                </div>
 
-              {/* Schedule Cards */}
-              <div className="px-4 space-y-3">
-                {dateSchedule.slots.map((slot, index) => (
-                  <div key={index} className="border-[1.5px] border-gray-200 rounded-10 p-4">
-                    {/* Time */}
-                    <p className="text-subtitle-rg text-primary mb-3">
-                      {formatTimeRange(slot.startTime, slot.endTime)}
-                    </p>
+                {/* Schedule Cards */}
+                <div className="px-4 space-y-3">
+                  {dateSchedule.slots.map((slot, index) => (
+                    <div key={index} className="border-[1.5px] border-gray-200 rounded-10 p-4">
+                      {/* Time */}
+                      <p className="text-subtitle-rg text-primary mb-3">
+                        {formatTimeRange(slot.startTime, slot.endTime)}
+                      </p>
 
-                    {/* Applicants */}
-                    <div className="mb-3">
-                      <div className="flex gap-4">
-                        <span className="text-body-md text-gray-950 w-14 shrink-0">지원자</span>
-                        <div className="flex-1 space-y-1">
-                          {slot.applicants.map((applicant, appIndex) => (
-                            <p key={appIndex} className="text-body-rg text-gray-950">
-                              {applicant.name}({applicant.school}/{applicant.major}/{applicant.position})
-                            </p>
-                          ))}
+                      {/* Applicants */}
+                      <div className="mb-3">
+                        <div className="flex gap-4">
+                          <span className="text-body-md text-gray-950 w-14 shrink-0">지원자</span>
+                          <div className="flex-1 space-y-1">
+                            {slot.applicants.map((applicant, appIndex) => (
+                              <p key={appIndex} className="text-body-rg text-gray-950">
+                                {applicant.name}({applicant.school}/{applicant.major}/{applicant.position})
+                              </p>
+                            ))}
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Interviewers */}
-                    <div className="flex gap-4">
-                      <span className="text-body-md text-gray-950 w-14 shrink-0">면접관</span>
-                      <p className="text-body-rg text-gray-950 flex-1">
-                        {slot.interviewers.map((i) => i.name).join(', ')}
-                      </p>
+                      {/* Interviewers */}
+                      <div className="flex gap-4">
+                        <span className="text-body-md text-gray-950 w-14 shrink-0">면접관</span>
+                        <p className="text-body-rg text-gray-950 flex-1">
+                          {slot.interviewers.map(i => i.name).join(', ')}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          )
-        ))}
+            )
+        )}
       </div>
 
       {/* Bottom Button */}
