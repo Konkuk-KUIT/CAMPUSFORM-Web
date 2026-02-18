@@ -3,6 +3,7 @@ export interface CalendarEvent {
   date: Date;
   title: string;
   timeRange: string;
+  isChecked?: boolean;
 }
 
 export interface Schedule {

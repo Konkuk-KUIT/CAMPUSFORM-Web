@@ -86,12 +86,14 @@ export default function HomeMain() {
             date: new Date(project.startAt),
             title: `${project.title} - 모집 시작`,
             timeRange: '종일',
+            isChecked: false,
           });
           // 모집 종료일
           events.push({
             date: new Date(project.endAt),
             title: `${project.title} - 모집 마감`,
             timeRange: '종일',
+            isChecked: false,
           });
         });
 
@@ -118,6 +120,7 @@ export default function HomeMain() {
                           date: new Date(day.date),
                           title: `${project.title} - ${applicant.name} 면접`,
                           timeRange: `${slot.startTime} - ${slot.endTime}`,
+                          isChecked: false,
                         });
                       });
                     } else {
@@ -126,6 +129,7 @@ export default function HomeMain() {
                         date: new Date(day.date),
                         title: `${project.title} - 면접 슬롯`,
                         timeRange: `${slot.startTime} - ${slot.endTime}`,
+                        isChecked: false,
                       });
                     }
                   });
@@ -152,11 +156,13 @@ export default function HomeMain() {
             date: new Date(project.startAt),
             title: `${project.title} - 모집 시작`,
             timeRange: '종일',
+            isChecked: false,
           },
           {
             date: new Date(project.endAt),
             title: `${project.title} - 모집 마감`,
             timeRange: '종일',
+            isChecked: false,
           },
         ]);
         setCalendarEvents(fallbackEvents);
@@ -179,6 +185,24 @@ export default function HomeMain() {
     }
   };
 
+  // 일정 체크 상태 업데이트
+  const handleScheduleCheck = (scheduleIndex: number, checked: boolean) => {
+    const targetSchedules = calendarEvents.filter(
+      event => event.date.toDateString() === selectedDate.toDateString()
+    );
+    
+    if (scheduleIndex >= 0 && scheduleIndex < targetSchedules.length) {
+      const targetEvent = targetSchedules[scheduleIndex];
+      const allEventIndex = calendarEvents.indexOf(targetEvent);
+      
+      if (allEventIndex !== -1) {
+        const updatedEvents = [...calendarEvents];
+        updatedEvents[allEventIndex] = { ...updatedEvents[allEventIndex], isChecked: checked };
+        setCalendarEvents(updatedEvents);
+      }
+    }
+  };
+
   // 선택된 날짜의 일정 필터링
   const todaySchedules = calendarEvents
     .filter(event => event.date.toDateString() === selectedDate.toDateString())
@@ -186,7 +210,7 @@ export default function HomeMain() {
       date: event.date,
       title: event.title,
       timeRange: event.timeRange,
-      isChecked: false,
+      isChecked: event.isChecked || false,
     }));
 
   if (isLoading) {
@@ -224,7 +248,11 @@ export default function HomeMain() {
                   events={calendarEvents}
                 />
               </section>
-              <ScheduleList selectedDate={selectedDate} schedules={todaySchedules} />
+              <ScheduleList 
+                selectedDate={selectedDate} 
+                schedules={todaySchedules}
+                onScheduleCheck={handleScheduleCheck}
+              />
             </div>
           ) : (
             <div className="flex flex-col animate-in fade-in duration-200">
