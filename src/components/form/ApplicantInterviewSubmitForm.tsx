@@ -434,7 +434,8 @@ export default function ApplicantInterviewSubmitForm() {
         <div className="px-4 pb-5">
           <label className="block text-subtitle-sm-md text-gray-950 mb-2">전화번호</label>
           <input
-            type="tel"
+            type="text"
+            inputMode="tel"
             value={phone}
             onChange={e => setPhone(e.target.value)}
             placeholder="전화번호를 입력해주세요."
