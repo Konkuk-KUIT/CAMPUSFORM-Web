@@ -10,9 +10,10 @@ interface ScheduleListProps {
     timeRange: string;
     isChecked: boolean;
   }>;
+  onScheduleCheck?: (index: number, checked: boolean) => void;
 }
 
-export default function ScheduleList({ selectedDate = new Date(), schedules = [] }: ScheduleListProps) {
+export default function ScheduleList({ selectedDate = new Date(), schedules = [], onScheduleCheck }: ScheduleListProps) {
   const isEmpty = schedules.length === 0;
 
   const days = ['일', '월', '화', '수', '목', '금', '토'];
@@ -42,7 +43,13 @@ export default function ScheduleList({ selectedDate = new Date(), schedules = []
       ) : (
         <div className="flex flex-col gap-[12px]">
           {schedules.map((item, index) => (
-            <Schedule key={index} title={item.title} timeRange={item.timeRange} initialChecked={item.isChecked} />
+            <Schedule 
+              key={index} 
+              title={item.title} 
+              timeRange={item.timeRange} 
+              isChecked={item.isChecked}
+              onCheckedChange={(checked) => onScheduleCheck?.(index, checked)}
+            />
           ))}
         </div>
       )}
