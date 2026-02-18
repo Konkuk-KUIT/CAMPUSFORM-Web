@@ -98,6 +98,9 @@ export default function TimePicker({
     onChange: (idx: number) => void;
     isHourField: boolean;
   }) => {
+    const [touchStartY, setTouchStartY] = useState<number | null>(null);
+    const [accumulatedDelta, setAccumulatedDelta] = useState(0);
+
     const getItemLabel = (item: number) => {
       if (isHourField) {
         return String(item).padStart(2, '0');
@@ -119,6 +122,50 @@ export default function TimePicker({
       onChange(newIndex);
     };
 
+    const handleTouchStart = (e: React.TouchEvent) => {
+      setTouchStartY(e.touches[0].clientY);
+      setAccumulatedDelta(0);
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+      if (touchStartY === null) return;
+      
+      const currentY = e.touches[0].clientY;
+      const deltaY = touchStartY - currentY;
+      
+      // 누적된 delta에 추가
+      const newAccumulatedDelta = accumulatedDelta + deltaY;
+      setAccumulatedDelta(newAccumulatedDelta);
+      
+      // 30px 이상 움직였을 때만 변경 (감도 조절)
+      const threshold = 30;
+      if (Math.abs(newAccumulatedDelta) >= threshold) {
+        const steps = Math.floor(Math.abs(newAccumulatedDelta) / threshold);
+        const direction = newAccumulatedDelta > 0 ? 1 : -1;
+        
+        let newIndex = selectedIndex + (direction * steps);
+        
+        // 순환 처리
+        while (newIndex < 0) {
+          newIndex = items.length + newIndex;
+        }
+        while (newIndex >= items.length) {
+          newIndex = newIndex - items.length;
+        }
+        
+        onChange(newIndex);
+        
+        // 사용한 delta만큼 차감
+        setAccumulatedDelta(newAccumulatedDelta % threshold);
+        setTouchStartY(currentY);
+      }
+    };
+
+    const handleTouchEnd = () => {
+      setTouchStartY(null);
+      setAccumulatedDelta(0);
+    };
+
     // 순환 인덱스 계산 함수
     const getCircularIndex = (index: number) => {
       if (index < 0) {
@@ -133,6 +180,9 @@ export default function TimePicker({
       <div
         className="relative w-[73px] h-[151px] overflow-hidden flex items-center justify-center"
         onWheel={handleWheel}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
         {/* 아이템들을 중앙 기준으로 배치 */}
         <div className="relative w-full h-full flex items-center justify-center">
