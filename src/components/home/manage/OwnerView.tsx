@@ -39,8 +39,11 @@ export default function OwnerView({
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [showWarningModal, setShowWarningModal] = useState(false);
   const [showPositionTooltip, setShowPositionTooltip] = useState(false);
-  const { closedProjectIds, closeProject } = useManualCloseStore();
+  // 수정 - openedProjectIds도 읽고, status를 store에서 직접 계산
+  const { closedProjectIds, openedProjectIds, closeProject, openProject } = useManualCloseStore();
   const isManuallyClosed = closedProjectIds.includes(projectId);
+  const isManuallyOpened = openedProjectIds.includes(projectId);
+  const currentStatus = isManuallyOpened ? '모집 중' : isManuallyClosed ? '모집 완료' : initialStatus;
 
   const formatDate = (date: Date | null) => {
     if (!date) return '';
@@ -94,9 +97,23 @@ export default function OwnerView({
     }
   };
 
-  const handleDateConfirm = (start: Date | null, end: Date | null) => {
+  const handleDateConfirm = async (start: Date | null, end: Date | null) => {
     setStartDate(start);
     setEndDate(end);
+    setIsDateModalOpen(false);
+
+    if (!start || !end) return;
+
+    try {
+      await projectService.updateProjectPeriod(projectId, {
+        startAt: formatDate(start),
+        endAt: formatDate(end),
+      });
+      toast.success('모집 기간이 수정되었습니다.');
+    } catch (e) {
+      console.error('모집 기간 수정 실패:', e);
+      toast.error('모집 기간 수정에 실패했습니다.');
+    }
   };
 
   const handleSaveProjectName = async () => {
@@ -110,6 +127,8 @@ export default function OwnerView({
       toast.error('프로젝트 이름 수정에 실패했습니다.');
     }
   };
+
+  const positionEditHref = `/home/addproject/connect/edit-position?from=manage&projectId=${projectId}&sheetUrl=${encodeURIComponent(project.sheetUrl ?? '')}`;
 
   return (
     <div className="flex justify-center min-h-screen bg-white">
@@ -130,7 +149,6 @@ export default function OwnerView({
       `}</style>
 
       <div className="relative w-[375px] bg-white min-h-screen flex flex-col pb-10">
-        {/* 헤더 */}
         <div className="flex items-center justify-between h-12 px-4 bg-white border-b border-gray-100">
           <Link href="/home" className="w-6 h-6 flex items-center justify-center">
             <Image src="/icons/logo.svg" alt="logo" width={21} height={22} />
@@ -140,7 +158,6 @@ export default function OwnerView({
         </div>
 
         <div className="flex-1 px-5 py-6 flex flex-col gap-6 overflow-y-auto scrollbar-hide pb-10">
-          {/* 프로젝트 이름 */}
           <div className="flex flex-col gap-2">
             <label className="text-[14px] font-bold text-gray-950">프로젝트 이름</label>
             <div className="flex gap-2 items-start">
@@ -166,27 +183,23 @@ export default function OwnerView({
             </div>
           </div>
 
-          {/* 모집 상태 */}
           <div className="flex flex-col gap-2">
             <label className="text-[14px] font-bold text-gray-950">모집 상태</label>
-            {isManuallyClosed ? (
-              <div className="w-full h-12.5 px-4 flex items-center rounded-10 border border-gray-100 bg-gray-100 text-body-rg text-gray-300">
-                모집 마감
-              </div>
-            ) : (
-              <SheetDropdown
-                options={['모집 중', '모집 마감']}
-                value={status}
-                onChange={(val) => {
-                  if (val === '모집 마감') {
-                    closeProject(projectId);
-                    toast.success('모집이 마감되었습니다.');
-                  }
-                }}
-                placeholder="모집 상태를 선택하세요"
-                showNoneOption={false}
-              />
-            )}
+            <SheetDropdown
+              options={['모집 중', '모집 완료']}
+              value={currentStatus}
+              onChange={val => {
+                if (val === '모집 완료') {
+                  closeProject(projectId);
+                  setStatus('모집 완료');
+                } else {
+                  openProject(projectId);
+                  setStatus('모집 중');
+                }
+              }}
+              placeholder="모집 상태를 선택하세요"
+              showNoneOption={false}
+            />
           </div>
 
           {/* 구글폼 URL */}
@@ -202,22 +215,25 @@ export default function OwnerView({
             />
           </div>
 
-          {/* 모집 기간 */}
           <div className="flex flex-col gap-2">
             <label className="text-[14px] font-bold text-gray-950">모집 기간 설정</label>
             <button
               onClick={() => setIsDateModalOpen(true)}
-              className="w-full h-[48px] flex items-center justify-between px-4 text-left"
+              className="w-full flex items-center gap-3 py-3 text-left"
               type="button"
             >
-              <span className={`text-[14px] ${startDate ? 'text-gray-950' : 'text-gray-400'}`}>
-                {startDate && endDate ? `${formatDate(startDate)} - ${formatDate(endDate)}` : 'yyyy-mm-dd - yyyy-mm-dd'}
-              </span>
-              <Image src="/icons/calendar.svg" alt="calendar" width={18} height={18} />
+              <div className="flex items-center gap-1">
+                <span className="text-body-rg text-gray-400">{startDate ? formatDate(startDate) : 'yyyy-mm-dd'}</span>
+                <Image src="/icons/calendar.svg" alt="calendar" width={18} height={18} />
+              </div>
+              <span className="text-[14px] text-gray-400">—</span>
+              <div className="flex items-center gap-1">
+                <span className="text-body-rg text-gray-400">{endDate ? formatDate(endDate) : 'yyyy-mm-dd'}</span>
+                <Image src="/icons/calendar.svg" alt="calendar" width={18} height={18} />
+              </div>
             </button>
           </div>
 
-          {/* 포지션 설정 */}
           <div className="flex flex-col gap-2">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-1">
@@ -253,7 +269,7 @@ export default function OwnerView({
                 </div>
               </div>
               <Link
-                href={`/home/addproject/connect/edit-position?from=manage&projectId=${projectId}`}
+                href={positionEditHref}
                 className="flex items-center gap-1 text-[13px] font-normal leading-[18px] tracking-[0.13px] text-[var(--color-primary)] underline decoration-solid"
               >
                 편집하기
@@ -270,7 +286,6 @@ export default function OwnerView({
             </div>
           </div>
 
-          {/* 관리자 추가 */}
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2">
               <span className="text-[14px] font-bold text-gray-950">관리자 추가</span>
@@ -309,7 +324,6 @@ export default function OwnerView({
           </div>
         </div>
 
-        {/* 모달들 */}
         {isDateModalOpen && (
           <DateRangePickerModal
             onClose={() => setIsDateModalOpen(false)}

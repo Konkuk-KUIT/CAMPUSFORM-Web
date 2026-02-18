@@ -9,6 +9,7 @@ import { useNewProjectStore } from '@/store/newProjectStore';
 import { projectService } from '@/services/projectService';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
+import { toast } from '@/components/Toast';
 
 interface ScheduleState {
   [key: string]: boolean;
@@ -18,7 +19,7 @@ export default function ApplicantInterviewSubmitForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token'); // URL에서 token 파라미터 가져오기
-  
+
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [selectedSlots, setSelectedSlots] = useState<ScheduleState>({});
@@ -34,17 +35,16 @@ export default function ApplicantInterviewSubmitForm() {
   const [guidanceText, setGuidanceText] = useState('');
   const [projectTitle, setProjectTitle] = useState('면접 가능 시간');
 
-
   // 프로젝트 ID 초기화 (token이 없을 때만)
   useEffect(() => {
     const initializeProjectId = async () => {
       if (token || projectId) return; // token이 있거나 projectId가 있으면 스킵
-      
+
       if (createdProjectId) {
         setProjectId(createdProjectId);
         return;
       }
-      
+
       try {
         const projects = await projectService.getProjects();
         if (projects.length > 0) {
@@ -54,7 +54,7 @@ export default function ApplicantInterviewSubmitForm() {
         console.error('프로젝트 목록 조회 실패:', error);
       }
     };
-    
+
     initializeProjectId();
   }, [token]);
 
@@ -62,7 +62,7 @@ export default function ApplicantInterviewSubmitForm() {
   useEffect(() => {
     const fetchInterviewConfig = async () => {
       if (!token) return;
-      
+
       try {
         const config = await projectService.getPublicInterviewConfig(token);
         if (config) {
@@ -77,7 +77,7 @@ export default function ApplicantInterviewSubmitForm() {
         console.error('공개 면접 config 조회 실패:', error);
       }
     };
-    
+
     fetchInterviewConfig();
   }, [token]);
 
@@ -88,25 +88,25 @@ export default function ApplicantInterviewSubmitForm() {
         // token이 있으면 공개 API 사용
         try {
           const slotsData = await projectService.getPublicInterviewSlots(token);
-          
+
           if (!slotsData) {
             return;
           }
-          
+
           // API 응답에서 면접 설정 정보 추출
           if (slotsData.summaries && Array.isArray(slotsData.summaries) && slotsData.summaries.length > 0) {
             // summaries를 그대로 state에 저장
             setSlotsSummaries(slotsData.summaries);
-            
+
             // summaries에서 날짜 추출
             const dates = slotsData.summaries.map((s: any) => s.date).filter(Boolean);
-            
+
             if (dates.length > 0) {
               const setting = {
                 interviewDates: dates,
-                slotDurationMin: 30
+                slotDurationMin: 30,
               };
-              
+
               setInterviewSetting(setting);
             }
           }
@@ -117,11 +117,19 @@ export default function ApplicantInterviewSubmitForm() {
         // token이 없으면 개발 모드 (기존 방식)
         try {
           const setting = await projectService.getInterviewSetting(projectId);
-          
+
           // 새로운 API 형식: interviewDates 배열
-          if (setting && setting.interviewDates && setting.interviewDates.length > 0 && setting.startTime && setting.endTime) {
+          if (
+            setting &&
+            setting.interviewDates &&
+            setting.interviewDates.length > 0 &&
+            setting.startTime &&
+            setting.endTime
+          ) {
             // interviewDates 배열을 startDate, endDate로 변환
-            const dates = setting.interviewDates.map((d: string) => new Date(d)).sort((a: Date, b: Date) => a.getTime() - b.getTime());
+            const dates = setting.interviewDates
+              .map((d: string) => new Date(d))
+              .sort((a: Date, b: Date) => a.getTime() - b.getTime());
             const convertedSetting = {
               ...setting,
               startDate: dates[0].toISOString().slice(0, 10),
@@ -135,7 +143,7 @@ export default function ApplicantInterviewSubmitForm() {
         }
       }
     };
-    
+
     fetchInterviewSetting();
   }, [token, projectId]);
 
@@ -143,17 +151,16 @@ export default function ApplicantInterviewSubmitForm() {
   useEffect(() => {
     const fetchApplicantConfig = async () => {
       if (token || !projectId) return;
-      
+
       try {
         const config = await projectService.getApplicantLinkConfig(projectId);
-        
+
         if (config && config.guidanceText !== undefined && config.guidanceText !== null) {
           setGuidanceText(config.guidanceText);
         }
-      } catch (error) {
-      }
+      } catch (error) {}
     };
-    
+
     fetchApplicantConfig();
   }, [token, projectId]);
 
@@ -164,22 +171,20 @@ export default function ApplicantInterviewSubmitForm() {
     }
 
     const result: Record<string, string[]> = {};
-    
+
     // API에서 받은 summaries를 기반으로 시간 슬롯 구성
     slotsSummaries.forEach((summary: any) => {
       if (summary.date && summary.slots && Array.isArray(summary.slots)) {
         const d = new Date(summary.date);
         const dateKey = format(d, 'M월 d일 (E)', { locale: ko });
-        
+
         // slots 배열에서 startTime만 추출 (초 제거)
-        const times = summary.slots
-          .map((slot: any) => slot.startTime.substring(0, 5))
-          .filter((time: string) => time); // null/undefined 제거
-        
+        const times = summary.slots.map((slot: any) => slot.startTime.substring(0, 5)).filter((time: string) => time); // null/undefined 제거
+
         result[dateKey] = times;
       }
     });
-    
+
     return result;
   }, [slotsSummaries]);
 
@@ -190,16 +195,16 @@ export default function ApplicantInterviewSubmitForm() {
     }
 
     const result: Record<string, string[]> = {};
-    
+
     // 시작 시간과 종료 시간이 있는 경우에만
     if (!interviewSetting.startTime || !interviewSetting.endTime) {
       return {};
     }
-    
+
     // 시작 시간과 종료 시간 파싱
     const [startHour, startMin] = interviewSetting.startTime.split(':').map(Number);
     const [endHour, endMin] = interviewSetting.endTime.split(':').map(Number);
-    
+
     // interviewDates 가 있으면 사용, 없으면 startDate~endDate 범위 사용 (호환성)
     if (interviewSetting.interviewDates && Array.isArray(interviewSetting.interviewDates)) {
       // interviewDates 배열의 각 날짜에 대해 시간 슬롯 생성
@@ -207,55 +212,53 @@ export default function ApplicantInterviewSubmitForm() {
         const d = new Date(dateStr);
         const dateKey = format(d, 'M월 d일 (E)', { locale: ko });
         const times: string[] = [];
-        
+
         let currentHour = startHour;
         let currentMin = startMin;
-        
+
         while (currentHour < endHour || (currentHour === endHour && currentMin < endMin)) {
           times.push(`${currentHour.toString().padStart(2, '0')}:${currentMin.toString().padStart(2, '0')}`);
-          
+
           currentMin += 30;
           if (currentMin >= 60) {
             currentMin = 0;
             currentHour += 1;
           }
         }
-        
+
         result[dateKey] = times;
       });
     } else {
       // 호환성: startDate/endDate 방식
       const startDate = new Date(interviewSetting.startDate);
       const endDate = new Date(interviewSetting.endDate);
-      
+
       for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
         const dateKey = format(d, 'M월 d일 (E)', { locale: ko });
         const times: string[] = [];
-        
+
         let currentHour = startHour;
         let currentMin = startMin;
-        
+
         while (currentHour < endHour || (currentHour === endHour && currentMin < endMin)) {
           times.push(`${currentHour.toString().padStart(2, '0')}:${currentMin.toString().padStart(2, '0')}`);
-          
+
           currentMin += 30;
           if (currentMin >= 60) {
             currentMin = 0;
             currentHour += 1;
           }
         }
-        
+
         result[dateKey] = times;
       }
     }
-    
+
     return result;
   }, [interviewSetting, slotsSummaries]);
 
   // API slots가 있으면 사용, 없으면 fallback 사용
-  const finalTimeSlots = Object.keys(timeSlotsByDate).length > 0 
-    ? timeSlotsByDate 
-    : fallbackTimeSlotsByDate;
+  const finalTimeSlots = Object.keys(timeSlotsByDate).length > 0 ? timeSlotsByDate : fallbackTimeSlotsByDate;
 
   const toggleDate = (date: string) => {
     const newExpanded = new Set(expandedDates);
@@ -277,12 +280,12 @@ export default function ApplicantInterviewSubmitForm() {
 
   const handleSubmit = async () => {
     if (!interviewSetting) {
-      alert('면접 정보를 불러오는 중입니다. 잠시만 기다려주세요.');
+      toast.warning('면접 정보를 불러오는 중입니다. 잠시만 기다려주세요.');
       return;
     }
 
     if (!token && !projectId) {
-      alert('유효하지 않은 접근입니다.');
+      toast.error('유효하지 않은 접근입니다.');
       return;
     }
 
@@ -292,13 +295,13 @@ export default function ApplicantInterviewSubmitForm() {
 
     // selected 형식: ["2월 17일 (금)-09:00", "2월 17일 (금)-09:30", ...]
     // API 형식으로 변환: { date: "2026-02-17", startTimes: ["09:00", "09:30"] }
-    
+
     // 날짜별로 시간을 그룹화
     const groupedByDate: { [isoDate: string]: string[] } = {};
-    
+
     // 날짜 매핑 생성 (한글 날짜 -> ISO 날짜)
     const dateMapping: { [koreanDate: string]: string } = {};
-    
+
     if (interviewSetting.interviewDates && Array.isArray(interviewSetting.interviewDates)) {
       // interviewDates 배열 사용
       interviewSetting.interviewDates.forEach((isoDate: string) => {
@@ -310,7 +313,7 @@ export default function ApplicantInterviewSubmitForm() {
       // 호환성: startDate/endDate 사용
       const startDate = new Date(interviewSetting.startDate);
       const endDate = new Date(interviewSetting.endDate);
-      
+
       for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
         const isoDate = format(d, 'yyyy-MM-dd');
         const koreanDate = format(d, 'M월 d일 (E)', { locale: ko });
@@ -321,7 +324,7 @@ export default function ApplicantInterviewSubmitForm() {
     selected.forEach(slot => {
       const [dateStr, time] = slot.split('-');
       const isoDate = dateMapping[dateStr];
-      
+
       if (isoDate) {
         if (!groupedByDate[isoDate]) {
           groupedByDate[isoDate] = [];
@@ -343,15 +346,15 @@ export default function ApplicantInterviewSubmitForm() {
           phone,
           selections,
         };
-        
+
         await projectService.submitApplicantAvailability(token, submitData);
       }
-      
+
       // 제출 완료 상태로 전환
       setIsSubmitted(true);
     } catch (error: any) {
       console.error('제출 실패:', error);
-      
+
       // 에러 메시지 상세 표시
       let errorMessage = '제출에 실패했습니다.';
       if (error?.response?.data?.message) {
@@ -359,8 +362,9 @@ export default function ApplicantInterviewSubmitForm() {
       } else if (error?.message) {
         errorMessage = error.message;
       }
-      
-      alert(`${errorMessage}\n\n입력한 이름과 전화번호가 서류 심사에 등록된 정보와 일치하는지 확인해주세요.`);
+
+      toast.error(errorMessage);
+      toast.warning('이름·전화번호가 등록 정보와 다릅니다.');
     }
   };
 
@@ -385,10 +389,10 @@ export default function ApplicantInterviewSubmitForm() {
           </div>
           <h2 className="text-subtitle-sb text-gray-950 mb-2 text-center">면접 가능 시간 제출이 완료되었습니다.</h2>
           <p className="text-body-rg text-gray-400 text-center mb-1">
-            제출하신 시간을 바탕으로 면접 일정을 알려져 이후
+            제출하신 시간을 바탕으로 면접 일정을 확인한 이후
           </p>
           <p className="text-body-rg text-gray-400 text-center mb-6">개별 안내드리겠습니다.</p>
-          <p className="text-body-sm text-gray-400 text-center">*시간 변경을 원할 시, 품을 새로 제출해주세요</p>
+          <p className="text-body-sm text-gray-400 text-center">*시간 변경을 원할 시, 폼을 새로 제출해주세요</p>
         </div>
 
         {/* 종료 버튼 */}
@@ -434,7 +438,8 @@ export default function ApplicantInterviewSubmitForm() {
         <div className="px-4 pb-5">
           <label className="block text-subtitle-sm-md text-gray-950 mb-2">전화번호</label>
           <input
-            type="tel"
+            type="text"
+            inputMode="tel"
             value={phone}
             onChange={e => setPhone(e.target.value)}
             placeholder="전화번호를 입력해주세요."
@@ -447,54 +452,50 @@ export default function ApplicantInterviewSubmitForm() {
           <h2 className="text-subtitle-sm-md text-gray-950 mb-2.5">면접 가능 시간 선택</h2>
 
           {!interviewSetting ? (
-            <div className="text-center py-8 text-body-sm text-gray-300">
-              면접 설정 정보를 불러오는 중...
-            </div>
+            <div className="text-center py-8 text-body-sm text-gray-300">면접 설정 정보를 불러오는 중...</div>
           ) : Object.keys(finalTimeSlots).length === 0 ? (
-            <div className="text-center py-8 text-body-sm text-gray-300">
-              면접 정보 설정 후 이용 가능합니다.
-            </div>
+            <div className="text-center py-8 text-body-sm text-gray-300">면접 정보 설정 후 이용 가능합니다.</div>
           ) : (
             /* 드롭다운 리스트 */
             <div className="space-y-0">
               {Object.entries(finalTimeSlots)
                 .filter(([_, times]) => times.length > 0) // 시간이 있는 날짜만 표시
                 .map(([date, times]) => {
-                const isExpanded = expandedDates.has(date);
-                return (
-                  <div key={date}>
-                    {/* 날짜 헤더 */}
-                    <button
-                      onClick={() => toggleDate(date)}
-                      className={`w-full h-[50px] flex items-center justify-between px-[26px] border-b border-gray-100 ${
-                        isExpanded ? 'bg-blue-50' : 'bg-white'
-                      }`}
-                    >
-                      <span className="text-subtitle-sm-md text-gray-950">{date}</span>
-                      <div className="w-[31px] h-[31px] flex items-center justify-center">
-                        <Image
-                          src="/icons/dropdown-down.svg"
-                          alt=""
-                          width={31}
-                          height={31}
-                          className={isExpanded ? 'rotate-180' : ''}
-                        />
-                      </div>
-                    </button>
+                  const isExpanded = expandedDates.has(date);
+                  return (
+                    <div key={date}>
+                      {/* 날짜 헤더 */}
+                      <button
+                        onClick={() => toggleDate(date)}
+                        className={`w-full h-[50px] flex items-center justify-between px-[26px] border-b border-gray-100 ${
+                          isExpanded ? 'bg-blue-50' : 'bg-white'
+                        }`}
+                      >
+                        <span className="text-subtitle-sm-md text-gray-950">{date}</span>
+                        <div className="w-[31px] h-[31px] flex items-center justify-center">
+                          <Image
+                            src="/icons/dropdown-down.svg"
+                            alt=""
+                            width={31}
+                            height={31}
+                            className={isExpanded ? 'rotate-180' : ''}
+                          />
+                        </div>
+                      </button>
 
-                    {/* 시간 선택 (펼쳐진 경우) */}
-                    {isExpanded && (
-                      <div className="bg-white px-4 py-4 border-b border-gray-100">
-                        <div className="grid grid-cols-4 gap-2">
-                          {times.map(time => {
-                            const key = `${date}-${time}`;
-                            const isSelected = selectedSlots[key] || false;
+                      {/* 시간 선택 (펼쳐진 경우) */}
+                      {isExpanded && (
+                        <div className="bg-white px-4 py-4 border-b border-gray-100">
+                          <div className="grid grid-cols-4 gap-2">
+                            {times.map(time => {
+                              const key = `${date}-${time}`;
+                              const isSelected = selectedSlots[key] || false;
 
-                            return (
-                              <button
-                                key={key}
-                                onClick={() => handleTimeSlotToggle(date, time)}
-                                className={`
+                              return (
+                                <button
+                                  key={key}
+                                  onClick={() => handleTimeSlotToggle(date, time)}
+                                  className={`
                                   h-9 rounded-[5px] border text-body-sm-rg
                                   transition-all duration-200
                                   ${
@@ -503,17 +504,17 @@ export default function ApplicantInterviewSubmitForm() {
                                       : 'bg-white text-gray-950 border-gray-200'
                                   }
                                 `}
-                              >
-                                {time}
-                              </button>
-                            );
-                          })}
+                                >
+                                  {time}
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+                      )}
+                    </div>
+                  );
+                })}
             </div>
           )}
         </div>

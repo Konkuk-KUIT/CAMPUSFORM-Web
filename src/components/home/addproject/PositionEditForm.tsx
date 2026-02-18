@@ -24,16 +24,23 @@ export default function PositionEditForm() {
 
   const [collectedPositions, setCollectedPositions] = useState<string[]>([]);
   const [positions, setPositions] = useState<PositionMapping[]>([{ original: '', changed: '' }]);
-  const [selectedPositions, setSelectedPositions] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchPositions = async () => {
-      const sheetUrl = projectForm.sheetUrl;
-      const positionColumnIndex = projectForm.requiredMappings?.positionIdx ?? -1;
-
-      if (!sheetUrl) return;
-
       try {
+        let sheetUrl = '';
+        let positionColumnIndex = -1;
+
+        if (from === 'manage') {
+          sheetUrl = searchParams.get('sheetUrl') ?? '';
+          positionColumnIndex = Number(sessionStorage.getItem(`positionIdx-${projectId}`) ?? -1);
+        } else {
+          sheetUrl = projectForm.sheetUrl ?? '';
+          positionColumnIndex = projectForm.requiredMappings?.positionIdx ?? -1;
+        }
+
+        if (!sheetUrl || positionColumnIndex === -1) return;
+
         const result = await projectService.getMappingColumnValues(sheetUrl, positionColumnIndex);
         setCollectedPositions(result.values);
       } catch (e) {
@@ -42,7 +49,7 @@ export default function PositionEditForm() {
     };
 
     fetchPositions();
-  }, [projectForm.sheetUrl, projectForm.requiredMappings?.positionIdx]);
+  }, [from, searchParams, projectForm.sheetUrl, projectForm.requiredMappings?.positionIdx]);
 
   const handleAddPosition = () => {
     setPositions([...positions, { original: '', changed: '' }]);
@@ -56,10 +63,6 @@ export default function PositionEditForm() {
     const newPositions = [...positions];
     newPositions[index][field] = value;
     setPositions(newPositions);
-  };
-
-  const togglePosition = (position: string) => {
-    setSelectedPositions(prev => (prev.includes(position) ? prev.filter(p => p !== position) : [...prev, position]));
   };
 
   const handleSubmit = () => {

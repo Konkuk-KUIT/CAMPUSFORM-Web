@@ -70,7 +70,8 @@ export default function AddProjectForm() {
     try {
       const data = await projectService.getSheetHeaders(url);
       sessionStorage.setItem('cachedSheetHeaders', JSON.stringify(data));
-      window.location.href = `/home/addproject/connect?sheetUrl=${encodeURIComponent(url)}`;
+
+      router.push(`/home/addproject/connect?sheetUrl=${encodeURIComponent(url)}`);
     } catch {
       try {
         const authorizeUrl = await projectService.getGoogleAuthorizeUrl();
@@ -159,6 +160,11 @@ export default function AddProjectForm() {
       setProjectForm(updatedForm);
       const createdProject = await projectService.createProject(
         updatedForm as Parameters<typeof projectService.createProject>[0]
+      );
+
+      sessionStorage.setItem(
+        `positionIdx-${createdProject.id}`,
+        String(updatedForm.requiredMappings?.positionIdx ?? -1)
       );
 
       await projectService.syncSheet(createdProject.id);
@@ -328,7 +334,7 @@ export default function AddProjectForm() {
                 <span className="text-gray-500 text-12 mt-1 block">(예: 디자인팀 / Design팀)</span>
               </p>
               <p className="text-[13px] text-gray-950 text-center leading-snug">
-                원활한 분류를 위해 구글 시트에서
+                원활한 분류를 위해 해당 단계에서
                 <br />
                 <span className="text-primary font-bold">포지션 명칭을 하나로 통일</span> 후 연동해 주세요.
               </p>

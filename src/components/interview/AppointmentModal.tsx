@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 interface AppointmentModalProps {
   isOpen: boolean;
@@ -10,6 +10,100 @@ interface AppointmentModalProps {
   initialTime?: string;
 }
 
+// ── ScrollerWheel ─────────────────────────────────────────────
+interface ScrollerWheelProps {
+  items: (number | string)[];
+  selectedIndex: number;
+  onChange: (index: number) => void;
+  formatLabel: (item: number | string) => string;
+  align?: 'left' | 'right' | 'center';
+}
+
+function ScrollerWheel({ items, selectedIndex, onChange, formatLabel, align = 'center' }: ScrollerWheelProps) {
+  const getCircularIndex = (index: number) => {
+    const len = items.length;
+    return ((index % len) + len) % len;
+  };
+
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? 1 : -1;
+    onChange(getCircularIndex(selectedIndex + delta));
+  };
+
+  const alignClass =
+    align === 'left' ? 'left-0' : align === 'right' ? 'right-0' : 'left-1/2 -translate-x-1/2';
+
+  const ITEM_GAP = 28; // px between each item center
+
+  const itemStyle = (offset: number): React.CSSProperties => ({
+    position: 'absolute',
+    top: `calc(50% + ${offset * ITEM_GAP}px - 12px)`,
+  });
+
+  // offset → opacity 매핑 (|offset|이 클수록 더 흐리게)
+  const opacityMap: Record<number, string> = {
+    0: 'opacity-100',
+    1: 'opacity-40',
+    2: 'opacity-20',
+  };
+
+  const colorClass = (offset: number) =>
+    offset === 0 ? 'text-[#5A81FA] font-normal tracking-[0.4px]' : 'text-gray-300'
+
+  return (
+    <div
+      className="relative w-[60px] h-[100px] overflow-hidden flex items-center justify-center select-none"
+      onWheel={handleWheel}
+    >
+      {[-2, -1, 0, 1, 2].map(offset => (
+        <div
+          key={offset}
+          className={`absolute text-[22px] h-[24px] flex items-center justify-center w-[60px] tabular-nums
+            ${colorClass(offset)} ${opacityMap[Math.abs(offset)]} ${alignClass}`}
+          style={itemStyle(offset)}
+        >
+          {formatLabel(items[getCircularIndex(selectedIndex + offset)])}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── 유틸 ──────────────────────────────────────────────────────
+const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);        // 1~12
+const DAYS   = Array.from({ length: 31 }, (_, i) => i + 1);        // 1~31
+const HOURS  = Array.from({ length: 24 }, (_, i) => i);            // 0~23
+const MINUTES = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];   // 5분 단위
+
+function parseInitialDate(initialDate?: string) {
+  let month = new Date().getMonth() + 1;
+  let day = new Date().getDate();
+  if (initialDate) {
+    const m = initialDate.match(/(\d+)월/);
+    const d = initialDate.match(/(\d+)일/);
+    if (m) month = Number(m[1]);
+    if (d) day = Number(d[1]);
+  }
+  return { month, day };
+}
+
+function parseInitialTime(initialTime?: string) {
+  let hour = 9, minute = 0;
+  if (initialTime) {
+    const [h, min] = initialTime.split(':').map(Number);
+    if (!isNaN(h)) hour = h;
+    if (!isNaN(min)) {
+      // 5분 단위로 가장 가까운 값으로 snap
+      minute = MINUTES.reduce((prev, cur) =>
+        Math.abs(cur - min) < Math.abs(prev - min) ? cur : prev, 0
+      );
+    }
+  }
+  return { hour, minute };
+}
+
+// ── AppointmentModal ──────────────────────────────────────────
 export default function AppointmentModal({
   isOpen,
   onClose,
@@ -17,179 +111,94 @@ export default function AppointmentModal({
   initialDate,
   initialTime,
 }: AppointmentModalProps) {
-  // initialDate: "10월 2일 (수)", initialTime: "01:00"
-  const parseInitial = () => {
-    let month = 11, day = 15, hour = 14, minute = 0;
-    if (initialDate) {
-      const m = initialDate.match(/(\d+)월/);
-      const d = initialDate.match(/(\d+)일/);
-      if (m) month = Number(m[1]);
-      if (d) day = Number(d[1]);
-    }
-    if (initialTime) {
-      const [h, min] = initialTime.split(':').map(Number);
-      if (!isNaN(h)) hour = h;
-      if (!isNaN(min)) minute = min;
-    }
-    return { month, day, hour, minute };
-  };
+  const [monthIdx,  setMonthIdx]  = useState(0);
+  const [dayIdx,    setDayIdx]    = useState(0);
+  const [hourIdx,   setHourIdx]   = useState(9);
+  const [minuteIdx, setMinuteIdx] = useState(0);
 
-  const [selectedMonth, setSelectedMonth] = useState(parseInitial().month);
-  const [selectedDay, setSelectedDay] = useState(parseInitial().day);
-  const [selectedHour, setSelectedHour] = useState(parseInitial().hour);
-  const [selectedMinute, setSelectedMinute] = useState(parseInitial().minute);
-
-  // 모달 열릴 때마다 현재 배정값으로 리셋
+  // 모달이 열릴 때마다 initialDate/Time 값으로 리셋
   useEffect(() => {
-    if (isOpen) {
-      const { month, day, hour, minute } = parseInitial();
-      setSelectedMonth(month);
-      setSelectedDay(day);
-      setSelectedHour(hour);
-      setSelectedMinute(minute);
-    }
+    if (!isOpen) return;
+    const { month, day } = parseInitialDate(initialDate);
+    const { hour, minute } = parseInitialTime(initialTime);
+
+    setMonthIdx(MONTHS.indexOf(month) !== -1 ? MONTHS.indexOf(month) : month - 1);
+    setDayIdx(DAYS.indexOf(day) !== -1 ? DAYS.indexOf(day) : day - 1);
+    setHourIdx(hour);
+    setMinuteIdx(MINUTES.indexOf(minute) !== -1 ? MINUTES.indexOf(minute) : 0);
   }, [isOpen, initialDate, initialTime]);
 
   if (!isOpen) return null;
 
-  const months = [9, 10, 11, 12, 1];
-  const days = Array.from({ length: 31 }, (_, i) => i + 1);
-  const hours = Array.from({ length: 24 }, (_, i) => i);
-  const minutes = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
-
-  // 무한 스크롤을 위해 배열 반복
-  const infiniteMonths = [...months, ...months, ...months, ...months, ...months];
-  const infiniteDays = [...days, ...days, ...days];
-  const infiniteHours = [...hours, ...hours, ...hours];
-  const infiniteMinutes = [...minutes, ...minutes, ...minutes];
-
   const handleConfirm = () => {
     const year = new Date().getFullYear();
-    const rawDate = `${year}-${String(selectedMonth).padStart(2, '0')}-${String(selectedDay).padStart(2, '0')}`;
-    const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][new Date(year, selectedMonth - 1, selectedDay).getDay()];
-    const formattedDate = `${selectedMonth}월 ${selectedDay}일 (${dayOfWeek})`;
-    const formattedTime = `${String(selectedHour).padStart(2, '0')}:${String(selectedMinute).padStart(2, '0')}`;
+    const month = MONTHS[monthIdx];
+    const day   = DAYS[dayIdx];
+    const hour  = HOURS[hourIdx];
+    const min   = MINUTES[minuteIdx];
+
+    const rawDate = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][new Date(year, month - 1, day).getDay()];
+    const formattedDate = `${month}월 ${day}일 (${dayOfWeek})`;
+    const formattedTime = `${String(hour).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
+
     onConfirm(formattedDate, formattedTime, rawDate);
   };
 
-  const handleScroll = (
-    e: React.UIEvent<HTMLDivElement>,
-    items: number[],
-    setSelected: (val: number) => void
-  ) => {
-    const container = e.currentTarget;
-    const scrollTop = container.scrollTop;
-    const itemHeight = 32;
-    const centerIndex = Math.round(scrollTop / itemHeight);
-    const actualIndex = centerIndex % items.length;
-    setSelected(items[actualIndex]);
-  };
-
   return (
-    <div 
-      className="fixed inset-0 flex items-center justify-center z-50" 
+    <div
+      className="fixed inset-0 flex items-center justify-center z-50"
       style={{ background: 'rgba(31, 31, 31, 0.40)' }}
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-10 w-[296px] h-[207px] flex flex-col"
-        onClick={(e) => e.stopPropagation()}
+        className="bg-white rounded-10 flex flex-col overflow-hidden"
+        style={{ width: 296, height: 207 }}
+        onClick={e => e.stopPropagation()}
       >
-        {/* 날짜/시간 선택 휠 */}
-        <div className="flex-1 flex items-center justify-center gap-2 px-4">
-          {/* 월 선택 */}
-          <div 
-            className="flex-1 h-24 overflow-y-auto scrollbar-hide"
-            onScroll={(e) => handleScroll(e, months, setSelectedMonth)}
-          >
-            <div className="flex flex-col items-center">
-              {infiniteMonths.map((month, idx) => (
-                <button
-                  key={`month-${idx}`}
-                  onClick={() => setSelectedMonth(month)}
-                  className={`py-1 text-center whitespace-nowrap ${
-                    selectedMonth === month
-                      ? 'text-primary text-[22px] font-normal leading-normal tracking-[0.4px]'
-                      : 'text-gray-300 text-[22px] font-normal leading-normal tracking-[0.4px]'
-                  }`}
-                >
-                  {month}월
-                </button>
-              ))}
-            </div>
-          </div>
+        {/* 휠 영역 */}
+        <div className="flex items-center justify-center gap-1 px-4 mt-8">
+          {/* 월 */}
+          <ScrollerWheel
+            items={MONTHS}
+            selectedIndex={monthIdx}
+            onChange={setMonthIdx}
+            formatLabel={v => `${v}월`}
+            align="right"
+          />
 
-          {/* 일 선택 */}
-          <div 
-            className="flex-1 h-24 overflow-y-auto scrollbar-hide"
-            onScroll={(e) => handleScroll(e, days, setSelectedDay)}
-          >
-            <div className="flex flex-col items-center">
-              {infiniteDays.map((day, idx) => (
-                <button
-                  key={`day-${idx}`}
-                  onClick={() => setSelectedDay(day)}
-                  className={`py-1 text-center whitespace-nowrap ${
-                    selectedDay === day
-                      ? 'text-primary text-[22px] font-normal leading-normal tracking-[0.4px]'
-                      : 'text-gray-300 text-[22px] font-normal leading-normal tracking-[0.4px]'
-                  }`}
-                >
-                  {day}일
-                </button>
-              ))}
-            </div>
-          </div>
+          {/* 일 */}
+          <ScrollerWheel
+            items={DAYS}
+            selectedIndex={dayIdx}
+            onChange={setDayIdx}
+            formatLabel={v => `${v}일`}
+            align="left"
+          />
 
-          {/* 시간 선택 */}
-          <div 
-            className="flex-1 h-24 overflow-y-auto scrollbar-hide"
-            onScroll={(e) => handleScroll(e, hours, setSelectedHour)}
-          >
-            <div className="flex flex-col items-center">
-              {infiniteHours.map((hour, idx) => (
-                <button
-                  key={`hour-${idx}`}
-                  onClick={() => setSelectedHour(hour)}
-                  className={`py-1 text-center whitespace-nowrap ${
-                    selectedHour === hour
-                      ? 'text-primary text-[22px] font-normal leading-normal tracking-[0.4px]'
-                      : 'text-gray-300 text-[22px] font-normal leading-normal tracking-[0.4px]'
-                  }`}
-                >
-                  {String(hour).padStart(2, '0')}
-                </button>
-              ))}
-            </div>
-          </div>
+          {/* 시 */}
+          <ScrollerWheel
+            items={HOURS}
+            selectedIndex={hourIdx}
+            onChange={setHourIdx}
+            formatLabel={v => String(v).padStart(2, '0')}
+            align="right"
+          />
 
-          <span className="text-[22px] text-gray-950">:</span>
+          <span className="text-[22px] text-[#5A81FA] -mx-2">:</span>
 
-          {/* 분 선택 */}
-          <div 
-            className="flex-1 h-24 overflow-y-auto scrollbar-hide"
-            onScroll={(e) => handleScroll(e, minutes, setSelectedMinute)}
-          >
-            <div className="flex flex-col items-center">
-              {infiniteMinutes.map((minute, idx) => (
-                <button
-                  key={`minute-${idx}`}
-                  onClick={() => setSelectedMinute(minute)}
-                  className={`py-1 text-center whitespace-nowrap ${
-                    selectedMinute === minute
-                      ? 'text-primary text-[22px] font-normal leading-normal tracking-[0.4px]'
-                      : 'text-gray-300 text-[22px] font-normal leading-normal tracking-[0.4px]'
-                  }`}
-                >
-                  {String(minute).padStart(2, '0')}
-                </button>
-              ))}
-            </div>
-          </div>
+          {/* 분 */}
+          <ScrollerWheel
+            items={MINUTES}
+            selectedIndex={minuteIdx}
+            onChange={setMinuteIdx}
+            formatLabel={v => String(v).padStart(2, '0')}
+            align="left"
+          />
         </div>
 
         {/* 버튼 */}
-        <div className="flex justify-end gap-[37px] pb-[30px] pr-[30px]">
+        <div className="flex justify-end gap-[37px] pb-[30px] pr-[30px] pt-6">
           <button
             onClick={onClose}
             className="text-black text-[16px] font-medium leading-5 tracking-[-0.5px]"

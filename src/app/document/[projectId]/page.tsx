@@ -3,6 +3,7 @@ import DocumentHeader from '@/components/ui/DocumentHeader';
 import Navbar from '@/components/Navbar';
 import ProjectIdSetter from '@/components/ProjectIdSetter';
 
+// 서류 지원자 관리 페이지
 export default async function DocumentListPage({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = await params;
 

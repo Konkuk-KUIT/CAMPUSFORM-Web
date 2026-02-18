@@ -9,7 +9,7 @@ interface ProjectFilterProps {
 
 export default function ProjectFilter({ isOnlyRecruiting, onChange }: ProjectFilterProps) {
   return (
-    <div className="flex w-full items-center justify-end px-4 mt-[12px] mb-2">
+    <div className="flex w-full items-center justify-end px-4 mt-[12px]">
       <CheckBox checked={isOnlyRecruiting} onChange={onChange} label="모집 중만 보기" />
     </div>
   );

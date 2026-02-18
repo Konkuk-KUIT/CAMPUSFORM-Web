@@ -12,6 +12,9 @@ interface SearchBarProps {
   sortValue?: string;
   onSortChange?: (value: string) => void;
   onRefresh?: () => Promise<void>;
+  selectedFilter?: string;
+  onFilterClear?: () => void;
+  lastSyncedAt?: Date;
 }
 
 export default function SearchBar({
@@ -22,9 +25,11 @@ export default function SearchBar({
   sortValue,
   onSortChange,
   onRefresh,
+  selectedFilter,
+  onFilterClear,
+  lastSyncedAt,
 }: SearchBarProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [lastRefreshTime, setLastRefreshTime] = useState<Date>(new Date());
   const [timeText, setTimeText] = useState('0분 전');
 
   const sortOptions = [
@@ -33,26 +38,22 @@ export default function SearchBar({
     { id: 'star', label: '별표 순' },
   ];
 
-  // 새로고침 시간 계산 및 표시
   useEffect(() => {
-    const updateElapsedTime = () => {
-      const now = new Date();
-      const diffMs = now.getTime() - lastRefreshTime.getTime();
-      const diffMinutes = Math.floor(diffMs / 1000 / 60);
+    const base = lastSyncedAt ?? new Date();
 
+    const compute = () => {
+      const diffMinutes = Math.floor((new Date().getTime() - base.getTime()) / 60000);
       if (diffMinutes < 60) {
         setTimeText(`${diffMinutes}분 전`);
       } else {
-        const hours = Math.floor(diffMinutes / 60);
-        setTimeText(`${hours}시간 전`);
+        setTimeText(`${Math.floor(diffMinutes / 60)}시간 전`);
       }
     };
 
-    updateElapsedTime(); // 초기 실행
-    const interval = setInterval(updateElapsedTime, 60000); // 1분마다 업데이트
-
+    compute();
+    const interval = setInterval(compute, 60000);
     return () => clearInterval(interval);
-  }, [lastRefreshTime]);
+  }, [lastSyncedAt]);
 
   const handleSortChange = (value: string) => {
     onSortChange?.(value);
@@ -60,8 +61,6 @@ export default function SearchBar({
   };
 
   const handleRefresh = async () => {
-    setLastRefreshTime(new Date());
-    setTimeText('0분 전');
     await onRefresh?.();
   };
 
@@ -82,6 +81,18 @@ export default function SearchBar({
           <Image src="/icons/filter.svg" alt="필터" width={15} height={15} />
         </button>
       </div>
+
+      {/* 선택된 필터 칩 */}
+      {selectedFilter && selectedFilter !== '전체' && (
+        <div className="px-4 pb-1 flex flex-wrap gap-2 text-gray-600 text-body-sm">
+          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-[13px] bg-blue-50">
+            {selectedFilter}
+            <button onClick={onFilterClear} className="cursor-pointer">
+              ×
+            </button>
+          </span>
+        </div>
+      )}
 
       {/* 새로고침, 정렬 */}
       {showSort && (

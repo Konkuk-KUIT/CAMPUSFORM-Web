@@ -40,7 +40,7 @@ const formatInterviewDate = (raw: string | null | undefined): string | undefined
 
 const formatInterviewTime = (raw: string | null | undefined): string | undefined => {
   if (!raw) return undefined;
-  return raw.length >= 5 ? raw.substring(0, 5) : raw; // "01:00:00" → "01:00"
+  return raw.length >= 5 ? raw.substring(0, 5) : raw;
 };
 
 const mapApplicant = (a: ApplicantRaw): InterviewApplicant => ({
@@ -74,7 +74,8 @@ export default function InterviewContent({ projectId }: { projectId: number }) {
   const [isAppointmentOpen, setIsAppointmentOpen] = useState(false);
   const [selectedAppointmentApplicantId, setSelectedAppointmentApplicantId] = useState<number | null>(null);
   const [selectedAppointmentDate, setSelectedAppointmentDate] = useState<string | undefined>();
-  const [selectedAppointmentTime, setSelectedAppointmentTime] = useState<string | undefined>(); 
+  const [selectedAppointmentTime, setSelectedAppointmentTime] = useState<string | undefined>();
+  const [lastSyncedAt, setLastSyncedAt] = useState<Date>(new Date());
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -109,6 +110,7 @@ export default function InterviewContent({ projectId }: { projectId: number }) {
       const res = await applicantService.getApplicants(projectId, 'INTERVIEW');
       const mapped = res.applicants.map(mapApplicant);
       setApplicants(mapped);
+      setLastSyncedAt(new Date());
     } catch (e) {
       toast.error('새로고침에 실패했습니다.');
     }
@@ -117,9 +119,7 @@ export default function InterviewContent({ projectId }: { projectId: number }) {
   const handleStatusChange = async (applicantId: number, newStatus: '보류' | '합격' | '불합격') => {
     try {
       await applicantService.updateStatus(projectId, applicantId, 'INTERVIEW', statusReverseMap[newStatus]);
-      setApplicants(prev =>
-        prev.map(a => (a.applicantId === applicantId ? { ...a, interviewStatus: newStatus } : a))
-      );
+      setApplicants(prev => prev.map(a => (a.applicantId === applicantId ? { ...a, interviewStatus: newStatus } : a)));
     } catch (e) {
       toast.error('상태 변경에 실패했습니다.');
     }
@@ -138,17 +138,21 @@ export default function InterviewContent({ projectId }: { projectId: number }) {
     result.sort((a, b) => {
       if (sortBy === 'name-asc') return a.name.localeCompare(b.name, 'ko');
       if (sortBy === 'name-desc') return b.name.localeCompare(a.name, 'ko');
+      if (sortBy === 'star') return (favorites.has(b.applicantId) ? 1 : 0) - (favorites.has(a.applicantId) ? 1 : 0);
       return 0;
     });
     return result;
-  }, [applicants, selectedTab, searchQuery, selectedPosition, sortBy]);
+  }, [applicants, selectedTab, searchQuery, selectedPosition, sortBy, favorites]);
 
-  const counts = useMemo(() => ({
-    전체: applicants.length,
-    보류: applicants.filter(a => a.interviewStatus === '보류').length,
-    합격: applicants.filter(a => a.interviewStatus === '합격').length,
-    불합격: applicants.filter(a => a.interviewStatus === '불합격').length,
-  }), [applicants]);
+  const counts = useMemo(
+    () => ({
+      전체: applicants.length,
+      보류: applicants.filter(a => a.interviewStatus === '보류').length,
+      합격: applicants.filter(a => a.interviewStatus === '합격').length,
+      불합격: applicants.filter(a => a.interviewStatus === '불합격').length,
+    }),
+    [applicants]
+  );
 
   const handleToggleFavorite = async (applicantId: number) => {
     try {
@@ -169,9 +173,7 @@ export default function InterviewContent({ projectId }: { projectId: number }) {
       await applicantService.manualAssignInterview(projectId, selectedAppointmentApplicantId, rawDate, time);
       setApplicants(prev =>
         prev.map(a =>
-          a.applicantId === selectedAppointmentApplicantId
-            ? { ...a, appointmentDate: date, appointmentTime: time }
-            : a
+          a.applicantId === selectedAppointmentApplicantId ? { ...a, appointmentDate: date, appointmentTime: time } : a
         )
       );
       setIsAppointmentOpen(false);
@@ -203,6 +205,8 @@ export default function InterviewContent({ projectId }: { projectId: number }) {
           showSort={true}
           sortValue={sortBy}
           onSortChange={setSortBy}
+          onRefresh={handleRefresh}
+          lastSyncedAt={lastSyncedAt}
         />
       </div>
 
@@ -253,7 +257,10 @@ export default function InterviewContent({ projectId }: { projectId: number }) {
               key={position}
               size="sm"
               variant={selectedPosition === position ? 'outline' : 'neutral'}
-              onClick={() => { setSelectedPosition(position); setIsFilterOpen(false); }}
+              onClick={() => {
+                setSelectedPosition(position);
+                setIsFilterOpen(false);
+              }}
             >
               {position}
             </BtnRound>
@@ -269,7 +276,7 @@ export default function InterviewContent({ projectId }: { projectId: number }) {
         stage="INTERVIEW"
         currentUserId={currentUserId}
       />
-      
+
       <AppointmentModal
         isOpen={isAppointmentOpen}
         onClose={() => setIsAppointmentOpen(false)}

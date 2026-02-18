@@ -8,12 +8,10 @@ export default async function InterviewListPage({ params }: { params: Promise<{ 
   const { projectId } = await params;
 
   return (
-    <div className="">
+    <div>
       <ProjectIdSetter projectId={Number(projectId)} />
       <InterviewHeader />
-      <div className="">
-        <InterviewContent projectId={Number(projectId)} />
-      </div>
+      <InterviewContent projectId={Number(projectId)} />
       <Navbar />
     </div>
   );

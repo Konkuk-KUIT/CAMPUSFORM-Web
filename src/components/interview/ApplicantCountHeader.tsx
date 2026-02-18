@@ -28,7 +28,7 @@ export default function ApplicantCountHeader({ type, list }: ApplicantCountHeade
     const text = list
       .map(a => a.phoneNumber)
       .filter(Boolean)
-      .join('\n');
+      .join(', ');
     navigator.clipboard.writeText(text);
   };
 

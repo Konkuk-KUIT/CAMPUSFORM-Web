@@ -350,17 +350,17 @@ export default function SmartScheduleResponseResultForm() {
 
             {/* Time Slots */}
             {dateSchedule.slots.map((slot, slotIndex) => (
-              <div key={slotIndex} className="bg-white h-[118px] flex items-center px-[26px] gap-0">
+              <div key={slotIndex} className="bg-white min-h-[118px] flex items-center px-[26px] gap-0 py-4">
                 {/* Time */}
                 <p className="text-subtitle-rg text-gray-950 w-[60px] flex-shrink-0 mr-[35px]">{formatTime(slot.time)}</p>
 
                 {/* Applicants Card */}
-                <div className="border-[1.5px] border-gray-200 rounded-[10px] p-[15px] flex flex-col gap-[6px] flex-1 min-w-0 overflow-hidden">
+                <div className="border-[1.5px] border-gray-200 rounded-[10px] p-[15px] flex flex-col gap-[6px] flex-1 min-w-0">
                   {slot.applicants.length > 0 ? (
                     slot.applicants.map((applicant, appIndex) => (
                       <p
                         key={appIndex}
-                        className={`text-body-sm-rg truncate ${
+                        className={`text-body-sm-rg ${
                           searchQuery && applicant.name.toLowerCase().includes(searchQuery.toLowerCase())
                             ? 'text-primary'
                             : 'text-gray-950'

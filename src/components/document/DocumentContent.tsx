@@ -54,6 +54,7 @@ export default function DocumentContent({ projectId }: { projectId: number }) {
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [currentUserId, setCurrentUserId] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [lastSyncedAt, setLastSyncedAt] = useState<Date>(new Date());
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -69,7 +70,6 @@ export default function DocumentContent({ projectId }: { projectId: number }) {
     const fetchApplicants = async () => {
       try {
         setIsLoading(true);
-        await projectService.syncSheet(projectId);
         const res = await applicantService.getApplicants(projectId, 'DOCUMENT');
         const mappedApplicants = res.applicants.map(mapApplicant);
         setApplicants(mappedApplicants);
@@ -87,10 +87,12 @@ export default function DocumentContent({ projectId }: { projectId: number }) {
 
   const handleRefresh = async () => {
     try {
+      await projectService.syncSheet(projectId);
       const res = await applicantService.getApplicants(projectId, 'DOCUMENT');
       const mappedApplicants = res.applicants.map(mapApplicant);
       setApplicants(mappedApplicants);
       setFavorites(new Set(mappedApplicants.filter(a => a.favorite).map(a => a.applicantId)));
+      setLastSyncedAt(new Date());
     } catch (e) {
       console.error('지원자 목록 조회 실패:', e);
       toast.error('지원자 목록을 불러오지 못했습니다.');
@@ -187,6 +189,10 @@ export default function DocumentContent({ projectId }: { projectId: number }) {
           showSort={true}
           sortValue={sortBy}
           onSortChange={setSortBy}
+          selectedFilter={selectedPosition}
+          onFilterClear={() => setSelectedPosition('전체')}
+          onRefresh={handleRefresh}
+          lastSyncedAt={lastSyncedAt}
         />
       </div>
 
@@ -202,7 +208,7 @@ export default function DocumentContent({ projectId }: { projectId: number }) {
             filteredApplicants.map((applicant, index) => (
               <ApplicantFileCard
                 key={applicant.applicantId ?? index}
-                href={`/document/${projectId}/${applicant.applicantId}`} // ✅ 수정
+                href={`/document/${projectId}/${applicant.applicantId}`}
                 id={applicant.applicantId}
                 name={applicant.name}
                 info={[applicant.university, applicant.major, applicant.position].filter(Boolean).join(' / ')}
@@ -218,7 +224,7 @@ export default function DocumentContent({ projectId }: { projectId: number }) {
         </div>
       </PullToRefresh>
 
-      <BottomSheet isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)}>
+      <BottomSheet isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} className="h-[40vh] pb-8">
         <h2 className="text-subtitle-md">지원 포지션</h2>
         <div className="mt-4 flex flex-wrap gap-2">
           {positions.map(position => (
