@@ -39,8 +39,11 @@ export default function OwnerView({
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [showWarningModal, setShowWarningModal] = useState(false);
   const [showPositionTooltip, setShowPositionTooltip] = useState(false);
-  const { closedProjectIds, closeProject, openProject } = useManualCloseStore();
+  // 수정 - openedProjectIds도 읽고, status를 store에서 직접 계산
+  const { closedProjectIds, openedProjectIds, closeProject, openProject } = useManualCloseStore();
   const isManuallyClosed = closedProjectIds.includes(projectId);
+  const isManuallyOpened = openedProjectIds.includes(projectId);
+  const currentStatus = isManuallyOpened ? '모집 중' : isManuallyClosed ? '모집 완료' : initialStatus;
 
   const formatDate = (date: Date | null) => {
     if (!date) return '';
@@ -170,7 +173,7 @@ export default function OwnerView({
             <label className="text-[14px] font-bold text-gray-950">모집 상태</label>
             <SheetDropdown
               options={['모집 중', '모집 완료']}
-              value={isManuallyClosed ? '모집 완료' : status}
+              value={currentStatus}
               onChange={(val) => {
                 if (val === '모집 완료') {
                   closeProject(projectId);

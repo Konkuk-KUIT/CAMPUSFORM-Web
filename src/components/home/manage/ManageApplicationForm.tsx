@@ -21,7 +21,7 @@ export interface ManageViewProps {
 }
 
 export default function ManageApplicationForm({ projectId }: { projectId: number }) {
-  const { closedProjectIds, closeProject, openProject } = useManualCloseStore(); // 수정
+  const { closedProjectIds, openedProjectIds, closeProject, openProject } = useManualCloseStore();
   const [isOwner, setIsOwner] = useState<boolean | null>(null);
   const [viewProps, setViewProps] = useState<ManageViewProps | null>(null);
 
@@ -82,7 +82,7 @@ export default function ManageApplicationForm({ projectId }: { projectId: number
     };
 
     fetchData();
-  }, [projectId]);
+  }, [projectId, closedProjectIds, openedProjectIds]);
 
   if (isOwner === null || !viewProps) return <Loading />;
 
