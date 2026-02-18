@@ -68,6 +68,15 @@ export default function TimePicker({
     setIsOpen(true);
   };
 
+  const handleCancel = () => {
+    // 취소 시 temp 값을 원래 props 값으로 복원
+    setTempStartHour(parseInt(startHour) || 0);
+    setTempStartMinute(parseInt(startMinute) || 0);
+    setTempEndHour(parseInt(endHour) || 0);
+    setTempEndMinute(parseInt(endMinute) || 0);
+    setIsOpen(false);
+  };
+
   const handleConfirm = () => {
     if (editingField === 'startHour') onTimeChange('startHour', String(tempStartHour).padStart(2, '0'));
     if (editingField === 'startMinute') onTimeChange('startMinute', String(tempStartMinute).padStart(2, '0'));
@@ -248,7 +257,7 @@ export default function TimePicker({
             className="flex items-center justify-end gap-2 h-8 text-[14px] text-black"
           >
             <span className="min-w-[60px] text-right">
-              {String(tempStartHour).padStart(2, '0')} : {formatMinute(tempStartMinute)}
+              {startHour} : {startMinute}
             </span>
             <Image src="/icons/chevron-down.svg" alt="dropdown" width={16} height={16} />
           </button>
@@ -261,7 +270,7 @@ export default function TimePicker({
             className="flex items-center justify-end gap-2 h-8 text-[14px] text-black"
           >
             <span className="min-w-[60px] text-right">
-              {String(tempEndHour).padStart(2, '0')} : {formatMinute(tempEndMinute)}
+              {endHour} : {endMinute}
             </span>
             <Image src="/icons/chevron-down.svg" alt="dropdown" width={16} height={16} />
           </button>
@@ -333,7 +342,7 @@ export default function TimePicker({
             {/* Action buttons */}
             <div className="flex gap-12 justify-end w-full">
               <button
-                onClick={() => setIsOpen(false)}
+                onClick={handleCancel}
                 className="text-[16px] font-medium text-gray-800"
               >
                 취소
