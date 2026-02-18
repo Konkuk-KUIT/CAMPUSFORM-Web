@@ -33,6 +33,7 @@ export default function NotificationMessageForm({
   const [isVariableEnabled, setIsVariableEnabled] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const editableRef = useRef<HTMLDivElement>(null);
+  const isComposingEditable = useRef(false);
 
   const title = type === '합격자' ? '합격자 문자 템플릿 입력' : '불합격자 문자 템플릿 입력';
   const modalTitle = type === '합격자' ? '합격자' : '불합격자';
@@ -53,25 +54,25 @@ export default function NotificationMessageForm({
     setTemplate(value);
     setIsVariableEnabled(false);
     onTemplateChange?.(value);
-    onTemplateApply?.(value, false); // 실시간 반영
+    onTemplateApply?.(value, false);
   };
 
   const handleApplyVariables = () => {
     setIsVariableEnabled(true);
-    onTemplateApply?.(template, true); // 변수 치환 반영
+    onTemplateApply?.(template, true);
   };
 
   const handleCopyTemplate = async () => {
     try {
       await navigator.clipboard.writeText(template);
-      //toast.success('템플릿이 클립보드에 복사되었습니다.');
     } catch {
       //toast.error('복사에 실패했습니다.');
     }
   };
 
   const handleEditableInput = () => {
-    if (editableRef.current) {
+    if (editableRef.current && !isComposingEditable.current) {
+      // 수정
       const text = editableRef.current.innerText;
       setTemplate(text);
       onTemplateChange?.(text);
@@ -86,10 +87,10 @@ export default function NotificationMessageForm({
   };
 
   useEffect(() => {
-    if (isVariableEnabled && editableRef.current && template) {
+    if (isVariableEnabled && editableRef.current) {
       editableRef.current.innerHTML = renderHighlightedHTML();
     }
-  }, [isVariableEnabled, template]);
+  }, [isVariableEnabled]);
 
   const getEditableStyles = () => {
     if (isFocused) return 'bg-white border-primary border-1.5';
@@ -148,12 +149,20 @@ export default function NotificationMessageForm({
             ref={editableRef}
             contentEditable
             onInput={handleEditableInput}
+            onCompositionStart={() => {
+              isComposingEditable.current = true;
+            }}
+            onCompositionEnd={e => {
+              isComposingEditable.current = false;
+              const text = (e.target as HTMLElement).innerText;
+              setTemplate(text);
+              onTemplateChange?.(text);
+            }}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
             className={`w-85.75 h-41.25 p-4 rounded-10 outline-none resize-none transition-colors text-body-sm-rg text-gray-950 shadow-[2px_2px_20px_0px_rgba(0,0,0,0.03)] ${getEditableStyles()}`}
             style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', overflowY: 'auto' }}
             suppressContentEditableWarning
-            dangerouslySetInnerHTML={{ __html: renderHighlightedHTML() }}
           />
           {template && <span className="absolute bottom-4 right-4 text-10 text-gray-200">자동저장됨</span>}
         </div>

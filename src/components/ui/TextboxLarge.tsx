@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 interface TextboxLargeProps {
   placeholder?: string;
@@ -16,18 +16,29 @@ export default function TextboxLarge({
   color = false,
 }: TextboxLargeProps) {
   const [isFocused, setIsFocused] = useState(false);
-  const [internalValue, setInternalValue] = useState('');
+  const isComposing = useRef(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const value = controlledValue ?? internalValue;
+  // 외부에서 value가 바뀌면 DOM에 직접 반영
+  useEffect(() => {
+    if (textareaRef.current && controlledValue !== undefined) {
+      if (textareaRef.current.value !== controlledValue) {
+        textareaRef.current.value = controlledValue;
+      }
+    }
+  }, [controlledValue]);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newValue = e.target.value;
-    if (onChange) {
-      onChange(newValue);
-    } else {
-      setInternalValue(newValue);
-    }
+    if (isComposing.current) return;
+    onChange?.(e.target.value);
   };
+
+  const handleCompositionEnd = (e: React.CompositionEvent<HTMLTextAreaElement>) => {
+    isComposing.current = false;
+    onChange?.((e.target as HTMLTextAreaElement).value);
+  };
+
+  const value = controlledValue ?? '';
 
   const getState = () => {
     if (color) return 'color';
@@ -69,8 +80,13 @@ export default function TextboxLarge({
     <div className="w-full">
       <div className="relative">
         <textarea
-          value={value}
+          ref={textareaRef}
+          defaultValue={value}
           onChange={handleChange}
+          onCompositionStart={() => {
+            isComposing.current = true;
+          }}
+          onCompositionEnd={handleCompositionEnd}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           placeholder={placeholder}
