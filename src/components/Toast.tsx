@@ -39,11 +39,11 @@ const ToastItem = ({ toast }: { toast: ToastMessage }) => {
 
   return (
     <div
-      className={`flex items-center gap-3 bg-gray-700 px-3 py-2 rounded-full mb-3 
+      className={`flex items-center gap-3 bg-gray-700 px-3 py-2 rounded-full mb-3 whitespace-nowrap
         transition-all duration-500 ease-out
         ${toast.isLeaving ? 'opacity-0 -translate-y-2' : 'opacity-100 translate-y-0'}`}
     >
-      <Image src={iconPaths[toast.type]} alt="" width={22} height={22} className="flex-shrink-0" />
+      <Image src={iconPaths[toast.type]} alt="" width={22} height={22} className="shrink-0" />
       <span className="text-white text-sm">{toast.message}</span>
     </div>
   );
