@@ -65,6 +65,14 @@ export default function DocumentCompleteButtons({ projectId }: { projectId: numb
         isOpen={isEndModalOpen}
         onCancel={() => setIsEndModalOpen(false)}
         onConfirm={handleCompleteWithoutInterview}
+        description={
+          <>
+            <span className="text-subtitle-md">모든 절차가 종료되며 수정할 수 없습니다.</span>
+            <br />
+            종료를 확정하시겠습니까?
+          </>
+        }
+        className="h-[148px]"
       />
     </>
   );
