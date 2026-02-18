@@ -1,4 +1,3 @@
-// components/Toast.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -43,7 +42,7 @@ const ToastItem = ({ toast }: { toast: ToastMessage }) => {
         transition-all duration-500 ease-out
         ${toast.isLeaving ? 'opacity-0 -translate-y-2' : 'opacity-100 translate-y-0'}`}
     >
-      <Image src={iconPaths[toast.type]} alt="" width={22} height={22} className="shrink-0" />
+      <Image src={iconPaths[toast.type]} alt="" width={22} height={22} className="flex-shrink-0" />
       <span className="text-white text-sm">{toast.message}</span>
     </div>
   );
@@ -74,7 +73,7 @@ export const ToastContainer = () => {
   }, []);
 
   return (
-    <div className="fixed top-12 left-1/2 -translate-x-1/2 z-50">
+    <div className="fixed top-12 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center">
       {toasts.map(toast => (
         <ToastItem key={toast.id} toast={toast} />
       ))}
