@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/Btn';
 import ConfirmModal from '@/components/interview/ConfirmModal';
 import { projectService } from '@/services/projectService';
+import { toast } from '@/components/Toast';
 
 interface InterviewCompleteButtonsProps {
   projectId: number;
@@ -22,7 +23,7 @@ export default function InterviewCompleteButtons({ projectId }: InterviewComplet
       router.push('/home');
     } catch (error) {
       console.error('Failed to complete interview:', error);
-      alert('면접 종료에 실패했습니다. 다시 시도해주세요.');
+      toast.error('면접 종료에 실패했습니다. 다시 시도해주세요.');
     } finally {
       setIsLoading(false);
       setIsModalOpen(false);
@@ -33,21 +34,12 @@ export default function InterviewCompleteButtons({ projectId }: InterviewComplet
     <>
       {/* 버튼 영역 */}
       <div className="px-4 pb-20 flex flex-col gap-2">
-        <Button 
-          variant="primary" 
-          size="lg" 
-          onClick={() => setIsModalOpen(true)}
-          disabled={isLoading}
-        >
+        <Button variant="primary" size="lg" onClick={() => setIsModalOpen(true)} disabled={isLoading}>
           {isLoading ? '처리 중...' : '종료하기'}
         </Button>
       </div>
 
-      <ConfirmModal 
-        isOpen={isModalOpen} 
-        onCancel={() => setIsModalOpen(false)}
-        onConfirm={handleConfirm}
-      />
+      <ConfirmModal isOpen={isModalOpen} onCancel={() => setIsModalOpen(false)} onConfirm={handleConfirm} />
     </>
   );
 }

@@ -70,7 +70,8 @@ export default function AddProjectForm() {
     try {
       const data = await projectService.getSheetHeaders(url);
       sessionStorage.setItem('cachedSheetHeaders', JSON.stringify(data));
-      window.location.href = `/home/addproject/connect?sheetUrl=${encodeURIComponent(url)}`;
+
+      router.push(`/home/addproject/connect?sheetUrl=${encodeURIComponent(url)}`);
     } catch {
       try {
         const authorizeUrl = await projectService.getGoogleAuthorizeUrl();

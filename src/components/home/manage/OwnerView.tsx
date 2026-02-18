@@ -97,9 +97,23 @@ export default function OwnerView({
     }
   };
 
-  const handleDateConfirm = (start: Date | null, end: Date | null) => {
+  const handleDateConfirm = async (start: Date | null, end: Date | null) => {
     setStartDate(start);
     setEndDate(end);
+    setIsDateModalOpen(false);
+
+    if (!start || !end) return;
+
+    try {
+      await projectService.updateProjectPeriod(projectId, {
+        startAt: formatDate(start),
+        endAt: formatDate(end),
+      });
+      toast.success('모집 기간이 수정되었습니다.');
+    } catch (e) {
+      console.error('모집 기간 수정 실패:', e);
+      toast.error('모집 기간 수정에 실패했습니다.');
+    }
   };
 
   const handleSaveProjectName = async () => {
@@ -174,22 +188,20 @@ export default function OwnerView({
             <SheetDropdown
               options={['모집 중', '모집 완료']}
               value={currentStatus}
-              onChange={(val) => {
+              onChange={val => {
                 if (val === '모집 완료') {
                   closeProject(projectId);
                   setStatus('모집 완료');
-                  //toast.success('모집이 마감되었습니다.');
                 } else {
                   openProject(projectId);
                   setStatus('모집 중');
-                  //toast.success('모집 중으로 변경되었습니다.');
                 }
               }}
               placeholder="모집 상태를 선택하세요"
               showNoneOption={false}
             />
           </div>
-            
+
           {/* 구글폼 URL */}
           <div className="flex flex-col gap-2">
             <label className="text-[14px] font-bold text-gray-950">구글폼 스프레드 시트 URL</label>
@@ -207,13 +219,18 @@ export default function OwnerView({
             <label className="text-[14px] font-bold text-gray-950">모집 기간 설정</label>
             <button
               onClick={() => setIsDateModalOpen(true)}
-              className="w-full h-[48px] flex items-center justify-between px-4 text-left"
+              className="w-full flex items-center gap-3 py-3 text-left"
               type="button"
             >
-              <span className={`text-[14px] ${startDate ? 'text-gray-950' : 'text-gray-400'}`}>
-                {startDate && endDate ? `${formatDate(startDate)} - ${formatDate(endDate)}` : 'yyyy-mm-dd - yyyy-mm-dd'}
-              </span>
-              <Image src="/icons/calendar.svg" alt="calendar" width={18} height={18} />
+              <div className="flex items-center gap-1">
+                <span className="text-body-rg text-gray-400">{startDate ? formatDate(startDate) : 'yyyy-mm-dd'}</span>
+                <Image src="/icons/calendar.svg" alt="calendar" width={18} height={18} />
+              </div>
+              <span className="text-[14px] text-gray-400">—</span>
+              <div className="flex items-center gap-1">
+                <span className="text-body-rg text-gray-400">{endDate ? formatDate(endDate) : 'yyyy-mm-dd'}</span>
+                <Image src="/icons/calendar.svg" alt="calendar" width={18} height={18} />
+              </div>
             </button>
           </div>
 

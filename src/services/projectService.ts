@@ -1,4 +1,3 @@
-
 import apiClient from '@/lib/api';
 import type {
   Project,
@@ -9,21 +8,21 @@ import type {
 } from '@/types/project';
 
 class ProjectService {
-    // GET : 면접 정보 설정 조회
-    async getInterviewSetting(projectId: number): Promise<any> {
-      const response = await apiClient.get(`/recruiting/projects/${projectId}/interview-setting`);
-      return response.data;
-    }
-  
-    // PUT : 면접 정보 설정 저장/수정
-    async updateInterviewSetting(projectId: number, data: any): Promise<any> {
-      const response = await apiClient.put(`/recruiting/projects/${projectId}/interview-setting`, data);
-      return response.data;
-    }
+  // GET : 면접 정보 설정 조회
+  async getInterviewSetting(projectId: number): Promise<any> {
+    const response = await apiClient.get(`/recruiting/projects/${projectId}/interview-setting`);
+    return response.data;
+  }
+
+  // PUT : 면접 정보 설정 저장/수정
+  async updateInterviewSetting(projectId: number, data: any): Promise<any> {
+    const response = await apiClient.put(`/recruiting/projects/${projectId}/interview-setting`, data);
+    return response.data;
+  }
   // GET : 구글 OAuth 동의 URL 조회
   async getGoogleAuthorizeUrl(): Promise<string> {
     const response = await apiClient.get('/projects/google-oauth/authorize-url', {
-      params: { useLocalhost: true },
+      params: { useLocalhost: false },
     });
     return response.data.authorizeUrl;
   }
@@ -59,6 +58,12 @@ class ProjectService {
   // PATCH : 프로젝트 이름 수정
   async updateProjectName(projectId: number, title: string): Promise<Project> {
     const response = await apiClient.patch<Project>(`/projects/${projectId}/name`, { title });
+    return response.data;
+  }
+
+  // PATCH : 프로젝트 모집 기간 수정
+  async updateProjectPeriod(projectId: number, data: { startAt: string; endAt: string }): Promise<any> {
+    const response = await apiClient.patch(`/projects/${projectId}/period`, data);
     return response.data;
   }
 
@@ -131,7 +136,10 @@ class ProjectService {
 
   // POST/PUT : 면접관 시간 등록 (availability 저장)
   async updateInterviewerAvailability(projectId: number, adminId: number, data: any): Promise<any> {
-    const response = await apiClient.put(`/recruiting/projects/${projectId}/interviewers/${adminId}/availability`, data);
+    const response = await apiClient.put(
+      `/recruiting/projects/${projectId}/interviewers/${adminId}/availability`,
+      data
+    );
     return response.data;
   }
 
@@ -148,8 +156,14 @@ class ProjectService {
   }
 
   // PUT : 특정 면접관 필수 여부 설정/해제
-  async updateRequiredInterviewer(projectId: number, adminId: number, required: boolean): Promise<{ adminIds: number[] }> {
-    const response = await apiClient.put(`/recruiting/projects/${projectId}/required-interviewers/${adminId}`, { required });
+  async updateRequiredInterviewer(
+    projectId: number,
+    adminId: number,
+    required: boolean
+  ): Promise<{ adminIds: number[] }> {
+    const response = await apiClient.put(`/recruiting/projects/${projectId}/required-interviewers/${adminId}`, {
+      required,
+    });
     return response.data;
   }
 
@@ -172,11 +186,14 @@ class ProjectService {
   }
 
   // POST : 지원자 면접 가능 시간 제출 (공개 API)
-  async submitApplicantAvailability(token: string, data: {
-    name: string;
-    phone: string;
-    selections: Array<{ date: string; startTimes: string[] }>;
-  }): Promise<any> {
+  async submitApplicantAvailability(
+    token: string,
+    data: {
+      name: string;
+      phone: string;
+      selections: Array<{ date: string; startTimes: string[] }>;
+    }
+  ): Promise<any> {
     const response = await apiClient.post(`/public/interview/submit?token=${token}`, data);
     return response.data;
   }
