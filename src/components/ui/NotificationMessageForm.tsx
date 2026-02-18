@@ -118,7 +118,7 @@ export default function NotificationMessageForm({
             <h3 className="text-primary font-medium text-[15px] leading-5.75 mb-2">동일 문자 일괄 전송</h3>
             <ol className="list-decimal list-inside font-normal text-[15px] leading-5.75 text-black">
               <li>상단 {modalTitle} 명단의 &apos;전화번호 복사하기&apos;</li>
-              <li>텔플릿 하단 &apos;템플릿 복사하기&apos;</li>
+              <li>템플릿 하단 &apos;템플릿 복사하기&apos;</li>
               <li>문자 앱에서 전체에게 동일하게 전송</li>
             </ol>
           </div>
