@@ -103,6 +103,18 @@ class ProjectService {
     return response.data;
   }
 
+  // GET: 기존 포지션 매핑 불러오기
+  async getPositionValues(projectId: number) {
+    const response = await apiClient.get(`/projects/${projectId}/position-values`);
+    return response.data;
+  }
+
+  // PUT: 포지션 매핑 저장/수정 (upsert)
+  async savePositionValues(projectId: number, valueMappings: { fromValue: string; toValue: string }[]) {
+    const response = await apiClient.put(`/projects/${projectId}/position-values`, { valueMappings });
+    return response.data;
+  }
+
   // POST : 시트 수동 동기화
   async syncSheet(projectId: number): Promise<void> {
     await apiClient.post(`/projects/${projectId}/sync-sheet`);
