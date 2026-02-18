@@ -54,6 +54,7 @@ export default function DocumentContent({ projectId }: { projectId: number }) {
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [currentUserId, setCurrentUserId] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [lastSyncedAt, setLastSyncedAt] = useState<Date>(new Date());
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -69,7 +70,6 @@ export default function DocumentContent({ projectId }: { projectId: number }) {
     const fetchApplicants = async () => {
       try {
         setIsLoading(true);
-        await projectService.syncSheet(projectId);
         const res = await applicantService.getApplicants(projectId, 'DOCUMENT');
         const mappedApplicants = res.applicants.map(mapApplicant);
         setApplicants(mappedApplicants);
@@ -87,10 +87,12 @@ export default function DocumentContent({ projectId }: { projectId: number }) {
 
   const handleRefresh = async () => {
     try {
+      await projectService.syncSheet(projectId);
       const res = await applicantService.getApplicants(projectId, 'DOCUMENT');
       const mappedApplicants = res.applicants.map(mapApplicant);
       setApplicants(mappedApplicants);
       setFavorites(new Set(mappedApplicants.filter(a => a.favorite).map(a => a.applicantId)));
+      setLastSyncedAt(new Date());
     } catch (e) {
       console.error('지원자 목록 조회 실패:', e);
       toast.error('지원자 목록을 불러오지 못했습니다.');
@@ -189,6 +191,8 @@ export default function DocumentContent({ projectId }: { projectId: number }) {
           onSortChange={setSortBy}
           selectedFilter={selectedPosition}
           onFilterClear={() => setSelectedPosition('전체')}
+          onRefresh={handleRefresh}
+          lastSyncedAt={lastSyncedAt}
         />
       </div>
 
