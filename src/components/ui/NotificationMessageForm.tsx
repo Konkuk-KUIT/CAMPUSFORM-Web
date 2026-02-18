@@ -38,8 +38,13 @@ export default function NotificationMessageForm({
   const title = type === '합격자' ? '합격자 문자 템플릿 입력' : '불합격자 문자 템플릿 입력';
   const modalTitle = type === '합격자' ? '합격자' : '불합격자';
 
+  const isMounted = useRef(false);
+
   useEffect(() => {
-    if (!template) return;
+    if (!isMounted.current) {
+      isMounted.current = true;
+      return;
+    }
     const timer = setTimeout(async () => {
       try {
         await documentResultService.saveSmsTemplate(projectId, { stage, status, content: template });

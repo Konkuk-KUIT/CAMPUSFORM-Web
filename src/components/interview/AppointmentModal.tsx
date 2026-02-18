@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface AppointmentModalProps {
   isOpen: boolean;
@@ -20,6 +20,9 @@ interface ScrollerWheelProps {
 }
 
 function ScrollerWheel({ items, selectedIndex, onChange, formatLabel, align = 'center' }: ScrollerWheelProps) {
+  const touchStartY = useRef<number | null>(null);  // ← useRef 추가
+  const accumulatedDelta = useRef<number>(0);       // ← 누적 이동량
+  // 
   const getCircularIndex = (index: number) => {
     const len = items.length;
     return ((index % len) + len) % len;
@@ -30,6 +33,34 @@ function ScrollerWheel({ items, selectedIndex, onChange, formatLabel, align = 'c
     const delta = e.deltaY > 0 ? 1 : -1;
     onChange(getCircularIndex(selectedIndex + delta));
   };
+
+  // ── 터치 핸들러 ──────────────────────────
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+    accumulatedDelta.current = 0;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    e.preventDefault();
+    if (touchStartY.current === null) return;
+
+    const deltaY = touchStartY.current - e.touches[0].clientY;
+    accumulatedDelta.current += deltaY;
+    touchStartY.current = e.touches[0].clientY;
+
+    const THRESHOLD = 14; // px당 한 칸
+    if (Math.abs(accumulatedDelta.current) >= THRESHOLD) {
+      const steps = Math.round(accumulatedDelta.current / THRESHOLD);
+      onChange(getCircularIndex(selectedIndex + steps));
+      accumulatedDelta.current = 0;
+    }
+  };
+
+  const handleTouchEnd = () => {
+    touchStartY.current = null;
+    accumulatedDelta.current = 0;
+  };
+  // ─────────────────────────────────────────
 
   const alignClass =
     align === 'left' ? 'left-0' : align === 'right' ? 'right-0' : 'left-1/2 -translate-x-1/2';
@@ -54,7 +85,11 @@ function ScrollerWheel({ items, selectedIndex, onChange, formatLabel, align = 'c
   return (
     <div
       className="relative w-[60px] h-[100px] overflow-hidden flex items-center justify-center select-none"
+      style={{ touchAction: 'none' }}
       onWheel={handleWheel}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
       {[-2, -1, 0, 1, 2].map(offset => (
         <div

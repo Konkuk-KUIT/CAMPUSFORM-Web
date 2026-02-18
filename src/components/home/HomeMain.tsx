@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { authService } from '@/services/authService';
 import { projectService } from '@/services/projectService';
-import { scheduleService } from '@/services/scheduleService';
+import { applicantService } from '@/services/applicantService';
 import type { Project } from '@/types/project';
 import type { CalendarEvent } from '@/types/schedule';
 import TopAppBar from '@/components/home/TopAppBar';
@@ -86,12 +86,14 @@ export default function HomeMain() {
             date: new Date(project.startAt),
             title: `${project.title} - 모집 시작`,
             timeRange: '종일',
+            isChecked: false,
           });
           // 모집 종료일
           events.push({
             date: new Date(project.endAt),
             title: `${project.title} - 모집 마감`,
             timeRange: '종일',
+            isChecked: false,
           });
         });
 
@@ -102,41 +104,37 @@ export default function HomeMain() {
         console.log('면접 단계 프로젝트:', interviewProjects.length, interviewProjects);
 
         if (interviewProjects.length > 0) {
-          // 각 프로젝트의 스마트 시간표를 조회하여 CalendarEvent로 변환
+          // 각 프로젝트의 지원자 목록을 조회하여 면접 시간이 배정된 지원자만 필터링
           for (const project of interviewProjects) {
             try {
-              console.log(`프로젝트 ${project.id}의 스마트 시간표 조회 중...`);
-              const schedule = await scheduleService.getSmartSchedule(project.id);
-              console.log(`프로젝트 ${project.id} 스케줄:`, schedule);
+              console.log(`프로젝트 ${project.id}의 지원자 목록 조회 중...`);
+              const applicantsData = await applicantService.getApplicants(project.id, 'INTERVIEW');
+              console.log(`프로젝트 ${project.id} 지원자 데이터:`, applicantsData);
               
-              if (schedule.days && schedule.days.length > 0) {
-                schedule.days.forEach(day => {
-                  day.slots.forEach(slot => {
-                    if (slot.applicants && slot.applicants.length > 0) {
-                      slot.applicants.forEach(applicant => {
-                        events.push({
-                          date: new Date(day.date),
-                          title: `${project.title} - ${applicant.name} 면접`,
-                          timeRange: `${slot.startTime} - ${slot.endTime}`,
-                        });
-                      });
-                    } else {
-                      // 지원자가 없는 슬롯도 표시
-                      events.push({
-                        date: new Date(day.date),
-                        title: `${project.title} - 면접 슬롯`,
-                        timeRange: `${slot.startTime} - ${slot.endTime}`,
-                      });
-                    }
+              if (applicantsData.applicants && applicantsData.applicants.length > 0) {
+                // 면접 시간이 배정된 지원자만 필터링
+                const scheduledApplicants = applicantsData.applicants.filter(
+                  applicant => applicant.interviewDate && applicant.interviewStartTime
+                );
+
+                scheduledApplicants.forEach(applicant => {
+                  const interviewDateTime = new Date(applicant.interviewDate!);
+                  const endTime = applicant.interviewStartTime!.substring(0, 5); // "HH:mm:ss" → "HH:mm"
+                  
+                  events.push({
+                    date: interviewDateTime,
+                    title: `${project.title} - ${applicant.name} 면접`,
+                    timeRange: `${endTime}`,
+                    isChecked: false,
                   });
                 });
               }
             } catch (error: any) {
-              // 404나 500 에러는 스마트 시간표가 아직 생성되지 않은 것으로 간주
-              if (error.response?.status === 404 || error.response?.status === 500) {
-                console.log(`프로젝트 ${project.id}: 스마트 시간표가 아직 생성되지 않았습니다.`);
+              // 404 에러는 지원자가 없는 것으로 간주
+              if (error.response?.status === 404) {
+                console.log(`프로젝트 ${project.id}: 지원자가 없습니다.`);
               } else {
-                console.error(`프로젝트 ${project.id}의 스케줄 조회 실패:`, error);
+                console.error(`프로젝트 ${project.id}의 지원자 조회 실패:`, error);
               }
               // 오류가 발생해도 다른 프로젝트들은 계속 조회
             }
@@ -152,11 +150,13 @@ export default function HomeMain() {
             date: new Date(project.startAt),
             title: `${project.title} - 모집 시작`,
             timeRange: '종일',
+            isChecked: false,
           },
           {
             date: new Date(project.endAt),
             title: `${project.title} - 모집 마감`,
             timeRange: '종일',
+            isChecked: false,
           },
         ]);
         setCalendarEvents(fallbackEvents);
@@ -179,6 +179,24 @@ export default function HomeMain() {
     }
   };
 
+  // 일정 체크 상태 업데이트
+  const handleScheduleCheck = (scheduleIndex: number, checked: boolean) => {
+    const targetSchedules = calendarEvents.filter(
+      event => event.date.toDateString() === selectedDate.toDateString()
+    );
+    
+    if (scheduleIndex >= 0 && scheduleIndex < targetSchedules.length) {
+      const targetEvent = targetSchedules[scheduleIndex];
+      const allEventIndex = calendarEvents.indexOf(targetEvent);
+      
+      if (allEventIndex !== -1) {
+        const updatedEvents = [...calendarEvents];
+        updatedEvents[allEventIndex] = { ...updatedEvents[allEventIndex], isChecked: checked };
+        setCalendarEvents(updatedEvents);
+      }
+    }
+  };
+
   // 선택된 날짜의 일정 필터링
   const todaySchedules = calendarEvents
     .filter(event => event.date.toDateString() === selectedDate.toDateString())
@@ -186,7 +204,7 @@ export default function HomeMain() {
       date: event.date,
       title: event.title,
       timeRange: event.timeRange,
-      isChecked: false,
+      isChecked: event.isChecked || false,
     }));
 
   if (isLoading) {
@@ -224,7 +242,11 @@ export default function HomeMain() {
                   events={calendarEvents}
                 />
               </section>
-              <ScheduleList selectedDate={selectedDate} schedules={todaySchedules} />
+              <ScheduleList 
+                selectedDate={selectedDate} 
+                schedules={todaySchedules}
+                onScheduleCheck={handleScheduleCheck}
+              />
             </div>
           ) : (
             <div className="flex flex-col animate-in fade-in duration-200">
