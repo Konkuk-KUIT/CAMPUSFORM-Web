@@ -11,7 +11,7 @@ export default function Schedule({ title, timeRange, isChecked, onCheckedChange 
   return (
     <div
     onClick={() => onCheckedChange(!isChecked)}
-    className="w-[311px] min-h-[54px] bg-blue-50 rounded-[10px] flex items-center gap-[14px] px-[6px] py-2 cursor-pointer">
+    className="w-[300px] min-h-[54px] bg-blue-50 rounded-[10px] flex items-center gap-[14px] px-[6px] py-2 cursor-pointer">
       <div className="w-[7px] h-[38px] bg-primary rounded-[10px] flex-shrink-0" />
 
       <div className="flex flex-col flex-1 min-w-0">
