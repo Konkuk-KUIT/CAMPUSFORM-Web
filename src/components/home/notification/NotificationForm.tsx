@@ -21,25 +21,18 @@ function toTimeAgo(isoString: string): string {
   return `${Math.floor(hours / 24)}일 전`;
 }
 
-function extractName(message?: string): string {
-  if (!message) return '누군가';
-  const match = message.match(/^(.+?) 님이/);
-  return match ? match[1] : '누군가';
-}
-
-function buildMessage(noti: Notification): string {
-  const { type, payload } = noti;
-  const name = extractName(payload.message as string);
-  switch (type) {
-    case 'COMMENT_CREATED':
-      return `${name} 님이 댓글을 작성했어요.`;
-    case 'NEW_APPLICANT':
-      return `${name} 님이 새롭게 지원했어요.`;
-    case 'ADMIN_ADDED':
-      return '새 관리자가 추가되었어요.';
-    default:
-      return (payload.message as string) ?? '';
+function buildSheetSyncMessage(message: string): string {
+  const updateMatch = message.match(/지원자 정보\((.+?)\)가 업데이트/);
+  if (updateMatch) {
+    return `${updateMatch[1]} 님의 지원서가 수정되었어요.`;
   }
+
+  const newMatch = message.match(/새 지원자 (\d+)명\((.+?)\)이 추가/);
+  if (newMatch) {
+    return `새 지원자 ${newMatch[1]}명(${newMatch[2]})이 추가되었어요.`;
+  }
+
+  return message.replace('스프레드시트 동기화가 완료되었습니다. ', '');
 }
 
 export default function NotificationForm() {
@@ -94,12 +87,20 @@ export default function NotificationForm() {
     }
 
     switch (noti.type) {
-      case 'COMMENT_CREATED':
+      case 'COMMENT_CREATED': {
+        const stage = noti.payload.stage as string;
+        const basePath = stage === 'INTERVIEW' ? 'interview' : 'document';
+        router.push(`/${basePath}/${noti.projectId}/${noti.payload.applicantId}`);
+        break;
+      }
       case 'NEW_APPLICANT':
         router.push(`/document/${noti.projectId}/${noti.payload.applicantId}`);
         break;
       case 'ADMIN_ADDED':
-        router.push(`/manage`);
+        router.push(`/manage/${noti.projectId}`);
+        break;
+      case 'SHEET_SYNC_RESULT':
+        router.push(`/manage/${noti.projectId}`);
         break;
     }
   };
@@ -154,7 +155,13 @@ export default function NotificationForm() {
                 type={noti.type}
                 title={(noti.payload.projectTitle as string) ?? `프로젝트 ${noti.projectId}`}
                 subContent={noti.type === 'COMMENT_CREATED' ? `- ${noti.payload.title as string}` : undefined}
-                content={buildMessage(noti)}
+                content={
+                  noti.type === 'SHEET_SYNC_RESULT'
+                    ? buildSheetSyncMessage(noti.payload.message as string)
+                    : noti.type === 'ADMIN_ADDED'
+                      ? '새 관리자가 추가되었어요.'
+                      : ((noti.payload.message as string) ?? '')
+                }
                 timeAgo={toTimeAgo(noti.createdAt)}
                 isUnread={!noti.read}
                 onClick={() => handleCardClick(noti)}
