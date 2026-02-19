@@ -24,14 +24,31 @@ export default function NotificationCard({
 }: NotificationCardProps) {
   const getIconSrc = () => {
     switch (type) {
-      case 'NEW_APPLICANT':
+      case 'SHEET_SYNC_RESULT':
         return isUnread ? '/icons/newapplicant-blue.svg' : '/icons/newapplicant.svg';
       case 'COMMENT_CREATED':
         return isUnread ? '/icons/comment-blue.svg' : '/icons/comment-black.svg';
       case 'ADMIN_ADDED':
         return isUnread ? '/icons/admin-blue.svg' : '/icons/admin.svg';
+      case 'NEW_APPLICANT':
+        return isUnread ? '/icons/newapplicant-blue.svg' : '/icons/newapplicant.svg';
       default:
         return '/icons/comment.svg';
+    }
+  };
+
+  const getIconSize = () => {
+    switch (type) {
+      case 'NEW_APPLICANT':
+        return { width: 18, height: 18 };
+      case 'COMMENT_CREATED':
+        return { width: 15, height: 15 };
+      case 'ADMIN_ADDED':
+        return { width: 20, height: 20 };
+      case 'SHEET_SYNC_RESULT':
+        return { width: 18, height: 18 };
+      default:
+        return { width: 16, height: 16 };
     }
   };
 
@@ -42,12 +59,12 @@ export default function NotificationCard({
                   ${isUnread ? 'bg-blue-50' : 'bg-white'}`}
     >
       <div className="flex items-center w-full">
-        <div className={`shrink-0 relative ${isUnread ? 'text-primary' : 'text-gray-950'}`}>
+        <div className="shrink-0 w-[18px] flex items-center justify-center">
           <Image
             src={getIconSrc()}
             alt={type}
-            width={16.5}
-            height={16.5}
+            width={getIconSize().width}
+            height={getIconSize().height}
             className={type === 'NEW_APPLICANT' && !isUnread ? 'grayscale' : ''}
           />
         </div>

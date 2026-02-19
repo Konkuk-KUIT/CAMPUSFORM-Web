@@ -1,4 +1,4 @@
-export type NotificationType = 'NEW_APPLICANT' | 'COMMENT_CREATED' | 'ADMIN_ADDED';
+export type NotificationType = 'COMMENT_CREATED' | 'NEW_APPLICANT' | 'ADMIN_ADDED' | 'SHEET_SYNC_RESULT';
 
 export interface NotificationPayload {
   commenter?: string;

@@ -31,7 +31,22 @@ export default function PositionEditForm() {
         let sheetUrl = '';
         let positionColumnIndex = -1;
 
-        if (from === 'manage') {
+        if (from === 'manage' && projectId) {
+          // 기존 저장된 매핑 불러오기
+          try {
+            const saved = await projectService.getPositionValues(Number(projectId));
+            if (saved?.valueMappings?.length > 0) {
+              setPositions(
+                saved.valueMappings.map((m: { fromValue: string; toValue: string }) => ({
+                  original: m.fromValue,
+                  changed: m.toValue,
+                }))
+              );
+            }
+          } catch {
+            // 저장된 매핑 없으면 무시
+          }
+
           sheetUrl = searchParams.get('sheetUrl') ?? '';
           positionColumnIndex = Number(sessionStorage.getItem(`positionIdx-${projectId}`) ?? -1);
         } else {
@@ -49,7 +64,7 @@ export default function PositionEditForm() {
     };
 
     fetchPositions();
-  }, [from, searchParams, projectForm.sheetUrl, projectForm.requiredMappings?.positionIdx]);
+  }, [from, projectId, searchParams, projectForm.sheetUrl, projectForm.requiredMappings?.positionIdx]);
 
   const handleAddPosition = () => {
     setPositions([...positions, { original: '', changed: '' }]);
@@ -65,12 +80,22 @@ export default function PositionEditForm() {
     setPositions(newPositions);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const valueMappings = positions
       .filter(p => p.original && p.changed)
       .map(p => ({ fromValue: p.original, toValue: p.changed }));
 
-    setProjectForm({ valueMappings });
+    if (from === 'manage' && projectId) {
+      try {
+        await projectService.savePositionValues(Number(projectId), valueMappings);
+      } catch (e) {
+        console.error('포지션 저장 오류:', e);
+        return;
+      }
+    } else {
+      setProjectForm({ valueMappings });
+    }
+
     router.push(backPath);
   };
 
