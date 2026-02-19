@@ -274,7 +274,6 @@ export default function SmartScheduleMainForm() {
 
     try {
       await projectService.updateInterviewerAvailability(projectId, userId, { availabilities });
-      toast.success(`${interviewerName}님의 시간이 저장되었습니다.`);
       await fetchInterviewers();
     } catch (error: any) {
       console.error('시간 저장 실패:', error);
