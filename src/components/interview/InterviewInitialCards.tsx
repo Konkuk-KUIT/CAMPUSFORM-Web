@@ -10,7 +10,9 @@ export default function InterviewInitialCards() {
   const projectId = useCurrentProjectStore(s => s.projectId);
 
   const handleLoadApplicants = () => {
-    router.push('/interview/list');
+    if (projectId) {
+      router.push(`/interview/${projectId}`);
+    }
   };
 
   const handleCreateSchedule = () => {
