@@ -22,5 +22,7 @@ export interface InterviewApplicant {
   interviewStatus: '보류' | '합격' | '불합격'; // 면접 결과
   appointmentDate?: string;
   appointmentTime?: string;
+  rawInterviewDate: string | null;
+  rawInterviewTime: string | null;
   commentCount: number;
 }

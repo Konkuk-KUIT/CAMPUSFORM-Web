@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/Btn';
-import ConfirmModal from '@/components/document/ConfirmModal';
+import ConfirmModal from '@/components/ConfirmModal';
 import { projectService } from '@/services/projectService';
 import { toast } from '@/components/Toast';
 
@@ -58,8 +58,21 @@ export default function DocumentCompleteButtons({ projectId }: { projectId: numb
       </div>
 
       {/* 파란 버튼 확인 모달 */}
-      <ConfirmModal isOpen={isModalOpen} onCancel={() => setIsModalOpen(false)} onConfirm={handleStartInterview} />
-
+      <ConfirmModal
+        isOpen={isModalOpen}
+        onCancel={() => setIsModalOpen(false)}
+        onConfirm={handleStartInterview}
+        description={
+          <>
+            면접 단계로 이동하면
+            <br />
+            <span className="font-medium">서류 단계는 종료되며 수정할 수 없습니다.</span>
+            <br />
+            계속 진행하시겠습니까?
+          </>
+        }
+      />
+      
       {/* 흰색 버튼 확인 모달 */}
       <ConfirmModal
         isOpen={isEndModalOpen}
@@ -72,7 +85,6 @@ export default function DocumentCompleteButtons({ projectId }: { projectId: numb
             종료를 확정하시겠습니까?
           </>
         }
-        className="h-[148px]"
       />
     </>
   );

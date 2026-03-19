@@ -6,7 +6,7 @@ import Link from 'next/link';
 import TextboxGoogle from '@/components/home/TextboxGoogle';
 import ProfileCross from '@/components/ui/ProfileCross';
 import DateRangePickerModal from '@/components/home/addproject/DateRangePickerModal';
-import InfoModal from '@/components/ui/InfoModal';
+import ConfirmModal from '@/components/ConfirmModal';
 import SheetDropdown from '@/components/home/addproject/SheetDropdown';
 import Navbar from '@/components/Navbar';
 import Button from '@/components/ui/Btn';
@@ -332,12 +332,11 @@ export default function OwnerView({
             initialEndDate={endDate}
           />
         )}
-        {showInfoModal && (
-          <InfoModal
-            description={'아직 캠퍼스폼 회원이 아니에요.\n미가입 계정은 초대할 수 없습니다.'}
-            onConfirm={() => setShowInfoModal(false)}
-          />
-        )}
+        <ConfirmModal
+          isOpen={showInfoModal}
+          description={'아직 캠퍼스폼 회원이 아니에요.\n미가입 계정은 초대할 수 없습니다.'}
+          onConfirm={() => setShowInfoModal(false)}
+        />
         {showWarningModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
             <div className="relative w-[300px] bg-white rounded-[20px] px-6 py-8 flex flex-col items-center shadow-2xl">

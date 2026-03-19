@@ -2,7 +2,7 @@
 
 import ReplyButton from '@/components/ui/ReplyButton';
 import SelectModal from '@/components/ui/SelectModal';
-import DeleteCommentModal from '@/components/document/DeleteCommentModal';
+import ConfirmModal from '@/components/ConfirmModal';
 import type { ReplyProps } from '@/types/comment';
 import Image from 'next/image';
 import { useState } from 'react';
@@ -112,7 +112,7 @@ export default function Reply({
           <div className="flex items-start justify-between">
             <div>
               <h4 className="text-body-md text-gray-950">{authorNickname ?? '이름 없음'}</h4>
-              <p className="text-body-xs-rg text-gray-500">{formatDateTime(createdAt)}</p>
+              <p className="text-body-xs-rg text-gray-500 tracking-[0.01em] lining-nums proportional-nums">{formatDateTime(createdAt)}</p>
             </div>
 
             {/* 내 댓글일 때만 메뉴 버튼 표시 */}
@@ -220,10 +220,11 @@ export default function Reply({
       )}
 
       {/* 삭제 확인 모달 */}
-      <DeleteCommentModal
+      <ConfirmModal
         isOpen={showDeleteModal}
-        onCancel={() => setShowDeleteModal(false)}
+        description="댓글을 삭제하시겠습니까?"
         onConfirm={handleDeleteConfirm}
+        onCancel={() => setShowDeleteModal(false)}
       />
     </div>
   );

@@ -12,6 +12,7 @@ import SegmentedControl from '@/components/ui/SegmentedControl';
 import Calendar from '@/components/home/Calendar';
 import ScheduleList from '@/components/home/ScheduleList';
 import ProjectFilter from '@/components/home/ProjectFilter';
+import ConfirmModal from '@/components/ConfirmModal';
 import RecruitmentCard from '@/components/home/RecruitmentCard';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -29,6 +30,7 @@ export default function HomeMain() {
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
   const [isLoadingSchedules, setIsLoadingSchedules] = useState(false);
   const { closedProjectIds, openedProjectIds } = useManualCloseStore();
+  const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -168,14 +170,21 @@ export default function HomeMain() {
     fetchSchedules();
   }, [projects]);
 
-  const handleDeleteProject = async (id: number) => {
+  const handleDeleteProject = (id: number) => {
+    setDeleteTargetId(id);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTargetId) return;
     try {
-      await projectService.deleteProject(id);
-      setProjects(projects.filter(p => p.id !== id));
+      await projectService.deleteProject(deleteTargetId);
+      setProjects(projects.filter(p => p.id !== deleteTargetId));
       toast.success('프로젝트가 삭제되었습니다.');
     } catch (e) {
       console.error('프로젝트 삭제 오류:', e);
       toast.error('프로젝트 삭제에 실패했습니다.');
+    } finally {
+      setDeleteTargetId(null);
     }
   };
 
@@ -218,6 +227,12 @@ export default function HomeMain() {
   return (
     <main className="min-h-screen flex justify-center bg-gray-50">
       <ToastContainer />
+      <ConfirmModal
+        isOpen={deleteTargetId !== null}
+        description="프로젝트를 삭제하시겠습니까?"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteTargetId(null)}
+      />      
       <div className="relative w-[375px] bg-gray-50 min-h-screen flex flex-col overflow-y-auto">
         <div className="sticky top-0 z-50 bg-white">
           <TopAppBar />
@@ -255,6 +270,13 @@ export default function HomeMain() {
               <section className="mt-[10px] flex flex-col items-center gap-3 pb-5 w-full px-4">
                 {projects
                   .filter(p => !isOnlyRecruiting || openedProjectIds.includes(p.id) || (p.state === 'DOCUMENT' && !closedProjectIds.includes(p.id)))
+                  .sort((a, b) => {
+                    const isActiveA = openedProjectIds.includes(a.id) || (a.state === 'DOCUMENT' && !closedProjectIds.includes(a.id));
+                    const isActiveB = openedProjectIds.includes(b.id) || (b.state === 'DOCUMENT' && !closedProjectIds.includes(b.id));
+
+                    if (isActiveA !== isActiveB) return isActiveA ? -1 : 1; // 모집중 우선
+                    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                  })
                   .map(project => {
                     const isManuallyClosed = closedProjectIds.includes(project.id);
                     const isManuallyOpened = openedProjectIds.includes(project.id);
@@ -295,5 +317,6 @@ export default function HomeMain() {
         </div>
       </div>
     </main>
+    
   );
 }

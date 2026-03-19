@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/Btn';
-import ConfirmModal from '@/components/interview/ConfirmModal';
+import ConfirmModal from '@/components/ConfirmModal';
 import { projectService } from '@/services/projectService';
 import { toast } from '@/components/Toast';
 
@@ -39,7 +39,18 @@ export default function InterviewCompleteButtons({ projectId }: InterviewComplet
         </Button>
       </div>
 
-      <ConfirmModal isOpen={isModalOpen} onCancel={() => setIsModalOpen(false)} onConfirm={handleConfirm} />
+      <ConfirmModal
+        isOpen={isModalOpen}
+        onCancel={() => setIsModalOpen(false)}
+        onConfirm={handleConfirm}
+        description={
+          <>
+            모든 절차가 종료되며 수정할 수 없습니다.
+            <br />
+            종료를 확정하시겠습니까?
+          </>
+        }
+      />
     </>
   );
 }

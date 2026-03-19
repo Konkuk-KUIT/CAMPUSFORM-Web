@@ -46,42 +46,48 @@ export default function RecruitmentCard({
 
   const isActive = status === 'on';
 
-  // 카드에 group 추가
   const cardClasses = clsx(
-    'group relative w-[343px] h-[130px] rounded-10 overflow-hidden cursor-pointer transition-colors',
+    'group relative w-[343px] h-[130px] rounded-10 overflow-hidden cursor-pointer transition-colors shadow-[0px_2px_10px_0px_#0000000D]',
     {
       'bg-[#FFFFFF] hover:bg-[#DBE3FE] active:bg-[#BFCEFE] border border-gray-100': isActive,
-      'bg-[#EFEFEF] hover:bg-[#D1D1D1] active:bg-[#B0B0B0] border border-gray-100': !isActive,
+      'bg-[#EFEFEF] hover:bg-[#EFEFEF] active:bg-[#E3E3E3] border border-[#E6E6E6] hover:border-[#D9D9D9] active:border-[#E3E3E3]': !isActive,
     }
   );
 
-  // 모집마감일 때만 group-hover/active로 텍스트 색 변경
   const titleClasses = clsx(
     'w-[160px] h-[22px] text-subtitle-sb whitespace-nowrap truncate',
     {
       'text-gray-950': isActive,
-      'text-[#D1D1D1] group-hover:text-[#B0B0B0] group-active:text-[#888888]': !isActive,
+      'text-[#B0B0B0] group-hover:text-[#9F9F9F] group-active:text-[#ADADAD]': !isActive,
     }
   );
 
   const recruitmentStatusClasses = clsx('text-body-sm mb-[2px]', {
     'text-gray-600': isActive,
-    'text-[#D1D1D1] group-hover:text-[#B0B0B0] group-active:text-[#888888]': !isActive,
+    'text-[#B0B0B0] group-hover:text-[#9F9F9F] group-active:text-[#ADADAD]': !isActive,
   });
 
   const dateRangeClasses = clsx('text-subtitle-sm-rg', {
     'text-gray-400': isActive,
-    'text-[#D1D1D1] group-hover:text-[#B0B0B0] group-active:text-[#888888]': !isActive,
+    'text-[#B0B0B0] group-hover:text-[#9F9F9F] group-active:text-[#ADADAD]': !isActive,
   });
 
   const applicantCountClasses = clsx('text-body-rg', {
     'text-gray-950': isActive,
-    'text-[#D1D1D1] group-hover:text-[#B0B0B0] group-active:text-[#888888]': !isActive,
+    'text-[#B0B0B0] group-hover:text-[#9F9F9F] group-active:text-[#ADADAD]': !isActive,
   });
 
   const applicantCountSpanClasses = clsx('font-semibold', {
     'text-primary': isActive,
   });
+
+  const moreButtonClasses = clsx(
+    'absolute top-[16px] right-[16px] w-[24px] h-[24px] flex flex-col items-center justify-center gap-[3px] rounded-full z-10 cursor-pointer',
+    {
+      'text-gray-950': isActive,
+      'text-[#B0B0B0] group-hover:text-[#9F9F9F] group-active:text-[#ADADAD]': !isActive,
+    }
+  );
 
   return (
     <div className={cardClasses} onClick={onClick}>
@@ -102,7 +108,7 @@ export default function RecruitmentCard({
           e.stopPropagation();
           setIsMenuOpen(!isMenuOpen);
         }}
-        className="absolute top-[16px] right-[16px] w-[24px] h-[24px] flex flex-col items-center justify-center gap-[3px] rounded-full text-gray-950 z-10 cursor-pointer"
+        className={moreButtonClasses}
       >
         <span className="w-[3.5px] h-[3.5px] bg-current rounded-full" />
         <span className="w-[3.5px] h-[3.5px] bg-current rounded-full" />
@@ -112,7 +118,7 @@ export default function RecruitmentCard({
       {isMenuOpen && (
         <div
           className="absolute top-[48px] right-[16px] z-20 shadow-[0_2px_8px_rgba(0,0,0,0.1)] rounded-10"
-          onClick={e => e.stopPropagation()}  // 추가
+          onClick={e => e.stopPropagation()}
         >
           <SelectModal options={modalOptions} onChange={handleMenuSelect} backgroundColor="white" width="w-[102px]" />
         </div>
