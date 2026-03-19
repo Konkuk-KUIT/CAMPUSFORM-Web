@@ -17,30 +17,32 @@ export default function DeleteManagerModal({
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 px-4">
-      <div className="flex flex-col w-[330px] bg-white rounded-xl shadow-lg overflow-hidden">
-        <div className="mt-12 w-full pl-6">
-          <p className="text-base font-medium text-gray-900 leading-snug whitespace-pre-line">
-            관리자를 삭제하시겠습니까?
-          </p>
+      <div className="relative flex flex-col w-[330px] h-[135px] bg-white rounded-[10px] overflow-hidden">
+
+        {/* 텍스트 영역 h-[80px] */}
+        <div className="h-[80px] flex items-center px-6">
+          <p className="text-body-md text-[#333333]">관리자를 삭제하시겠습니까?</p>
         </div>
 
-        <div className="mt-auto flex justify-end w-full pb-3 pr-3 pt-8">
-          <button 
+        {/* 버튼 영역 h-[55px] */}
+        <div className="h-[55px] border-t border-gray-50 flex">
+          <button
             onClick={onClose}
-            className="w-16 h-12 flex items-center justify-center text-base font-medium text-gray-900 hover:text-black transition-colors"
+            className="w-[165px] h-full flex items-center justify-center text-subtitle-sm-md text-[#1F1F1F]"
           >
             취소
           </button>
-          <button 
+          <button
             onClick={() => {
               onConfirm();
               onClose();
             }}
-            className="w-16 h-12 flex items-center justify-center text-base font-medium text-gray-900 hover:text-black transition-colors"
+            className="w-[165px] h-full flex items-center justify-center text-subtitle-sm-md text-primary"
           >
             확인
           </button>
         </div>
+
       </div>
     </div>
   );
