@@ -9,7 +9,7 @@ import TextboxGoogle from '@/components/home/TextboxGoogle';
 import Button from '@/components/ui/Btn';
 import ProfileCross from '@/components/ui/ProfileCross';
 import DateRangePickerModal from '@/components/home/addproject/DateRangePickerModal';
-import InfoModal from '@/components/ui/InfoModal';
+import ConfirmModal from '@/components/ConfirmModal';
 import { toast, ToastContainer } from '@/components/Toast';
 import { useNewProjectStore } from '@/store/newProjectStore';
 import { projectService } from '@/services/projectService';
@@ -298,12 +298,11 @@ export default function AddProjectForm() {
           />
         )}
 
-        {showInfoModal && (
-          <InfoModal
-            description={'아직 캠퍼스폼 회원이 아니에요.\n미가입 계정은 초대할 수 없습니다.'}
-            onConfirm={() => setShowInfoModal(false)}
-          />
-        )}
+        <ConfirmModal
+          isOpen={showInfoModal}
+          description={'아직 캠퍼스폼 회원이 아니에요.\n미가입 계정은 초대할 수 없습니다.'}
+          onConfirm={() => setShowInfoModal(false)}
+        />
 
         <div className="fixed bottom-0 left-0 right-0 bg-white px-5 py-4 max-w-93.75 mx-auto">
           <Button variant="primary" size="lg" disabled={isButtonDisabled} className="w-full" onClick={handleSubmit}>

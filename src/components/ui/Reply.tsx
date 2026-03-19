@@ -2,7 +2,7 @@
 
 import ReplyButton from '@/components/ui/ReplyButton';
 import SelectModal from '@/components/ui/SelectModal';
-import DeleteCommentModal from '@/components/document/DeleteCommentModal';
+import ConfirmModal from '@/components/ConfirmModal';
 import type { ReplyProps } from '@/types/comment';
 import Image from 'next/image';
 import { useState } from 'react';
@@ -220,10 +220,11 @@ export default function Reply({
       )}
 
       {/* 삭제 확인 모달 */}
-      <DeleteCommentModal
+      <ConfirmModal
         isOpen={showDeleteModal}
-        onCancel={() => setShowDeleteModal(false)}
+        description="댓글을 삭제하시겠습니까?"
         onConfirm={handleDeleteConfirm}
+        onCancel={() => setShowDeleteModal(false)}
       />
     </div>
   );

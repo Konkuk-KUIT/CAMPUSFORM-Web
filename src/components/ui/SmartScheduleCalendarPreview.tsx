@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import Toggle from '@/components/ui/Toggle';
-import ConfirmResetDialog from '@/components/ui/ConfirmResetDialog';
+import ConfirmModal from '@/components/ConfirmModal';
 
 const BLUE_COLORS = [
   '#efefef', // 0명 - gray-100

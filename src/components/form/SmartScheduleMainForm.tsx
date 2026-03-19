@@ -6,7 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Btn from '@/components/ui/Btn';
-import ConfirmResetDialog from '@/components/ui/ConfirmResetDialog';
+import ConfirmModal from '@/components/ConfirmModal';
 import UnassignedApplicantsAlert from '@/components/ui/UnassignedApplicantsAlert';
 import AllAccordion from '@/components/ui/AllAccordion';
 import SmartScheduleButton from '@/components/ui/SmartScheduleButton';
@@ -684,10 +684,20 @@ export default function SmartScheduleMainForm() {
             </Btn>
           </div>
 
-          <ConfirmResetDialog
+          <ConfirmModal
             isOpen={showConfirmDialog}
-            onClose={() => setShowConfirmDialog(false)}
+            onCancel={() => setShowConfirmDialog(false)}
             onConfirm={handleConfirm}
+            description={
+              <>
+                재설정 시 <span className="font-semibold">기존 데이터가 초기화</span>되며,
+                <br />
+                지원자들에게 다시 응답을 받아야 합니다.
+                <br />
+                진행하시겠습니까?
+              </>
+            }
+            confirmText="완료"
           />
 
           <UnassignedApplicantsAlert isOpen={showInfoAlert} onConfirm={handleInfoAlertConfirm} />
