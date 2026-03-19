@@ -51,7 +51,7 @@ export default function StatusDropdown({ value, onChange }: StatusDropdownProps)
       <button
         ref={buttonRef}
         onClick={handleOpen}
-        className="w-full h-6.5 bg-gray-50 border border-gray-200 rounded-5 px-2 py-1 flex items-center relative"
+        className="w-[79px] h-[26px] bg-[#F2F2F2] border border-[#F0F0F0] rounded-[30px] pt-[11px] pr-[17px] pb-[11px] pl-[16px] flex items-center relative gap-[10px]"
       >
         <div className="flex items-center gap-1 absolute left-[45%] -translate-x-1/2">
           <div className={`w-1.5 h-1.5 rounded-full ${selectedOption.color} shrink-0`} />
