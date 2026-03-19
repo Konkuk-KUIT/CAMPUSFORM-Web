@@ -255,6 +255,13 @@ export default function HomeMain() {
               <section className="mt-[10px] flex flex-col items-center gap-3 pb-5 w-full px-4">
                 {projects
                   .filter(p => !isOnlyRecruiting || openedProjectIds.includes(p.id) || (p.state === 'DOCUMENT' && !closedProjectIds.includes(p.id)))
+                  .sort((a, b) => {
+                    const isActiveA = openedProjectIds.includes(a.id) || (a.state === 'DOCUMENT' && !closedProjectIds.includes(a.id));
+                    const isActiveB = openedProjectIds.includes(b.id) || (b.state === 'DOCUMENT' && !closedProjectIds.includes(b.id));
+
+                    if (isActiveA !== isActiveB) return isActiveA ? -1 : 1; // 모집중 우선
+                    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                  })
                   .map(project => {
                     const isManuallyClosed = closedProjectIds.includes(project.id);
                     const isManuallyOpened = openedProjectIds.includes(project.id);
