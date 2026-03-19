@@ -17,27 +17,39 @@ export default function ConfirmModal({ isOpen, onCancel, onConfirm, description,
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onCancel} />
 
-      <div className={`relative bg-white rounded-10 py-5.25 px-8 w-82. h-44 ${className ?? ''}`}>
-        <p className="text-subtitle-rg text-black whitespace-pre-line m-3">
-          {description ?? (
-            <>
-              면접 단계로 이동하면
-              <br />
-              <span className="text-subtitle-md">서류 단계는 종료되며 수정할 수 없습니다.</span>
-              <br />
-              계속 진행하시겠습니까?
-            </>
-          )}
-        </p>
+      <div className={`relative flex flex-col w-[330px] h-[175px] bg-white rounded-[10px] overflow-hidden ${className ?? ''}`}>
 
-        <div className="flex justify-end gap-5">
-          <button onClick={onCancel} className="text-subtitle-md px-2 py-2 cursor-pointer">
+        {/* 텍스트 영역 h-[120px] */}
+        <div className="h-[120px] flex items-center px-6">
+          <p className="text-body-md text-[#333333] whitespace-pre-line">
+            {description ?? (
+              <>
+                면접 단계로 이동하면
+                <br />
+                <span className="font-medium">서류 단계는 종료되며 수정할 수 없습니다.</span>
+                <br />
+                계속 진행하시겠습니까?
+              </>
+            )}
+          </p>
+        </div>
+
+        {/* 버튼 영역 h-[55px] */}
+        <div className="h-[55px] border-t border-gray-50 flex">
+          <button
+            onClick={onCancel}
+            className="w-[165px] h-full flex items-center justify-center text-subtitle-sm-md text-[#1F1F1F]"
+          >
             취소
           </button>
-          <button onClick={onConfirm} className="text-subtitle-md px-2 py-2 cursor-pointer">
+          <button
+            onClick={onConfirm}
+            className="w-[165px] h-full flex items-center justify-center text-subtitle-sm-md text-primary"
+          >
             확인
           </button>
         </div>
+
       </div>
     </div>
   );
