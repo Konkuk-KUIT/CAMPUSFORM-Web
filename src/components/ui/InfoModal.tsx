@@ -5,27 +5,28 @@ interface InfoModalProps {
   onConfirm: () => void;
 }
 
-export default function InfoModal({
-  description,
-  onConfirm,
-}: InfoModalProps) {
+export default function InfoModal({ description, onConfirm }: InfoModalProps) {
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 px-4">
-      <div className="flex flex-col w-[330px] bg-white rounded-xl shadow-lg overflow-hidden">
-        <div className="mt-12 w-full pl-6">
-          <p className="text-base font-medium text-gray-900 leading-snug whitespace-pre-line">
+      <div className="flex flex-col w-[330px] h-[155px] bg-white rounded-[10px] shadow-lg overflow-hidden">
+        
+        {/* 텍스트 영역 h-[102px] */}
+        <div className="h-[102px] flex items-center px-6">
+          <p className="text-body-md text-[#333333] whitespace-pre-line">
             {description}
           </p>
         </div>
 
-        <div className="mt-auto flex justify-end w-full pb-3 pr-3 pt-8">
-          <button 
+        {/* 버튼 영역 h-[55px] */}
+        <div className="h-[55px] border-t border-gray-50 flex items-center justify-center">
+          <button
             onClick={onConfirm}
-            className="w-16 h-12 flex items-center justify-center text-base font-medium text-gray-900 hover:text-black transition-colors"
+            className="w-full h-full flex items-center justify-center text-subtitle-sm-md text-primary"
           >
             확인
           </button>
         </div>
+
       </div>
     </div>
   );
