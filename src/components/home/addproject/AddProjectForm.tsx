@@ -220,7 +220,7 @@ export default function AddProjectForm() {
             <p className="text-[11px] text-gray-500 leading-tight pl-[10px]">
               스프레드시트의 항목을 서비스에서 사용할 수 있도록 변환합니다.
             </p>
-            <div className="flex gap-1 items-start relative">
+            <div className="flex gap-2 items-start relative">
               <div className="flex-1">
                 <TextboxGoogle
                   placeholder="https://docs.google.com/spreadsheets..."
@@ -289,7 +289,7 @@ export default function AddProjectForm() {
 
           <div className="flex flex-col gap-2">
             <label className="text-body text-gray-950 pl-[10px]">관리자 추가하기</label>
-            <div className="flex gap-1 items-start relative">
+            <div className="flex gap-2 items-start relative">
               <div className="flex-1">
                 <TextboxGoogle
                   placeholder="구글 계정을 입력해주세요"

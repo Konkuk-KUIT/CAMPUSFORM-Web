@@ -32,23 +32,27 @@ export default function AdminView({ project, adminList, ownerUserId, status, sta
           <span className="text-[15px] font-semibold text-gray-950">지원서 관리</span>
           <NotificationBell />
         </div>
+
         <div className="flex-1 px-5 py-6 flex flex-col gap-6 overflow-y-auto scrollbar-hide pb-16">
+          {/* 프로젝트 이름 */}
           <div className="flex flex-col gap-2">
-            <label className="text-subtitle-sm-md text-gray-950">프로젝트 이름</label>
+            <label className="text-body text-gray-950 pl-[10px]">프로젝트 이름</label>
             <div className="w-full h-12.5 px-4 flex items-center rounded-10 border border-gray-100 bg-gray-100 text-body-rg text-gray-300">
               <span>{project.title}</span>
             </div>
           </div>
 
+          {/* 모집 상태 */}
           <div className="flex flex-col gap-2">
-            <label className="text-subtitle-sm-md text-gray-950">모집 상태</label>
+            <label className="text-body text-gray-950 pl-[10px]">모집 상태</label>
             <div className="w-full h-12.5 px-4 flex items-center rounded-10 border border-gray-100 bg-gray-100 text-body-rg text-gray-300">
               <span>{status}</span>
             </div>
           </div>
 
+          {/* 구글폼 URL */}
           <div className="flex flex-col gap-2">
-            <label className="text-subtitle-sm-md text-gray-950">구글폼 스프레드 시트 URL</label>
+            <label className="text-body text-gray-950 pl-[10px]">구글폼 스프레드 시트 URL</label>
             <input
               value={project.sheetUrl ?? ''}
               disabled
@@ -57,16 +61,42 @@ export default function AdminView({ project, adminList, ownerUserId, status, sta
             />
           </div>
 
+          {/* 모집 기간 */}
           <div className="flex flex-col gap-2">
-            <label className="text-subtitle-sm-md text-gray-950">모집 기간</label>
-            <div className="w-full flex items-center justify-between rounded-10 text-body-rg text-gray-500">
-              <span>{startDate && endDate ? `${formatDate(startDate)} — ${formatDate(endDate)}` : '-'}</span>
+            <label className="text-body text-gray-950 pl-[10px]">모집 기간</label>
+            <div className="flex items-center gap-[10px]">
+              <div className="w-40 h-10 flex items-center justify-between pt-[7px] pr-[7px] pb-[8px] pl-[15px] border border-[#EFEFEF] rounded-5 bg-gray-100">
+                <span className="font-normal text-[14px] leading-[20px] text-gray-300">
+                  {startDate ? formatDate(startDate) : 'yyyy-mm-dd'}
+                </span>
+                <Image
+                  src="/icons/calendar2.svg"
+                  alt="calendar"
+                  width={23}
+                  height={23}
+                  className="[filter:brightness(0)_saturate(0%)_invert(82%)]"
+                />
+              </div>
+              <span className="text-gray-400 text-14 shrink-0">—</span>
+              <div className="w-40 h-10 flex items-center justify-between pt-[7px] pr-[7px] pb-[8px] pl-[15px] border border-[#EFEFEF] rounded-5 bg-gray-100">
+                <span className="font-normal text-[14px] leading-[20px] text-gray-300">
+                  {endDate ? formatDate(endDate) : 'yyyy-mm-dd'}
+                </span>
+                <Image
+                  src="/icons/calendar2.svg"
+                  alt="calendar"
+                  width={23}
+                  height={23}
+                  className="[filter:brightness(0)_saturate(0%)_invert(82%)]"
+                />
+              </div>
             </div>
           </div>
 
+          {/* 관리자 */}
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-1">
-              <span className="text-subtitle-sm-md text-gray-950">관리자</span>
+              <label className="text-body text-gray-950 pl-[10px]">관리자</label>
               <span className="text-body-rg text-gray-500">({adminList.length}명)</span>
               <div className="relative group">
                 <Image src="/icons/info-2.svg" alt="info" width={13.5} height={13.5} />

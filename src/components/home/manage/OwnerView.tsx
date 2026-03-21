@@ -39,7 +39,6 @@ export default function OwnerView({
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [showWarningModal, setShowWarningModal] = useState(false);
   const [showPositionTooltip, setShowPositionTooltip] = useState(false);
-  // 수정 - openedProjectIds도 읽고, status를 store에서 직접 계산
   const { closedProjectIds, openedProjectIds, closeProject, openProject } = useManualCloseStore();
   const isManuallyClosed = closedProjectIds.includes(projectId);
   const isManuallyOpened = openedProjectIds.includes(projectId);
@@ -158,9 +157,10 @@ export default function OwnerView({
         </div>
 
         <div className="flex-1 px-5 py-6 flex flex-col gap-6 overflow-y-auto scrollbar-hide pb-10">
+          {/* 프로젝트 이름 */}
           <div className="flex flex-col gap-2">
-            <label className="text-[14px] font-bold text-gray-950">프로젝트 이름</label>
-            <div className="flex gap-2 items-start">
+            <label className="text-body text-gray-950 pl-[10px]">프로젝트 이름</label>
+            <div className="flex gap-1 items-start">
               <div className="flex-1">
                 <TextboxGoogle
                   placeholder="프로젝트 이름을 입력해주세요"
@@ -174,7 +174,7 @@ export default function OwnerView({
               {isEditingName && (
                 <Button
                   variant="primary"
-                  className="!w-[50px] !h-[50px] !rounded-[10px] shrink-0 text-[13px] font-medium"
+                  className="w-[54px]! h-[50px]! rounded-10! shrink-0 font-normal text-[14px] leading-[20px] tracking-[0px] text-center [font-variant-numeric:lining-nums_proportional-nums]"
                   onClick={handleSaveProjectName}
                 >
                   저장
@@ -183,8 +183,9 @@ export default function OwnerView({
             </div>
           </div>
 
+          {/* 모집 상태 */}
           <div className="flex flex-col gap-2">
-            <label className="text-[14px] font-bold text-gray-950">모집 상태</label>
+            <label className="text-body text-gray-950 pl-[10px]">모집 상태</label>
             <SheetDropdown
               options={['모집 중', '모집 완료']}
               value={currentStatus}
@@ -204,8 +205,8 @@ export default function OwnerView({
 
           {/* 구글폼 URL */}
           <div className="flex flex-col gap-2">
-            <label className="text-[14px] font-bold text-gray-950">구글폼 스프레드 시트 URL</label>
-            <p className="text-[11px] text-gray-500 leading-tight">
+            <label className="text-body text-gray-950 pl-[10px]">구글폼 스프레드 시트 URL</label>
+            <p className="text-[11px] text-gray-500 leading-tight pl-[10px]">
               스프레드시트의 항목을 서비스에서 사용할 수 있도록 변환합니다.
             </p>
             <TextboxGoogle
@@ -215,29 +216,59 @@ export default function OwnerView({
             />
           </div>
 
+          {/* 모집 기간 설정 */}
           <div className="flex flex-col gap-2">
-            <label className="text-[14px] font-bold text-gray-950">모집 기간 설정</label>
-            <button
-              onClick={() => setIsDateModalOpen(true)}
-              className="w-full flex items-center gap-3 py-3 text-left"
-              type="button"
-            >
-              <div className="flex items-center gap-1">
-                <span className="text-body-rg text-gray-400">{startDate ? formatDate(startDate) : 'yyyy-mm-dd'}</span>
-                <Image src="/icons/calendar.svg" alt="calendar" width={18} height={18} />
-              </div>
-              <span className="text-[14px] text-gray-400">—</span>
-              <div className="flex items-center gap-1">
-                <span className="text-body-rg text-gray-400">{endDate ? formatDate(endDate) : 'yyyy-mm-dd'}</span>
-                <Image src="/icons/calendar.svg" alt="calendar" width={18} height={18} />
-              </div>
-            </button>
+            <label className="text-body text-gray-950 pl-[10px]">모집 기간 설정</label>
+            <div className="flex items-center gap-[10px]">
+              <button
+                onClick={() => setIsDateModalOpen(true)}
+                className="w-40 h-10 flex items-center justify-between pt-[7px] pr-[7px] pb-[8px] pl-[15px] border border-[#EFEFEF] rounded-5 bg-white hover:border-primary transition-colors"
+                type="button"
+              >
+                <span className={startDate
+                  ? 'text-14 text-gray-950'
+                  : 'font-["Pretendard"] font-normal text-[14px] leading-[20px] tracking-[0px] align-middle text-[#B0B0B0] [font-variant-numeric:lining-nums_proportional-nums]'
+                }>
+                  {startDate ? formatDate(startDate) : 'yyyy-mm-dd'}
+                </span>
+                <Image
+                  src="/icons/calendar2.svg"
+                  alt="calendar"
+                  width={23}
+                  height={23}
+                  className={startDate ? '' : '[filter:brightness(0)_saturate(0%)_invert(82%)]'}
+                />
+              </button>
+
+              <span className="text-gray-400 text-14 shrink-0">—</span>
+
+              <button
+                onClick={() => setIsDateModalOpen(true)}
+                className="w-40 h-10 flex items-center justify-between pt-[7px] pr-[7px] pb-[8px] pl-[15px] border border-[#EFEFEF] rounded-5 bg-white hover:border-primary transition-colors"
+                type="button"
+              >
+                <span className={endDate
+                  ? 'text-14 text-gray-950'
+                  : 'font-["Pretendard"] font-normal text-[14px] leading-[20px] tracking-[0px] align-middle text-[#B0B0B0] [font-variant-numeric:lining-nums_proportional-nums]'
+                }>
+                  {endDate ? formatDate(endDate) : 'yyyy-mm-dd'}
+                </span>
+                <Image
+                  src="/icons/calendar2.svg"
+                  alt="calendar"
+                  width={23}
+                  height={23}
+                  className={endDate ? '' : '[filter:brightness(0)_saturate(0%)_invert(82%)]'}
+                />
+              </button>
+            </div>
           </div>
 
+          {/* 포지션 설정 */}
           <div className="flex flex-col gap-2">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-1">
-                <label className="text-[14px] font-bold text-gray-950">포지션 설정</label>
+                <label className="text-body text-gray-950 pl-[10px]">포지션 설정</label>
                 <div
                   className="relative"
                   onMouseEnter={() => setShowPositionTooltip(true)}
@@ -286,12 +317,13 @@ export default function OwnerView({
             </div>
           </div>
 
+          {/* 관리자 추가 */}
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2">
-              <span className="text-[14px] font-bold text-gray-950">관리자 추가</span>
+              <label className="text-body text-gray-950 pl-[10px]">관리자 추가</label>
               <span className="text-[13px] text-gray-500">({adminList.length}명)</span>
             </div>
-            <div className="flex gap-2 items-start">
+            <div className="flex gap-1 items-start">
               <div className="flex-1">
                 <TextboxGoogle
                   placeholder="구글 계정을 입력해주세요"
@@ -303,7 +335,7 @@ export default function OwnerView({
               </div>
               <Button
                 variant="primary"
-                className="!w-[50px] !h-[50px] !rounded-[10px] shrink-0 text-[13px] font-medium"
+                className="w-[54px]! h-[50px]! rounded-10! shrink-0 font-normal text-[14px] leading-[20px] tracking-[0px] text-center [font-variant-numeric:lining-nums_proportional-nums]"
                 onClick={handleAddAdmin}
               >
                 추가
