@@ -86,14 +86,14 @@ export default function HomeMain() {
           // 모집 시작일
           events.push({
             date: new Date(project.startAt),
-            title: `${project.title} - 모집 시작`,
+            title: `모집 시작 - ${project.title}`,
             timeRange: '종일',
             isChecked: false,
           });
           // 모집 종료일
           events.push({
             date: new Date(project.endAt),
-            title: `${project.title} - 모집 마감`,
+            title: `모집 마감 - ${project.title}`,
             timeRange: '종일',
             isChecked: false,
           });
@@ -125,7 +125,7 @@ export default function HomeMain() {
                   
                   events.push({
                     date: interviewDateTime,
-                    title: `${project.title} - ${applicant.name} 면접`,
+                    title: `면접 - ${applicant.name} - ${project.title}`,
                     timeRange: `${endTime}`,
                     isChecked: false,
                   });
@@ -150,13 +150,13 @@ export default function HomeMain() {
         const fallbackEvents = projects.flatMap(project => [
           {
             date: new Date(project.startAt),
-            title: `${project.title} - 모집 시작`,
+            title: `모집 시작 - ${project.title}`,
             timeRange: '종일',
             isChecked: false,
           },
           {
             date: new Date(project.endAt),
-            title: `${project.title} - 모집 마감`,
+            title: `모집 마감 - ${project.title}`,
             timeRange: '종일',
             isChecked: false,
           },
