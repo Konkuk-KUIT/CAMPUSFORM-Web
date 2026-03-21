@@ -626,7 +626,7 @@ export default function SmartScheduleCalendarPreview({
       {/* Calendar Modal */}
       {showCalendarModal && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-[10px] p-4 flex flex-col gap-[10px] w-[303px]">
+          <div className="bg-white rounded-[10px] px-[25px] py-4 flex flex-col gap-[10px] w-[330px]">
             {/* Header with title and close button */}
             <div className="flex items-center justify-between">
               <span className="text-[14px] font-medium leading-[20px] text-[#1f1f1f]">날짜 선택</span>
@@ -642,21 +642,19 @@ export default function SmartScheduleCalendarPreview({
             </div>
 
             {/* Month navigation */}
-            <div className="flex items-center justify-center gap-[10px]">
+            <div className="flex items-center justify-between gap-[10px]">
               <button
                 onClick={() => {
                   const newDate = new Date(selectedDate);
                   newDate.setMonth(newDate.getMonth() - 1);
                   setSelectedDate(newDate);
                 }}
-                className="w-6 h-6 flex items-center justify-center"
+                className="w-6 h-6 flex items-center justify-center flex-shrink-0"
                 aria-label="이전 달"
               >
-                <svg width="10" height="5" viewBox="0 0 10 5" fill="none">
-                  <path d="M9 4.5L5 0.5L1 4.5" stroke="#1f1f1f" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" transform="rotate(-90 5 2.5)"/>
-                </svg>
+                <Image src="/icons/back-gray.svg" alt="이전" width={24} height={24} />
               </button>
-              <div className="text-center text-[14px] font-medium leading-[20px] text-[#1f1f1f] w-[184px]">
+              <div className="text-center text-[14px] font-medium leading-[20px] text-[#1f1f1f] flex-1">
                 {selectedDate.getFullYear()}년 {String(selectedDate.getMonth() + 1).padStart(2, '0')}월
               </div>
               <button
@@ -665,12 +663,12 @@ export default function SmartScheduleCalendarPreview({
                   newDate.setMonth(newDate.getMonth() + 1);
                   setSelectedDate(newDate);
                 }}
-                className="w-6 h-6 flex items-center justify-center"
+                className="w-6 h-6 flex items-center justify-center flex-shrink-0"
                 aria-label="다음 달"
               >
-                <svg width="10" height="5" viewBox="0 0 10 5" fill="none">
-                  <path d="M1 0.5L5 4.5L9 0.5" stroke="#1f1f1f" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" transform="rotate(-90 5 2.5)"/>
-                </svg>
+                <div style={{ transform: 'rotate(180deg)' }}>
+                  <Image src="/icons/back-gray.svg" alt="다음" width={24} height={24} />
+                </div>
               </button>
             </div>
 
