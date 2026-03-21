@@ -88,7 +88,7 @@ function ScrollerWheel({ items, selectedIndex, onChange, formatLabel, align = 'c
       {[-2, -1, 0, 1, 2].map(offset => (
         <div
           key={offset}
-          className={`absolute text-[22px] h-[24px] flex items-center justify-center w-[60px] tabular-nums
+          className={`absolute text-[20px] h-[24px] flex items-center justify-center w-[60px] tabular-nums
             ${colorClass(offset)} ${opacityMap[Math.abs(offset)]} ${alignClass}`}
           style={itemStyle(offset)}
         >
@@ -184,7 +184,7 @@ export default function AppointmentModal({
           <ScrollerWheel items={MONTHS} selectedIndex={monthIdx} onChange={setMonthIdx} formatLabel={v => `${v}월`} align="right" />
           <ScrollerWheel items={DAYS} selectedIndex={dayIdx} onChange={setDayIdx} formatLabel={v => `${v}일`} align="left" />
           <ScrollerWheel items={HOURS} selectedIndex={hourIdx} onChange={setHourIdx} formatLabel={v => String(v).padStart(2, '0')} align="right" />
-          <span className="text-[22px] text-[#5A81FA] -mx-2">:</span>
+          <span className="text-[20px] text-[#5A81FA] -mx-2">:</span>
           <ScrollerWheel items={MINUTES} selectedIndex={minuteIdx} onChange={setMinuteIdx} formatLabel={v => String(v).padStart(2, '0')} align="left" />
         </div>
 
