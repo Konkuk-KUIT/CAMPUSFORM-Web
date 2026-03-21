@@ -10,7 +10,6 @@ interface AppointmentModalProps {
   initialTime?: string;
 }
 
-// ── ScrollerWheel ─────────────────────────────────────────────
 interface ScrollerWheelProps {
   items: (number | string)[];
   selectedIndex: number;
@@ -20,9 +19,9 @@ interface ScrollerWheelProps {
 }
 
 function ScrollerWheel({ items, selectedIndex, onChange, formatLabel, align = 'center' }: ScrollerWheelProps) {
-  const touchStartY = useRef<number | null>(null);  // ← useRef 추가
-  const accumulatedDelta = useRef<number>(0);       // ← 누적 이동량
-  // 
+  const touchStartY = useRef<number | null>(null);
+  const accumulatedDelta = useRef<number>(0);
+
   const getCircularIndex = (index: number) => {
     const len = items.length;
     return ((index % len) + len) % len;
@@ -34,7 +33,6 @@ function ScrollerWheel({ items, selectedIndex, onChange, formatLabel, align = 'c
     onChange(getCircularIndex(selectedIndex + delta));
   };
 
-  // ── 터치 핸들러 ──────────────────────────
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartY.current = e.touches[0].clientY;
     accumulatedDelta.current = 0;
@@ -43,12 +41,10 @@ function ScrollerWheel({ items, selectedIndex, onChange, formatLabel, align = 'c
   const handleTouchMove = (e: React.TouchEvent) => {
     e.preventDefault();
     if (touchStartY.current === null) return;
-
     const deltaY = touchStartY.current - e.touches[0].clientY;
     accumulatedDelta.current += deltaY;
     touchStartY.current = e.touches[0].clientY;
-
-    const THRESHOLD = 14; // px당 한 칸
+    const THRESHOLD = 14;
     if (Math.abs(accumulatedDelta.current) >= THRESHOLD) {
       const steps = Math.round(accumulatedDelta.current / THRESHOLD);
       onChange(getCircularIndex(selectedIndex + steps));
@@ -60,19 +56,17 @@ function ScrollerWheel({ items, selectedIndex, onChange, formatLabel, align = 'c
     touchStartY.current = null;
     accumulatedDelta.current = 0;
   };
-  // ─────────────────────────────────────────
 
   const alignClass =
     align === 'left' ? 'left-0' : align === 'right' ? 'right-0' : 'left-1/2 -translate-x-1/2';
 
-  const ITEM_GAP = 28; // px between each item center
+  const ITEM_GAP = 28;
 
   const itemStyle = (offset: number): React.CSSProperties => ({
     position: 'absolute',
     top: `calc(50% + ${offset * ITEM_GAP}px - 12px)`,
   });
 
-  // offset → opacity 매핑 (|offset|이 클수록 더 흐리게)
   const opacityMap: Record<number, string> = {
     0: 'opacity-100',
     1: 'opacity-40',
@@ -80,7 +74,7 @@ function ScrollerWheel({ items, selectedIndex, onChange, formatLabel, align = 'c
   };
 
   const colorClass = (offset: number) =>
-    offset === 0 ? 'text-[#5A81FA] font-normal tracking-[0.4px]' : 'text-gray-300'
+    offset === 0 ? 'text-[#5A81FA] font-normal tracking-[0.4px]' : 'text-gray-300';
 
   return (
     <div
@@ -105,11 +99,10 @@ function ScrollerWheel({ items, selectedIndex, onChange, formatLabel, align = 'c
   );
 }
 
-// ── 유틸 ──────────────────────────────────────────────────────
-const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);        // 1~12
-const DAYS   = Array.from({ length: 31 }, (_, i) => i + 1);        // 1~31
-const HOURS  = Array.from({ length: 24 }, (_, i) => i);            // 0~23
-const MINUTES = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];   // 5분 단위
+const MONTHS  = Array.from({ length: 12 }, (_, i) => i + 1);
+const DAYS    = Array.from({ length: 31 }, (_, i) => i + 1);
+const HOURS   = Array.from({ length: 24 }, (_, i) => i);
+const MINUTES = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
 
 function parseInitialDate(initialDate?: string) {
   let month = new Date().getMonth() + 1;
@@ -129,7 +122,6 @@ function parseInitialTime(initialTime?: string) {
     const [h, min] = initialTime.split(':').map(Number);
     if (!isNaN(h)) hour = h;
     if (!isNaN(min)) {
-      // 5분 단위로 가장 가까운 값으로 snap
       minute = MINUTES.reduce((prev, cur) =>
         Math.abs(cur - min) < Math.abs(prev - min) ? cur : prev, 0
       );
@@ -138,7 +130,6 @@ function parseInitialTime(initialTime?: string) {
   return { hour, minute };
 }
 
-// ── AppointmentModal ──────────────────────────────────────────
 export default function AppointmentModal({
   isOpen,
   onClose,
@@ -151,12 +142,10 @@ export default function AppointmentModal({
   const [hourIdx,   setHourIdx]   = useState(9);
   const [minuteIdx, setMinuteIdx] = useState(0);
 
-  // 모달이 열릴 때마다 initialDate/Time 값으로 리셋
   useEffect(() => {
     if (!isOpen) return;
     const { month, day } = parseInitialDate(initialDate);
     const { hour, minute } = parseInitialTime(initialTime);
-
     setMonthIdx(MONTHS.indexOf(month) !== -1 ? MONTHS.indexOf(month) : month - 1);
     setDayIdx(DAYS.indexOf(day) !== -1 ? DAYS.indexOf(day) : day - 1);
     setHourIdx(hour);
@@ -187,62 +176,29 @@ export default function AppointmentModal({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-10 flex flex-col overflow-hidden"
-        style={{ width: 296, height: 207 }}
+        className="bg-white rounded-[10px] flex flex-col overflow-hidden w-[330px] h-[207px]"
         onClick={e => e.stopPropagation()}
       >
         {/* 휠 영역 */}
-        <div className="flex items-center justify-center gap-1 px-4 mt-8">
-          {/* 월 */}
-          <ScrollerWheel
-            items={MONTHS}
-            selectedIndex={monthIdx}
-            onChange={setMonthIdx}
-            formatLabel={v => `${v}월`}
-            align="right"
-          />
-
-          {/* 일 */}
-          <ScrollerWheel
-            items={DAYS}
-            selectedIndex={dayIdx}
-            onChange={setDayIdx}
-            formatLabel={v => `${v}일`}
-            align="left"
-          />
-
-          {/* 시 */}
-          <ScrollerWheel
-            items={HOURS}
-            selectedIndex={hourIdx}
-            onChange={setHourIdx}
-            formatLabel={v => String(v).padStart(2, '0')}
-            align="right"
-          />
-
+        <div className="flex-1 flex items-center justify-center gap-1 px-4">
+          <ScrollerWheel items={MONTHS} selectedIndex={monthIdx} onChange={setMonthIdx} formatLabel={v => `${v}월`} align="right" />
+          <ScrollerWheel items={DAYS} selectedIndex={dayIdx} onChange={setDayIdx} formatLabel={v => `${v}일`} align="left" />
+          <ScrollerWheel items={HOURS} selectedIndex={hourIdx} onChange={setHourIdx} formatLabel={v => String(v).padStart(2, '0')} align="right" />
           <span className="text-[22px] text-[#5A81FA] -mx-2">:</span>
-
-          {/* 분 */}
-          <ScrollerWheel
-            items={MINUTES}
-            selectedIndex={minuteIdx}
-            onChange={setMinuteIdx}
-            formatLabel={v => String(v).padStart(2, '0')}
-            align="left"
-          />
+          <ScrollerWheel items={MINUTES} selectedIndex={minuteIdx} onChange={setMinuteIdx} formatLabel={v => String(v).padStart(2, '0')} align="left" />
         </div>
 
-        {/* 버튼 */}
-        <div className="flex justify-end gap-[37px] pb-[30px] pr-[30px] pt-6">
+        {/* 버튼 영역 */}
+        <div className="h-[55px] border-t border-gray-50 flex">
           <button
             onClick={onClose}
-            className="text-black text-[16px] font-medium leading-5 tracking-[-0.5px]"
+            className="w-[165px] h-full flex items-center justify-center text-subtitle-sm-md text-[#1F1F1F]"
           >
             취소
           </button>
           <button
             onClick={handleConfirm}
-            className="text-black text-[16px] font-medium leading-5 tracking-[-0.5px]"
+            className="w-[165px] h-full flex items-center justify-center text-subtitle-sm-md text-primary"
           >
             설정
           </button>
