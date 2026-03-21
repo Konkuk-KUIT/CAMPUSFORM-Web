@@ -117,7 +117,7 @@ export default function PositionEditForm() {
               {collectedPositions.map((position, index) => (
                 <div
                   key={index}
-                  className="h-6.75 px-2.5 py-0.75 rounded-[13px] text-[13px] font-medium leading-[1.5] tracking-[-0.286px] bg-blue-50 text-[#5d5d5d]"
+                  className="h-6.75 px-2.5 py-0.75 rounded-[13px] text-[14px] font-normal leading-5 tracking-[0px] bg-blue-50 text-[#5d5d5d]"
                 >
                   {position}
                 </div>
