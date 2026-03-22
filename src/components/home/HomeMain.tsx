@@ -86,14 +86,14 @@ export default function HomeMain() {
           // 모집 시작일
           events.push({
             date: new Date(project.startAt),
-            title: `${project.title} - 모집 시작`,
+            title: `모집 시작 - ${project.title}`,
             timeRange: '종일',
             isChecked: false,
           });
           // 모집 종료일
           events.push({
             date: new Date(project.endAt),
-            title: `${project.title} - 모집 마감`,
+            title: `모집 마감 - ${project.title}`,
             timeRange: '종일',
             isChecked: false,
           });
@@ -125,7 +125,7 @@ export default function HomeMain() {
                   
                   events.push({
                     date: interviewDateTime,
-                    title: `${project.title} - ${applicant.name} 면접`,
+                    title: `면접 - ${applicant.name} - ${project.title}`,
                     timeRange: `${endTime}`,
                     isChecked: false,
                   });
@@ -150,13 +150,13 @@ export default function HomeMain() {
         const fallbackEvents = projects.flatMap(project => [
           {
             date: new Date(project.startAt),
-            title: `${project.title} - 모집 시작`,
+            title: `모집 시작 - ${project.title}`,
             timeRange: '종일',
             isChecked: false,
           },
           {
             date: new Date(project.endAt),
-            title: `${project.title} - 모집 마감`,
+            title: `모집 마감 - ${project.title}`,
             timeRange: '종일',
             isChecked: false,
           },
@@ -190,25 +190,35 @@ export default function HomeMain() {
 
   // 일정 체크 상태 업데이트
   const handleScheduleCheck = (scheduleIndex: number, checked: boolean) => {
-    const targetSchedules = calendarEvents.filter(
-      event => event.date.toDateString() === selectedDate.toDateString()
+    if (scheduleIndex < 0 || scheduleIndex >= todaySchedules.length) return;
+    
+    const targetSchedule = todaySchedules[scheduleIndex];
+    const targetEventIndex = calendarEvents.findIndex(
+      event => 
+        event.date.toDateString() === selectedDate.toDateString() && 
+        event.title === targetSchedule.title && 
+        event.timeRange === targetSchedule.timeRange
     );
     
-    if (scheduleIndex >= 0 && scheduleIndex < targetSchedules.length) {
-      const targetEvent = targetSchedules[scheduleIndex];
-      const allEventIndex = calendarEvents.indexOf(targetEvent);
-      
-      if (allEventIndex !== -1) {
-        const updatedEvents = [...calendarEvents];
-        updatedEvents[allEventIndex] = { ...updatedEvents[allEventIndex], isChecked: checked };
-        setCalendarEvents(updatedEvents);
-      }
+    if (targetEventIndex !== -1) {
+      const updatedEvents = [...calendarEvents];
+      updatedEvents[targetEventIndex] = { 
+        ...updatedEvents[targetEventIndex], 
+        isChecked: checked 
+      };
+      setCalendarEvents(updatedEvents);
     }
   };
 
-  // 선택된 날짜의 일정 필터링
+  // 선택된 날짜의 일정 필터링 및 정렬 (언체크 위, 체크 아래)
   const todaySchedules = calendarEvents
     .filter(event => event.date.toDateString() === selectedDate.toDateString())
+    .sort((a, b) => {
+      // isChecked가 false인 것(언체크) → 위쪽
+      // isChecked가 true인 것(체크) → 아래쪽
+      if (a.isChecked === b.isChecked) return 0;
+      return a.isChecked ? 1 : -1;
+    })
     .map(event => ({
       date: event.date,
       title: event.title,
