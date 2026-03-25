@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 
-// ── ScrollerWheel을 컴포넌트 밖으로 ──────────────────────────
 interface ScrollerWheelProps {
   items: number[];
   selectedIndex: number;
@@ -20,8 +19,6 @@ function ScrollerWheel({ items, selectedIndex, onChange, isHourField }: Scroller
     return ((index % len) + len) % len;
   };
 
-  const getItemLabel = (item: number) => String(item).padStart(2, '0');
-
   const handleWheel = (e: React.WheelEvent) => {
     const delta = e.deltaY > 0 ? 1 : -1;
     onChange(getCircularIndex(selectedIndex + delta));
@@ -35,11 +32,9 @@ function ScrollerWheel({ items, selectedIndex, onChange, isHourField }: Scroller
   const handleTouchMove = (e: React.TouchEvent) => {
     e.preventDefault();
     if (touchStartY.current === null) return;
-
     const deltaY = touchStartY.current - e.touches[0].clientY;
     accumulatedDelta.current += deltaY;
     touchStartY.current = e.touches[0].clientY;
-
     const THRESHOLD = 14;
     if (Math.abs(accumulatedDelta.current) >= THRESHOLD) {
       const steps = Math.round(accumulatedDelta.current / THRESHOLD);
@@ -53,52 +48,57 @@ function ScrollerWheel({ items, selectedIndex, onChange, isHourField }: Scroller
     accumulatedDelta.current = 0;
   };
 
+  const ITEM_GAP = 28;
+
+  const itemStyle = (offset: number): React.CSSProperties => ({
+    position: 'absolute',
+    top: `calc(50% + ${offset * ITEM_GAP}px - 12px)`,
+    left: isHourField ? '0' : 'auto',
+    right: isHourField ? 'auto' : '0',
+  });
+
+  const opacityMap: Record<number, string> = {
+    0: 'opacity-100',
+    1: 'opacity-40',
+    2: 'opacity-20',
+  };
+
+  const colorClass = (offset: number) =>
+    offset === 0 ? 'text-[#5A81FA] font-normal tracking-[0.4px]' : 'text-gray-300';
+
   return (
     <div
-      className="relative w-[73px] h-[151px] overflow-hidden flex items-center justify-center"
+      className="relative w-[73px] h-[170px] overflow-hidden flex items-center justify-center"
       style={{ touchAction: 'none' }}
       onWheel={handleWheel}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      <div className="relative w-full h-full flex items-center justify-center">
+      {/* 상단 그라데이션 */}
+      <div
+        className="absolute top-0 left-0 right-0 h-[50px] z-10 pointer-events-none"
+        style={{ background: 'linear-gradient(to bottom, rgba(255,255,255,1) 30%, rgba(255,255,255,0))' }}
+      />
+      {/* 하단 그라데이션 */}
+      <div
+        className="absolute bottom-0 left-0 right-0 h-[50px] z-10 pointer-events-none"
+        style={{ background: 'linear-gradient(to top, rgba(255,255,255,1) 30%, rgba(255,255,255,0))' }}
+      />
+      {[-2, -1, 0, 1, 2].map(offset => (
         <div
-          className="absolute text-blue-500 text-[22px] font-medium h-[30px] flex items-center justify-center w-[50px] tabular-nums"
-          style={{ top: 'calc(50% - 15px)', left: isHourField ? '0' : 'auto', right: isHourField ? 'auto' : '0' }}
+          key={offset}
+          className={`absolute text-[20px] h-[24px] flex items-center justify-center w-[50px] tabular-nums
+            ${colorClass(offset)} ${opacityMap[Math.abs(offset)]}`}
+          style={itemStyle(offset)}
         >
-          {getItemLabel(items[selectedIndex])}
+          {String(items[getCircularIndex(selectedIndex + offset)]).padStart(2, '0')}
         </div>
-        <div
-          className="absolute text-gray-300 text-[22px] h-[30px] flex items-center justify-center opacity-50 w-[50px] tabular-nums"
-          style={{ top: 'calc(50% - 50px)', left: isHourField ? '0' : 'auto', right: isHourField ? 'auto' : '0' }}
-        >
-          {getItemLabel(items[getCircularIndex(selectedIndex - 1)])}
-        </div>
-        <div
-          className="absolute text-gray-300 text-[22px] h-[30px] flex items-center justify-center opacity-30 w-[50px] tabular-nums"
-          style={{ top: 'calc(50% - 85px)', left: isHourField ? '0' : 'auto', right: isHourField ? 'auto' : '0' }}
-        >
-          {getItemLabel(items[getCircularIndex(selectedIndex - 2)])}
-        </div>
-        <div
-          className="absolute text-gray-300 text-[22px] h-[30px] flex items-center justify-center opacity-50 w-[50px] tabular-nums"
-          style={{ top: 'calc(50% + 20px)', left: isHourField ? '0' : 'auto', right: isHourField ? 'auto' : '0' }}
-        >
-          {getItemLabel(items[getCircularIndex(selectedIndex + 1)])}
-        </div>
-        <div
-          className="absolute text-gray-300 text-[22px] h-[30px] flex items-center justify-center opacity-30 w-[50px] tabular-nums"
-          style={{ top: 'calc(50% + 55px)', left: isHourField ? '0' : 'auto', right: isHourField ? 'auto' : '0' }}
-        >
-          {getItemLabel(items[getCircularIndex(selectedIndex + 2)])}
-        </div>
-      </div>
+      ))}
     </div>
   );
 }
 
-// ── TimePicker ────────────────────────────────────────────────
 interface TimePickerProps {
   startHour: string;
   startMinute: string;
@@ -207,15 +207,15 @@ export default function TimePicker({ startHour, startMinute, endHour, endMinute,
           className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4"
           style={{ touchAction: 'none' }}
         >
-          <div className="w-[241px] bg-white rounded-[10px] p-6 flex flex-col items-center gap-6">
-            <div className="flex items-center justify-center gap-2">
+          <div className="w-[240px] h-[217px] bg-white rounded-[10px] flex flex-col overflow-hidden">
+            <div className="flex-1 flex items-center justify-center -space-x-4">
               <ScrollerWheel
                 items={hours}
                 selectedIndex={isStartField ? tempStartHour : tempEndHour}
                 onChange={(idx) => isStartField ? setTempStartHour(idx) : setTempEndHour(idx)}
                 isHourField={true}
               />
-              <span className="text-[22px] font-medium text-gray-400">:</span>
+              <span className="text-[20px] font-normal text-[#5A81FA]">:</span>
               <ScrollerWheel
                 items={minutes}
                 selectedIndex={isStartField ? currentStartMinuteIdx : currentEndMinuteIdx}
@@ -226,9 +226,19 @@ export default function TimePicker({ startHour, startMinute, endHour, endMinute,
                 isHourField={false}
               />
             </div>
-            <div className="flex gap-12 justify-end w-full">
-              <button onClick={handleCancel} className="text-[16px] font-medium text-gray-800">취소</button>
-              <button onClick={handleConfirm} className="text-[16px] font-medium text-gray-800">설정</button>
+            <div className="h-[55px] border-t border-gray-50 flex">
+              <button
+                onClick={handleCancel}
+                className="w-[120px] h-full flex items-center justify-center text-subtitle-sm-md text-[#1F1F1F]"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleConfirm}
+                className="w-[120px] h-full flex items-center justify-center text-subtitle-sm-md text-primary"
+              >
+                설정
+              </button>
             </div>
           </div>
         </div>
