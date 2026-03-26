@@ -8,7 +8,7 @@ interface QuestionSectionProps {
 
 export default function QuestionSection({ title, content, maxLength }: QuestionSectionProps) {
   return (
-    <div className="py-1">
+    <div className="py-1 [&:not(:last-child)]:mb-[15px]">
       <h3 className="text-gray-950 text-[14px] font-medium leading-[20px] [font-variant-numeric:lining-nums_proportional-nums] [font-feature-settings:'dlig'_on] mb-[5px] w-[290px] mx-auto">
         {title}
         <br />
