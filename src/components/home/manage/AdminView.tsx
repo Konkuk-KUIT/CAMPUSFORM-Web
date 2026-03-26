@@ -100,9 +100,14 @@ export default function AdminView({ project, adminList, ownerUserId, status, sta
               <span className="text-body-rg text-gray-500">({adminList.length}명)</span>
               <div className="relative group">
                 <Image src="/icons/info-2.svg" alt="info" width={13.5} height={13.5} />
-                <div className="absolute left-0 top-6 z-20 hidden group-hover:block">
-                  <div className="bg-blue-300 text-white text-body-xs-rg px-1 py-1 rounded-5 whitespace-nowrap min-w-[220px] text-center">
-                    다음 단계 이동은 대표자만 가능합니다.
+                <div className="absolute left-0 bottom-full mb-4 z-20 hidden group-hover:block">
+                  <div className="bg-primary rounded-5 whitespace-nowrap px-3 py-[10px]">
+                    <p className="text-body-md text-white">다음 단계 이동은 대표자만 가능합니다.</p>
+                  </div>
+                  <div className="absolute left-3 -bottom-2">
+                    <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                      <path d="M5 8L0 0L10 0L5 8Z" fill="#5A81FA" />
+                    </svg>
                   </div>
                 </div>
               </div>

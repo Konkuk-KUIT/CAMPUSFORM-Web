@@ -282,17 +282,17 @@ export default function OwnerView({
                     className="ml-0.5 cursor-pointer"
                   />
                   {showPositionTooltip && (
-                    <div className="absolute left-[-20px] bottom-full mb-2 z-50">
-                      <div className="bg-[#93affd] rounded-[5px] px-3 py-2 whitespace-nowrap">
-                        <p className="text-[13px] font-normal leading-[18px] tracking-[0.13px] text-white">
+                    <div className="absolute left-[-20px] bottom-full mb-4 z-50">
+                      <div className="bg-primary rounded-5 whitespace-nowrap px-3 py-[10px]">
+                        <p className="text-body-md text-white">
                           중복되거나 다른 표기의 포지션이 있으십니까?
                           <br />
                           하나의 포지션 표기로 통합해 주세요.
                         </p>
                       </div>
                       <div className="absolute left-6 -bottom-2">
-                        <svg width="14" height="8" viewBox="0 0 14 8" fill="none">
-                          <path d="M7 8L0.937823 0.5L13.0622 0.5L7 8Z" fill="#93affd" />
+                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                          <path d="M5 8L0 0L10 0L5 8Z" fill="#5A81FA" />
                         </svg>
                       </div>
                     </div>
