@@ -30,12 +30,12 @@ export default function InputComment({
           value={value}
           onChange={e => setValue(e.target.value)}
           placeholder={placeholder}
-          className="w-72.25 h-10.75 px-4 rounded-5 border border-gray-200 bg-white text-body-sm-rg text-black placeholder:text-gray-200 outline-none"
+          className="flex-1 h-10.75 px-4 rounded-5 border border-gray-200 bg-white text-body-sm-rg text-black placeholder:text-gray-200 outline-none"
         />
         <button
           type="button"
           onClick={handleSubmit}
-          className="w-12 h-10.75 rounded-5 bg-primary text-body-xs-rg text-white"
+          className="w-12 h-10.75 rounded-5 bg-primary text-body-xs-rg text-white shrink-0"
         >
           {buttonText}
         </button>
