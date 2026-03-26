@@ -23,6 +23,7 @@ export default function PositionEditForm() {
   const backPath = from === 'manage' ? `/manage/${projectId}` : '/home/addproject/connect';
 
   const [collectedPositions, setCollectedPositions] = useState<string[]>([]);
+  const [displayedPositions, setDisplayedPositions] = useState<string[]>([]);
   const [positions, setPositions] = useState<PositionMapping[]>([{ original: '', changed: '' }]);
 
   useEffect(() => {
@@ -30,18 +31,17 @@ export default function PositionEditForm() {
       try {
         let sheetUrl = '';
         let positionColumnIndex = -1;
+        let savedMappings: PositionMapping[] = [];
 
         if (from === 'manage' && projectId) {
-          // 기존 저장된 매핑 불러오기
           try {
             const saved = await projectService.getPositionValues(Number(projectId));
             if (saved?.valueMappings?.length > 0) {
-              setPositions(
-                saved.valueMappings.map((m: { fromValue: string; toValue: string }) => ({
-                  original: m.fromValue,
-                  changed: m.toValue,
-                }))
-              );
+              savedMappings = saved.valueMappings.map((m: { fromValue: string; toValue: string }) => ({
+                original: m.fromValue,
+                changed: m.toValue,
+              }));
+              setPositions(savedMappings);
             }
           } catch {
             // 저장된 매핑 없으면 무시
@@ -50,6 +50,14 @@ export default function PositionEditForm() {
           sheetUrl = searchParams.get('sheetUrl') ?? '';
           positionColumnIndex = Number(sessionStorage.getItem(`positionIdx-${projectId}`) ?? -1);
         } else {
+          const stored = projectForm.valueMappings;
+          if (stored && stored.length > 0) {
+            savedMappings = stored.map((m: { fromValue: string; toValue: string }) => ({
+              original: m.fromValue,
+              changed: m.toValue,
+            }));
+            setPositions(savedMappings);
+          }
           sheetUrl = projectForm.sheetUrl ?? '';
           positionColumnIndex = projectForm.requiredMappings?.positionIdx ?? -1;
         }
@@ -58,6 +66,26 @@ export default function PositionEditForm() {
 
         const result = await projectService.getMappingColumnValues(sheetUrl, positionColumnIndex);
         setCollectedPositions(result.values);
+
+        // position-values API로 매핑된 결과값 표시
+        if (from === 'manage' && projectId) {
+          try {
+            const positionValues = await projectService.getPositionValues(Number(projectId));
+            if (positionValues?.values?.length > 0) {
+              setDisplayedPositions(positionValues.values);
+            } else {
+              setDisplayedPositions(result.values);
+            }
+          } catch {
+            setDisplayedPositions(result.values);
+          }
+        } else {
+          const updated = result.values.map(pos => {
+            const mapping = savedMappings.find(p => p.original === pos && p.changed);
+            return mapping ? mapping.changed : pos;
+          });
+          setDisplayedPositions(updated);
+        }
       } catch (e) {
         console.error('포지션 목록 조회 오류:', e);
       }
@@ -84,6 +112,12 @@ export default function PositionEditForm() {
     const valueMappings = positions
       .filter(p => p.original && p.changed)
       .map(p => ({ fromValue: p.original, toValue: p.changed }));
+
+    const updated = collectedPositions.map(pos => {
+      const mapping = positions.find(p => p.original === pos && p.changed);
+      return mapping ? mapping.changed : pos;
+    });
+    setDisplayedPositions(updated);
 
     if (from === 'manage' && projectId) {
       try {
@@ -114,7 +148,7 @@ export default function PositionEditForm() {
           <div className="flex flex-col gap-3">
             <h3 className="text-[15px] font-medium leading-5.25 text-black">수집된 포지션</h3>
             <div className="flex flex-wrap gap-2.5">
-              {collectedPositions.map((position, index) => (
+              {displayedPositions.map((position, index) => (
                 <div
                   key={index}
                   className="h-6.75 px-2.5 py-0.75 rounded-[13px] text-[14px] font-normal leading-5 tracking-[0px] bg-blue-50 text-[#5d5d5d]"

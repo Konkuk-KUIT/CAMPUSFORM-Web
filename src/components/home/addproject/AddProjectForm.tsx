@@ -167,6 +167,10 @@ export default function AddProjectForm() {
         String(updatedForm.requiredMappings?.positionIdx ?? -1)
       );
 
+      if (updatedForm.valueMappings && updatedForm.valueMappings.length > 0) {
+        await projectService.savePositionValues(createdProject.id, updatedForm.valueMappings);
+      }
+
       await projectService.syncSheet(createdProject.id);
 
       setCreatedProjectId(createdProject.id);
