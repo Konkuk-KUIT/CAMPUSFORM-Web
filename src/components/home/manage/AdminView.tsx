@@ -56,7 +56,7 @@ export default function AdminView({ project, adminList, ownerUserId, status, sta
             <input
               value={project.sheetUrl ?? ''}
               disabled
-              placeholder="https://docs.google.com/spreadsheets..."
+              placeholder="스프레드 시트 URL을 입력해주세요"
               className="w-full h-12.5 px-4 rounded-10 border border-gray-100 bg-gray-100 text-body-rg text-gray-300 placeholder:text-gray-300 cursor-not-allowed"
             />
           </div>

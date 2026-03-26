@@ -210,7 +210,7 @@ export default function OwnerView({
               스프레드시트의 항목을 서비스에서 사용할 수 있도록 변환합니다.
             </p>
             <TextboxGoogle
-              placeholder="https://docs.google.com/spreadsheets..."
+              placeholder="스프레드 시트 URL을 입력해주세요"
               value={project.sheetUrl ?? ''}
               disabled
             />
