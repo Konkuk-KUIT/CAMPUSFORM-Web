@@ -223,7 +223,7 @@ export default function AddProjectForm() {
             <div className="flex gap-2 items-start relative">
               <div className="flex-1">
                 <TextboxGoogle
-                  placeholder="https://docs.google.com/spreadsheets..."
+                  placeholder="스프레드 시트 URL을 입력해주세요"
                   value={url}
                   onChange={handleUrlChange}
                 />
