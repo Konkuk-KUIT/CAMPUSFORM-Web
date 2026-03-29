@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import PullToRefresh from '@/components/PullToRefresh';
 import ApplicantCardBasic from '@/components/ui/ApplicantCardBasic';
 import CommentSection from '@/components/sections/CommentSection';
@@ -24,15 +25,8 @@ const statusMap: Record<string, string> = {
 
 const formatPhoneNumber = (phone: string) => {
   const cleaned = phone.replace(/\D/g, '');
-
-  if (cleaned.length === 11) {
-    return cleaned.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
-  }
-
-  if (cleaned.length === 10) {
-    return cleaned.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
-  }
-
+  if (cleaned.length === 11) return cleaned.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+  if (cleaned.length === 10) return cleaned.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
   return phone;
 };
 
@@ -52,26 +46,15 @@ const mapApplicant = (data: ApplicantDetail): Applicant => ({
 });
 
 export default function DocumentDetailClient({ applicantId, projectId, stage }: DocumentDetailClientProps) {
+  const searchParams = useSearchParams();
   const [applicant, setApplicant] = useState<Applicant | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isCommentOpen, setCommentOpen] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
 
-  const formatPhoneNumber = (phone: string) => {
-  const cleaned = phone.replace(/\D/g, '');
-
-  if (cleaned.length === 11) {
-    return cleaned.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
-  }
-
-  if (cleaned.length === 10) {
-    return cleaned.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
-  }
-
-  return phone;
-};
-
   const currentUserId = 1;
+
+  const scrollToCommentId = searchParams.get('commentId') ? Number(searchParams.get('commentId')) : undefined;
 
   const fetchApplicant = async () => {
     try {
@@ -91,6 +74,13 @@ export default function DocumentDetailClient({ applicantId, projectId, stage }: 
     fetchApplicant();
   }, [applicantId, projectId, stage]);
 
+  // 알림에서 openComment=true로 진입 시 바텀시트 자동 오픈
+  useEffect(() => {
+    if (searchParams.get('openComment') === 'true') {
+      setCommentOpen(true);
+    }
+  }, [searchParams]);
+
   const handleRefresh = async () => {
     try {
       await fetchApplicant();
@@ -109,9 +99,7 @@ export default function DocumentDetailClient({ applicantId, projectId, stage }: 
     }
   };
 
-  if (isLoading) {
-    return <Loading fullScreen={false} />;
-  }
+  if (isLoading) return <Loading fullScreen={false} />;
 
   if (!applicant) {
     return (
@@ -155,6 +143,7 @@ export default function DocumentDetailClient({ applicantId, projectId, stage }: 
         applicantId={applicantId}
         stage={stage}
         currentUserId={currentUserId}
+        scrollToCommentId={scrollToCommentId}
       />
     </div>
   );
