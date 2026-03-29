@@ -29,7 +29,7 @@ export default function Modal({
       <div className="relative flex flex-col w-[330px] bg-white rounded-[10px] overflow-hidden">
 
         {/* 텍스트 영역 */}
-        <div className="min-h-[80px] flex items-center px-6 py-6">
+        <div className="min-h-[80px] flex items-center pt-[30px] pl-[40px] pr-6 pb-6">
           <p className="text-body-md text-[#333333] whitespace-pre-line">
             {description}
           </p>

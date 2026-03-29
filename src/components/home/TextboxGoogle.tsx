@@ -96,7 +96,7 @@ export default function TextboxGoogle({
           onBlur={() => setIsFocused(false)}
           placeholder={placeholder}
           disabled={disabled}
-          className={`w-full h-[50px] px-4 pr-12 rounded-[5px] border outline-none transition-colors text-body-rg placeholder:text-gray-300 
+          className={`w-full h-[50px] px-4 pr-4 rounded-[5px] border outline-none transition-colors text-body-rg placeholder:text-gray-300 
             ${styles[state].background} 
             ${styles[state].border} 
             ${styles[state].text} 

@@ -176,28 +176,24 @@ export default function Reply({
 
           {/* 수정 입력창 */}
           {showEditInput && (
-            <div className="mt-3">
+            <div className="mt-3 flex gap-1.5 items-end">
               <textarea
                 value={editContent}
-                onChange={e => setEditContent(e.target.value)}
+                onChange={e => {
+                  setEditContent(e.target.value);
+                  e.target.style.height = '43px';
+                  e.target.style.height = `${e.target.scrollHeight}px`;
+                }}
                 placeholder=""
-                className="w-full border border-gray-200 rounded-5 px-3 py-2 text-body-rg text-gray-800 resize-none outline-none focus:border-primary"
-                rows={1}
+                className="flex-1 border border-gray-200 rounded-5 px-3 py-2 text-body-rg text-gray-800 resize-none outline-none focus:border-primary overflow-hidden"
+                style={{ height: '43px', minHeight: '43px' }}
               />
-              <div className="flex justify-end gap-2 mt-2">
-                <button
-                  onClick={handleEditCancel}
-                  className="px-3 py-3 rounded-5 text-body-sm-rg text-gray-500 bg-gray-100"
-                >
-                  취소
-                </button>
-                <button
-                  onClick={handleEditSubmit}
-                  className="px-3 py-3 rounded-5 text-body-sm-rg text-white bg-primary"
-                >
-                  등록
-                </button>
-              </div>
+              <button
+                onClick={handleEditSubmit}
+                className="rounded-5 text-body-xs-rg text-white bg-primary h-[43px] w-12"
+              >
+                등록
+              </button>
             </div>
           )}
         </div>

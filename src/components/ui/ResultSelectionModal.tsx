@@ -36,17 +36,19 @@ export default function ResultSelectionModal({ isOpen, onClose }: ResultSelectio
         <Link
           href={documentResultHref}
           onClick={onClose}
-          className="w-24.5 h-18.75 bg-blue-50 rounded-10 flex items-center justify-center border border-blue-300 shadow-lg"
+          className="flex items-center justify-center rounded-[15px] opacity-100 bg-[#BFCEFE] shadow-[2px_2px_10px_0px_#0000001A] py-[10px] px-[18px] gap-[10px]"
+          style={{ width: '156px', height: '80px' }}
         >
-          <span className="Body/14/Regular text-black">서류 결과</span>
+          <span className="font-[Pretendard] font-medium text-[15px] leading-[20px] tracking-[0px] text-center align-middle [font-variant-numeric:lining-nums_proportional-nums] text-black">서류 결과</span>
         </Link>
 
         <Link
           href={interviewResultHref}
           onClick={onClose}
-          className="w-24.5 h-18.75 bg-blue-50 rounded-10 flex items-center justify-center border border-blue-300 shadow-lg"
+          className="flex items-center justify-center rounded-[15px] opacity-100 bg-[#BFCEFE] shadow-[2px_2px_10px_0px_#0000001A] py-[10px] px-[18px] gap-[10px]"
+          style={{ width: '156px', height: '80px' }}
         >
-          <span className="Body/14/Regular text-black">면접 결과</span>
+          <span className="font-[Pretendard] font-medium text-[15px] leading-[20px] tracking-[0px] text-center align-middle [font-variant-numeric:lining-nums_proportional-nums] text-black">면접 결과</span>
         </Link>
       </div>
     </>,
