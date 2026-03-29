@@ -10,6 +10,7 @@ import Button from '@/components/ui/Btn';
 import ProfileCross from '@/components/ui/ProfileCross';
 import DateRangePickerModal from '@/components/home/addproject/DateRangePickerModal';
 import ConfirmModal from '@/components/ConfirmModal';
+import Loading from '@/components/ui/Loading';
 import { toast, ToastContainer } from '@/components/Toast';
 import { useNewProjectStore } from '@/store/newProjectStore';
 import { projectService } from '@/services/projectService';
@@ -47,6 +48,7 @@ export default function AddProjectForm() {
   const [adminInput, setAdminInput] = useState('');
   const [isAdminError, setIsAdminError] = useState(false);
   const [adminList, setAdminList] = useState<Admin[]>([]);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -176,7 +178,9 @@ export default function AddProjectForm() {
         await projectService.savePositionValues(createdProject.id, updatedForm.valueMappings);
       }
 
+      setIsSyncing(true);
       await projectService.syncSheet(createdProject.id);
+      setIsSyncing(false);
 
       setCreatedProjectId(createdProject.id);
       reset();
@@ -184,6 +188,7 @@ export default function AddProjectForm() {
       sessionStorage.removeItem('warningModalClosed');
       router.push(`/document/${createdProject.id}`);
     } catch (e) {
+      setIsSyncing(false);
       console.error('프로젝트 생성 오류:', e);
       toast.error('프로젝트 생성에 실패했습니다.');
     }
@@ -357,6 +362,11 @@ export default function AddProjectForm() {
 
         <div className="h-24" />
 
+        {isSyncing && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-white">
+            <Loading fullScreen={false} />
+          </div>
+        )}
         {showWarningModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
             <div className="relative w-75 bg-white rounded-[20px] px-6 py-8 flex flex-col items-center shadow-2xl animate-in fade-in zoom-in-95 duration-200">
