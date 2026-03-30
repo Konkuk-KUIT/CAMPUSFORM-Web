@@ -16,6 +16,7 @@ interface CommentSectionProps {
   applicantId: number;
   stage: CommentStage;
   currentUserId: number;
+  scrollToCommentId?: number;
 }
 
 export default function CommentSection({
@@ -25,11 +26,11 @@ export default function CommentSection({
   applicantId,
   stage,
   currentUserId,
+  scrollToCommentId,
 }: CommentSectionProps) {
   const [comments, setComments] = useState<ReplyProps[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // 서버가 트리로 주기 때문에 isAuthor만 추가
   const mapComments = (commentList: CommentResponse[]): ReplyProps[] => {
     return commentList.map(comment => ({
       ...comment,
@@ -42,7 +43,6 @@ export default function CommentSection({
   // 댓글 불러오기
   const loadComments = async () => {
     if (!applicantId) return;
-
     setIsLoading(true);
     try {
       const response = await commentService.getComments(projectId, Number(applicantId), stage);
@@ -106,7 +106,13 @@ export default function CommentSection({
   // 바텀시트 열릴 때 댓글 불러오기
   useEffect(() => {
     if (isOpen && applicantId) {
-      loadComments();
+      loadComments().then(() => {
+        if (scrollToCommentId) {
+          setTimeout(() => {
+            document.getElementById(`comment-${scrollToCommentId}`)?.scrollIntoView({ behavior: 'smooth' });
+          }, 300);
+        }
+      });
     }
   }, [isOpen, applicantId]);
 

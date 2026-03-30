@@ -21,18 +21,18 @@ function toTimeAgo(isoString: string): string {
   return `${Math.floor(hours / 24)}일 전`;
 }
 
-function buildSheetSyncMessage(message: string): string {
-  const updateMatch = message.match(/지원자 정보\((.+?)\)가 업데이트/);
-  if (updateMatch) {
-    return `${updateMatch[1]} 님의 지원서가 수정되었어요.`;
-  }
+function formatNewApplicantMessage(message: string): string {
+  const match = message.match(/새 지원자 (\d+)명\((.+?)\)/);
+  if (!match) return message;
 
-  const newMatch = message.match(/새 지원자 (\d+)명\((.+?)\)이 추가/);
-  if (newMatch) {
-    return `새 지원자 ${newMatch[1]}명(${newMatch[2]})이 추가되었어요.`;
-  }
+  const total = Number(match[1]);
+  const names = match[2].split(', ');
 
-  return message.replace('스프레드시트 동기화가 완료되었습니다. ', '');
+  if (names.length <= 2) return message;
+
+  const preview = names.slice(0, 2).join(', ');
+  const rest = total - 2;
+  return `새 지원자 ${preview} 외 ${rest}명이 추가되었습니다.`;
 }
 
 export default function NotificationForm() {
@@ -90,7 +90,9 @@ export default function NotificationForm() {
       case 'COMMENT_CREATED': {
         const stage = noti.payload.stage as string;
         const basePath = stage === 'INTERVIEW' ? 'interview' : 'document';
-        router.push(`/${basePath}/${noti.projectId}/${noti.payload.applicantId}`);
+        router.push(
+          `/${basePath}/${noti.projectId}/${noti.payload.applicantId}?openComment=true&commentId=${noti.payload.commentId}`
+        );
         break;
       }
       case 'NEW_APPLICANT':
@@ -99,9 +101,15 @@ export default function NotificationForm() {
       case 'ADMIN_ADDED':
         router.push(`/manage/${noti.projectId}`);
         break;
-      case 'SHEET_SYNC_RESULT':
-        router.push(`/manage/${noti.projectId}`);
+      case 'SHEET_SYNC_RESULT': {
+        const applicantId = noti.payload.applicantId as number;
+        if (applicantId) {
+          router.push(`/document/${noti.projectId}/${applicantId}`);
+        } else {
+          router.push(`/manage/${noti.projectId}`);
+        }
         break;
+      }
     }
   };
 
@@ -156,11 +164,9 @@ export default function NotificationForm() {
                 title={(noti.payload.projectTitle as string) ?? `프로젝트 ${noti.projectId}`}
                 subContent={noti.type === 'COMMENT_CREATED' ? `- ${noti.payload.title as string}` : undefined}
                 content={
-                  noti.type === 'SHEET_SYNC_RESULT'
-                    ? buildSheetSyncMessage(noti.payload.message as string)
-                    : noti.type === 'ADMIN_ADDED'
-                      ? '새 관리자가 추가되었어요.'
-                      : ((noti.payload.message as string) ?? '')
+                  noti.type === 'SHEET_SYNC_RESULT' && (noti.payload.message as string)?.includes('새 지원자')
+                    ? formatNewApplicantMessage(noti.payload.message as string)
+                    : ((noti.payload.message as string) ?? '')
                 }
                 timeAgo={toTimeAgo(noti.createdAt)}
                 isUnread={!noti.read}

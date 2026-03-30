@@ -90,7 +90,7 @@ export default function Reply({
   };
 
   return (
-    <div className={`${isNested ? 'ml-3' : ''} py-3 mt-1`}>
+    <div id={`comment-${commentId}`} className={`${isNested ? 'ml-3' : ''} py-3 mt-1`}>
       <div className="flex gap-3">
         {/* 프로필 이미지 */}
         <div className="shrink-0">
@@ -112,7 +112,9 @@ export default function Reply({
           <div className="flex items-start justify-between">
             <div>
               <h4 className="text-body-md text-gray-950">{authorNickname ?? '이름 없음'}</h4>
-              <p className="text-body-xs-rg text-gray-500 tracking-[0.01em] lining-nums proportional-nums">{formatDateTime(createdAt)}</p>
+              <p className="text-body-xs-rg text-gray-500 tracking-[0.01em] lining-nums proportional-nums">
+                {formatDateTime(createdAt)}
+              </p>
             </div>
 
             {/* 내 댓글일 때만 메뉴 버튼 표시 */}
