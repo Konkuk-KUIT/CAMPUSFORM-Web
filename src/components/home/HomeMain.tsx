@@ -255,7 +255,7 @@ export default function HomeMain() {
 
           {currentTab === 'calendar' ? (
             <div className="flex flex-col animate-in fade-in duration-200 items-center flex-1">
-              <section className="w-full flex justify-center shrink-0 pt-[15px]">
+              <section className="w-full flex justify-center shrink-0 pt-[16px]">
                 <Calendar
                   variant="home"
                   selected={selectedDate}
