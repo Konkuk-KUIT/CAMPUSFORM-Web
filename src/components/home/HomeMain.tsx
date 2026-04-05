@@ -312,14 +312,14 @@ export default function HomeMain() {
                     );
                   })}
               </section>
-              <div className="flex justify-center w-full">
+              <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
                 <Link
                   href="/home/addproject"
-                  className="flex items-center justify-center active:scale-95 transition-transform cursor-pointer"
+                  className="flex items-center justify-center gap-2 px-5 py-3 bg-primary text-white font-medium text-15 rounded-full hover:opacity-90 active:scale-95 transition-all cursor-pointer"
+                  style={{ filter: 'drop-shadow(0 0 10px rgba(0,0,0,0.25))' }}
                 >
-                  <div style={{ filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))' }}>
-                    <Image src="/icons/plus-blue.svg" alt="add" width={65} height={65} />
-                  </div>
+                  <span>+</span>
+                  새 프로젝트 생성
                 </Link>
               </div>
             </div>
