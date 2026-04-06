@@ -96,7 +96,7 @@ export default function Textbox({
           onBlur={() => setIsFocused(false)}
           placeholder={placeholder}
           disabled={disabled}
-          className={`w-85.75 h-12.5 px-4 pr-12 rounded-5 border outline-none transition-colors text-body-rg placeholder:text-gray-300 ${styles[state].background} ${styles[state].border} ${styles[state].text} ${disabled ? 'cursor-not-allowed' : ''}`}
+          className={`w-full h-12.5 px-4 pr-12 rounded-5 border outline-none transition-colors text-body-rg placeholder:text-gray-300 ${styles[state].background} ${styles[state].border} ${styles[state].text} ${disabled ? 'cursor-not-allowed' : ''}`}
         />
         {/* 에러 아이콘 */}
         {error && (

@@ -20,7 +20,7 @@ export default function BtnRound({
   };
 
   const btnSize = {
-    sm: 'h-[30px] px-[14px] py-[5px] text-14 rounded-[15px]', // btn_30
+    sm: 'h-[30px] px-[14px] py-[8px] text-14 rounded-[15px]', // btn_30
     md: 'h-8 px-[13px] py-[3px] text-14 rounded-[15px]', // btn_32
     lg: 'h-[40px] w-[130px] text-[15px] rounded-full', //btn_41
   };

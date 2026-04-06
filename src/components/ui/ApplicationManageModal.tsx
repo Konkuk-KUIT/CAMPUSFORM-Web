@@ -1,181 +1,361 @@
-"use client";
+'use client';
 
-import { useMemo, useState } from "react";
+import { useState, useEffect } from 'react';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import Header from '@/components/ui/Header';
+import Textbox from '@/components/ui/Textbox';
+import TextboxGoogle from '@/components/home/TextboxGoogle';
+import Button from '@/components/ui/Btn';
+import ProfileCross from '@/components/ui/ProfileCross';
+import DateRangePickerModal from '@/components/home/addproject/DateRangePickerModal';
+import ConfirmModal from '@/components/ConfirmModal';
+import { toast, ToastContainer } from '@/components/Toast';
+import { useNewProjectStore } from '@/store/newProjectStore';
+import { projectService } from '@/services/projectService';
+import { authService } from '@/services/authService';
 
-interface ApplicationManageModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  projectTitle: string;
-}
-
-interface Manager {
+interface Admin {
   id: number;
   name: string;
   email: string;
-  isLeader?: boolean;
+  profileImageUrl?: string;
+  isLeader: boolean;
 }
 
-export default function ApplicationManageModal({
-  isOpen,
-  onClose,
-  projectTitle,
-}: ApplicationManageModalProps) {
-  if (!isOpen) return null;
+export default function AddProjectForm() {
+  const router = useRouter();
+  const { setProjectForm, projectForm, reset, setCreatedProjectId, setCachedSheetHeaders } = useNewProjectStore();
+  const [showWarningModal, setShowWarningModal] = useState(true);
+  const [isDateModalOpen, setIsDateModalOpen] = useState(false);
+  const [showInfoModal, setShowInfoModal] = useState(false);
+  const [title, setTitle] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('pendingTitle') ?? '';
+    }
+    return '';
+  });
+  const [isTitleError, setIsTitleError] = useState(false);
+  const [url, setUrl] = useState(projectForm.sheetUrl ?? '');
+  const [startDate, setStartDate] = useState<Date | null>(projectForm.startAt ? new Date(projectForm.startAt) : null);
+  const [endDate, setEndDate] = useState<Date | null>(projectForm.endAt ? new Date(projectForm.endAt) : null);
+  const [adminInput, setAdminInput] = useState('');
+  const [isAdminError, setIsAdminError] = useState(false);
+  const [adminList, setAdminList] = useState<Admin[]>([]);
 
-  const [status, setStatus] = useState("모집 중");
-  const [managerInput, setManagerInput] = useState("");
-  const [managers, setManagers] = useState<Manager[]>([
-    { id: 1, name: "닉네임", email: "xxxxx@gmail.com", isLeader: true },
-    { id: 2, name: "닉네임", email: "xxxxx@gmail.com" },
-  ]);
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      const auth = await authService.getCurrentUser();
+      if (auth.isAuthenticated && auth.user) {
+        setAdminList([
+          {
+            id: auth.user.userId,
+            name: auth.user.nickname ?? '나(대표)',
+            email: auth.user.email ?? '',
+            profileImageUrl: auth.user.profileImageUrl ?? undefined,
+            isLeader: true,
+          },
+        ]);
+      }
+    };
+    fetchCurrentUser();
+  }, []);
 
-  const managerCount = useMemo(() => managers.length, [managers]);
+  const handleConnectClick = async () => {
+    if (!url.trim()) return;
 
-  const addManager = () => {
-    if (!managerInput.trim()) return;
-    setManagers((prev) => [
-      ...prev,
-      { id: Date.now(), name: managerInput.trim(), email: `${managerInput.trim()}@gmail.com` },
-    ]);
-    setManagerInput("");
+    sessionStorage.setItem('pendingSheetUrl', url);
+    sessionStorage.setItem('pendingTitle', title);
+
+    try {
+      const data = await projectService.getSheetHeaders(url);
+      sessionStorage.setItem('cachedSheetHeaders', JSON.stringify(data));
+
+      router.push(`/home/addproject/connect?sheetUrl=${encodeURIComponent(url)}`);
+    } catch {
+      try {
+        const authorizeUrl = await projectService.getGoogleAuthorizeUrl();
+        window.location.href = authorizeUrl;
+      } catch (e) {
+        console.error('OAuth URL 오류:', e);
+        toast.error('Google 인증 URL을 불러오지 못했습니다.');
+      }
+    }
   };
 
-  const removeManager = (id: number) => {
-    setManagers((prev) => prev.filter((m) => m.id !== id));
+  const handleTitleChange = (newValue: string) => {
+    setTitle(newValue);
+    setProjectForm({ title: newValue });
+    setIsTitleError(newValue.length > 40);
   };
+
+  const handleUrlChange = (newValue: string) => {
+    setUrl(newValue);
+    setProjectForm({ sheetUrl: newValue });
+  };
+
+  const handleAdminInputChange = (newValue: string) => {
+    setAdminInput(newValue);
+    if (newValue === '') setIsAdminError(false);
+  };
+
+  const handleAddAdmin = async () => {
+    if (!adminInput.trim()) return;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(adminInput)) {
+      setIsAdminError(true);
+      return;
+    }
+    setIsAdminError(false);
+
+    try {
+      const user = await authService.getUserDetailByEmail(adminInput);
+      if (!user.exists) {
+        setShowInfoModal(true);
+        return;
+      }
+      const newAdmin: Admin = {
+        id: user.userId,
+        name: user.nickname,
+        email: user.email,
+        profileImageUrl: user.profileImageUrl,
+        isLeader: false,
+      };
+      setAdminList([...adminList, newAdmin]);
+      setAdminInput('');
+    } catch (e) {
+      console.error('관리자 조회 오류:', e);
+      toast.error('사용자 정보를 불러오지 못했습니다.');
+    }
+  };
+
+  const handleDeleteAdmin = (id: number) => {
+    setAdminList(adminList.filter(admin => admin.id !== id));
+  };
+
+  const handleDateConfirm = (start: Date | null, end: Date | null) => {
+    setStartDate(start);
+    setEndDate(end);
+    setProjectForm({ startAt: formatDate(start), endAt: formatDate(end) });
+  };
+
+  const formatDate = (date: Date | null) => {
+    if (!date) return '';
+    return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date
+      .getDate()
+      .toString()
+      .padStart(2, '0')}`;
+  };
+
+  const handleSubmit = async () => {
+    try {
+      const updatedForm = {
+        ...projectForm,
+        title,
+        startAt: formatDate(startDate),
+        endAt: formatDate(endDate),
+        adminIds: adminList.filter(a => !a.isLeader).map(a => a.id),
+      };
+
+      setProjectForm(updatedForm);
+      const createdProject = await projectService.createProject(
+        updatedForm as Parameters<typeof projectService.createProject>[0]
+      );
+
+      sessionStorage.setItem(
+        `positionIdx-${createdProject.id}`,
+        String(updatedForm.requiredMappings?.positionIdx ?? -1)
+      );
+
+      await projectService.syncSheet(createdProject.id);
+
+      setCreatedProjectId(createdProject.id);
+      reset();
+      sessionStorage.removeItem('pendingTitle');
+      router.push(`/document/${createdProject.id}`);
+    } catch (e) {
+      console.error('프로젝트 생성 오류:', e);
+      toast.error('프로젝트 생성에 실패했습니다.');
+    }
+  };
+
+  const isButtonDisabled = title.length === 0 || isTitleError || !startDate || !endDate;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 px-4">
-      <div className="w-[375px] max-w-full h-[90vh] bg-gray-50 rounded-[16px] overflow-hidden flex flex-col shadow-[0_8px_24px_rgba(0,0,0,0.12)]">
-        {/* Header */}
-        <div className="relative flex items-center justify-center h-[52px] bg-white border-b border-gray-100">
-          <span className="text-[15px] font-semibold text-gray-900">지원서 관리</span>
-          <button
-            onClick={onClose}
-            className="absolute right-4 w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-100 rounded-full transition"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" stroke="currentColor" fill="none" strokeWidth="2">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-        </div>
+    <div className="flex justify-center min-h-screen bg-white">
+      <ToastContainer />
+      <style jsx global>{`
+        .react-datepicker-wrapper {
+          width: 100%;
+        }
+        .react-datepicker__header {
+          background-color: var(--color-gray-100);
+          border-bottom: none;
+        }
+        .react-datepicker__day--selected {
+          background-color: var(--color-primary) !important;
+        }
+        .react-datepicker__day--keyboard-selected {
+          background-color: var(--color-blue-500) !important;
+        }
+      `}</style>
 
-        <div className="flex-1 overflow-y-auto px-5 py-4">
-          {/* 모집 상태 */}
-          <div className="mb-5">
-            <p className="text-[13px] font-medium text-gray-800 mb-2">모집 상태</p>
-            <button
-              className="w-full h-[44px] px-3 bg-white border border-gray-200 rounded-[10px] flex items-center justify-between text-[13px] text-gray-900"
-              onClick={() => setStatus(status === "모집 중" ? "모집 완료" : "모집 중")}
-            >
-              <span>{status}</span>
-              <svg width="18" height="18" viewBox="0 0 24 24" stroke="currentColor" fill="none" strokeWidth="2">
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
-            </button>
+      <div className="relative w-93.75 bg-white min-h-screen flex flex-col">
+        <Header title="새 프로젝트 추가" backTo="/home" hideNotification={true} />
+
+        <div className="flex-1 px-5 py-6 flex flex-col gap-6 overflow-y-auto scrollbar-hide pb-10">
+          <div className="flex flex-col gap-2">
+            <label className="text-14 font-bold text-gray-950">모집 공고명</label>
+            <Textbox
+              placeholder="공고명을 입력해주세요"
+              value={title}
+              onChange={handleTitleChange}
+              error={isTitleError}
+              errorMessage="공고명은 40자 이내로 입력해주세요."
+            />
           </div>
 
-          {/* 구글폼 URL */}
-          <div className="mb-5">
-            <p className="text-[13px] font-medium text-gray-800 mb-2">구글폼 스프레드 시트 URL</p>
-            <div className="w-full h-[44px] px-3 flex items-center rounded-[10px] bg-gray-100 text-[13px] text-gray-400">
-              https://docs.google.com/spreadsheets...
-            </div>
-          </div>
-
-          {/* 모집 기간 */}
-          <div className="mb-5">
-            <p className="text-[13px] font-medium text-gray-800 mb-2">모집 기간 설정</p>
-            <div className="flex items-center gap-3 text-[13px] text-gray-800">
-              <span className="flex items-center gap-1">
-                2025-11-12
-                <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" strokeWidth="2">
-                  <rect x="3" y="5" width="18" height="16" rx="2" />
-                  <line x1="16" y1="3" x2="16" y2="7" />
-                  <line x1="8" y1="3" x2="8" y2="7" />
-                </svg>
-              </span>
-              <span className="text-gray-500">~</span>
-              <span className="flex items-center gap-1">
-                2025-11-14
-                <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" strokeWidth="2">
-                  <rect x="3" y="5" width="18" height="16" rx="2" />
-                  <line x1="16" y1="3" x2="16" y2="7" />
-                  <line x1="8" y1="3" x2="8" y2="7" />
-                </svg>
-              </span>
-            </div>
-          </div>
-
-          {/* 관리자 추가 */}
-          <div className="mb-4">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-[13px] font-medium text-gray-800">관리자 추가하기</p>
-              <span className="text-[12px] text-gray-500">({managerCount}명)</span>
-            </div>
-
-            <div className="flex gap-2 mb-3">
-              <input
-                value={managerInput}
-                onChange={(e) => setManagerInput(e.target.value)}
-                placeholder="구글 계정을 입력해주세요"
-                className="flex-1 h-[44px] px-3 border border-gray-200 rounded-[10px] text-[13px] text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-primary"
-              />
-              <button
-                onClick={addManager}
-                className="w-[60px] h-[44px] bg-primary text-white rounded-[10px] text-[13px] font-semibold hover:bg-blue-600 transition"
+          <div className="flex flex-col gap-2">
+            <label className="text-14 font-bold text-gray-950">구글폼 스프레드 시트 URL</label>
+            <p className="text-[11px] text-gray-500 leading-tight">
+              스프레드시트의 항목을 서비스에서 사용할 수 있도록 변환합니다.
+            </p>
+            <div className="flex gap-2 items-start relative">
+              <div className="flex-1">
+                <TextboxGoogle
+                  placeholder="스프레드 시트 URL을 입력해주세요"
+                  value={url}
+                  onChange={handleUrlChange}
+                />
+              </div>
+              <Button
+                variant="primary"
+                className="w-12.5! h-12.5! rounded-10! shrink-0 text-[13px] font-medium bg-white text-primary! border border-primary! hover:bg-blue-50"
+                onClick={handleConnectClick}
+                disabled={!url.trim()}
               >
-                추가
+                연동
+              </Button>
+            </div>
+          </div>
+
+          {/* ✅ 모집 기간 설정: 두 박스 + 가운데 — 구분자 */}
+          <div className="flex flex-col gap-2">
+            <label className="text-14 font-bold text-gray-950">모집 기간 설정</label>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsDateModalOpen(true)}
+                className="flex-1 h-12 flex items-center justify-between px-4 border border-gray-200 rounded-10 bg-white hover:border-primary transition-colors"
+                type="button"
+              >
+                <span className={`text-14 ${startDate ? 'text-gray-950' : 'text-gray-400'}`}>
+                  {startDate ? formatDate(startDate) : 'yyyy-mm-dd'}
+                </span>
+                <Image src="/icons/calendar.svg" alt="calendar" width={18} height={18} />
+              </button>
+
+              <span className="text-gray-400 text-14 shrink-0">—</span>
+
+              <button
+                onClick={() => setIsDateModalOpen(true)}
+                className="flex-1 h-12 flex items-center justify-between px-4 border border-gray-200 rounded-10 bg-white hover:border-primary transition-colors"
+                type="button"
+              >
+                <span className={`text-14 ${endDate ? 'text-gray-950' : 'text-gray-400'}`}>
+                  {endDate ? formatDate(endDate) : 'yyyy-mm-dd'}
+                </span>
+                <Image src="/icons/calendar.svg" alt="calendar" width={18} height={18} />
               </button>
             </div>
+          </div>
 
-            <div className="space-y-2">
-              {managers.map((manager) => (
-                <div
-                  key={manager.id}
-                  className="flex items-center justify-between bg-white border border-gray-100 rounded-[10px] px-3 py-2"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-[36px] h-[36px] rounded-full bg-gray-200" />
-                    <div className="flex flex-col text-[12px] text-gray-900 leading-tight">
-                      <div className="flex items-center gap-1">
-                        <span className="text-[13px] font-semibold">{manager.name}</span>
-                        {manager.isLeader && (
-                          <span className="px-1.5 h-[16px] text-[10px] text-primary border border-primary rounded-[4px] flex items-center justify-center">
-                            대표
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-gray-500">{manager.email}</span>
-                    </div>
-                  </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-14 font-bold text-gray-950">관리자 추가하기</label>
+            <div className="flex gap-2 items-start relative">
+              <div className="flex-1">
+                <TextboxGoogle
+                  placeholder="구글 계정을 입력해주세요"
+                  value={adminInput}
+                  onChange={handleAdminInputChange}
+                  error={isAdminError}
+                  errorMessage="유효하지 않은 이메일입니다."
+                />
+              </div>
+              <Button
+                variant="primary"
+                className="w-12.5! h-12.5! rounded-10! shrink-0 text-13 font-medium"
+                onClick={handleAddAdmin}
+              >
+                추가
+              </Button>
+            </div>
 
-                  {!manager.isLeader && (
-                    <button
-                      onClick={() => removeManager(manager.id)}
-                      className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-800"
-                    >
-                      <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" strokeWidth="2">
-                        <line x1="18" y1="6" x2="6" y2="18" />
-                        <line x1="6" y1="6" x2="18" y2="18" />
-                      </svg>
-                    </button>
-                  )}
-                </div>
+            <div className="flex flex-col mt-2">
+              {adminList.map(admin => (
+                <ProfileCross
+                  key={admin.email}
+                  nickname={admin.name}
+                  email={admin.email}
+                  profileImageUrl={admin.profileImageUrl}
+                  isLeader={admin.isLeader}
+                  onDelete={() => handleDeleteAdmin(admin.id)}
+                />
               ))}
             </div>
           </div>
         </div>
 
-        {/* Bottom action bar */}
-        <div className="h-[60px] bg-white border-t border-gray-200 flex items-center justify-between px-6 text-[11px] text-gray-500">
-          <span className="opacity-50">관리</span>
-          <span className="opacity-50">서류</span>
-          <span className="text-primary font-semibold">설정</span>
-          <span className="opacity-50">면접</span>
-          <span className="opacity-50">시간표</span>
+        {isDateModalOpen && (
+          <DateRangePickerModal
+            onClose={() => setIsDateModalOpen(false)}
+            onConfirm={handleDateConfirm}
+            initialStartDate={startDate}
+            initialEndDate={endDate}
+          />
+        )}
+
+        <ConfirmModal
+          isOpen={showInfoModal}
+          description={'아직 캠퍼스폼 회원이 아니에요.\n미가입 계정은 초대할 수 없습니다.'}
+          onConfirm={() => setShowInfoModal(false)}
+        />
+
+        <div className="fixed bottom-0 left-0 right-0 bg-white px-5 py-4 max-w-93.75 mx-auto">
+          <Button variant="primary" size="lg" disabled={isButtonDisabled} className="w-full" onClick={handleSubmit}>
+            생성하기
+          </Button>
         </div>
+
+        <div className="h-24" />
+
+        {showWarningModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+            <div className="relative w-75 bg-white rounded-[20px] px-6 py-8 flex flex-col items-center shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+              <button
+                onClick={() => setShowWarningModal(false)}
+                className="absolute top-4 right-4 w-6 h-6 flex items-center justify-center opacity-70 hover:opacity-100 transition-opacity"
+              >
+                <Image src="/icons/cross.svg" alt="close" width={14} height={14} />
+              </button>
+              <h3 className="text-[15px] font-bold text-primary mb-6 text-center">잠깐! 포지션별로 모집하시나요?</h3>
+              <div className="mb-6">
+                <Image src="/icons/warning.svg" alt="warning" width={80} height={80} />
+              </div>
+              <p className="text-[13px] text-gray-950 text-center leading-snug mb-4">
+                같은 포지션이라도 명칭이 다르면
+                <br />
+                서로 다른 그룹으로 분류될 수 있어요.
+                <br />
+                <span className="text-gray-500 text-12 mt-1 block">(예: 디자인팀 / Design팀)</span>
+              </p>
+              <p className="text-[13px] text-gray-950 text-center leading-snug">
+                원활한 분류를 위해 지원 포지션 설정에서
+                <br />
+                <span className="text-primary font-bold">포지션 명칭을 하나로 통일</span> 후 연동해 주세요.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -9,7 +9,8 @@ import TextboxGoogle from '@/components/home/TextboxGoogle';
 import Button from '@/components/ui/Btn';
 import ProfileCross from '@/components/ui/ProfileCross';
 import DateRangePickerModal from '@/components/home/addproject/DateRangePickerModal';
-import InfoModal from '@/components/ui/InfoModal';
+import ConfirmModal from '@/components/ConfirmModal';
+import Loading from '@/components/ui/Loading';
 import { toast, ToastContainer } from '@/components/Toast';
 import { useNewProjectStore } from '@/store/newProjectStore';
 import { projectService } from '@/services/projectService';
@@ -26,7 +27,12 @@ interface Admin {
 export default function AddProjectForm() {
   const router = useRouter();
   const { setProjectForm, projectForm, reset, setCreatedProjectId, setCachedSheetHeaders } = useNewProjectStore();
-  const [showWarningModal, setShowWarningModal] = useState(true);
+  const [showWarningModal, setShowWarningModal] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('warningModalClosed') !== 'true';
+    }
+    return true;
+  });
   const [isDateModalOpen, setIsDateModalOpen] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [title, setTitle] = useState(() => {
@@ -42,6 +48,7 @@ export default function AddProjectForm() {
   const [adminInput, setAdminInput] = useState('');
   const [isAdminError, setIsAdminError] = useState(false);
   const [adminList, setAdminList] = useState<Admin[]>([]);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -66,11 +73,11 @@ export default function AddProjectForm() {
 
     sessionStorage.setItem('pendingSheetUrl', url);
     sessionStorage.setItem('pendingTitle', title);
+    sessionStorage.setItem('warningModalClosed', 'true');
 
     try {
       const data = await projectService.getSheetHeaders(url);
       sessionStorage.setItem('cachedSheetHeaders', JSON.stringify(data));
-
       router.push(`/home/addproject/connect?sheetUrl=${encodeURIComponent(url)}`);
     } catch {
       try {
@@ -167,13 +174,21 @@ export default function AddProjectForm() {
         String(updatedForm.requiredMappings?.positionIdx ?? -1)
       );
 
+      if (updatedForm.valueMappings && updatedForm.valueMappings.length > 0) {
+        await projectService.savePositionValues(createdProject.id, updatedForm.valueMappings);
+      }
+
+      setIsSyncing(true);
       await projectService.syncSheet(createdProject.id);
+      setIsSyncing(false);
 
       setCreatedProjectId(createdProject.id);
       reset();
       sessionStorage.removeItem('pendingTitle');
+      sessionStorage.removeItem('warningModalClosed');
       router.push(`/document/${createdProject.id}`);
     } catch (e) {
+      setIsSyncing(false);
       console.error('프로젝트 생성 오류:', e);
       toast.error('프로젝트 생성에 실패했습니다.');
     }
@@ -205,7 +220,7 @@ export default function AddProjectForm() {
 
         <div className="flex-1 px-5 py-6 flex flex-col gap-6 overflow-y-auto scrollbar-hide pb-10">
           <div className="flex flex-col gap-2">
-            <label className="text-14 font-bold text-gray-950">모집 공고명</label>
+            <label className="text-body text-gray-950 pl-[10px]">모집 공고명</label>
             <Textbox
               placeholder="공고명을 입력해주세요"
               value={title}
@@ -216,21 +231,17 @@ export default function AddProjectForm() {
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-14 font-bold text-gray-950">구글폼 스프레드 시트 URL</label>
-            <p className="text-[11px] text-gray-500 leading-tight">
+            <label className="text-body text-gray-950 pl-[10px]">구글폼 스프레드 시트 URL</label>
+            <p className="text-[11px] text-gray-500 leading-tight pl-[10px]">
               스프레드시트의 항목을 서비스에서 사용할 수 있도록 변환합니다.
             </p>
             <div className="flex gap-2 items-start relative">
               <div className="flex-1">
-                <TextboxGoogle
-                  placeholder="https://docs.google.com/spreadsheets..."
-                  value={url}
-                  onChange={handleUrlChange}
-                />
+                <TextboxGoogle placeholder="스프레드 시트 URL을 입력해주세요" value={url} onChange={handleUrlChange} />
               </div>
               <Button
                 variant="primary"
-                className="w-12.5! h-12.5! rounded-10! shrink-0 text-[13px] font-medium bg-white text-primary! border border-primary! hover:bg-blue-50"
+                className="w-[54px]! h-[50px]! rounded-10! shrink-0 bg-white text-primary! border-[1.5px]! border-primary! hover:bg-blue-50 font-normal text-[14px] leading-[20px] tracking-[0px] text-center [font-variant-numeric:lining-nums_proportional-nums]"
                 onClick={handleConnectClick}
                 disabled={!url.trim()}
               >
@@ -240,21 +251,60 @@ export default function AddProjectForm() {
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-14 font-bold text-gray-950">모집 기간 설정</label>
-            <button
-              onClick={() => setIsDateModalOpen(true)}
-              className="w-full h-12 flex items-center justify-between px-4 text-left"
-              type="button"
-            >
-              <span className={`text-14 ${startDate ? 'text-gray-950' : 'text-gray-400'}`}>
-                {startDate && endDate ? `${formatDate(startDate)} - ${formatDate(endDate)}` : 'yyyy-mm-dd - yyyy-mm-dd'}
-              </span>
-              <Image src="/icons/calendar.svg" alt="calendar" width={18} height={18} />
-            </button>
+            <label className="text-body text-gray-950 pl-[10px]">모집 기간 설정</label>
+            <div className="flex items-center gap-[10px]">
+              <button
+                onClick={() => setIsDateModalOpen(true)}
+                className="w-40 h-10 flex items-center justify-between pt-[7px] pr-[7px] pb-[8px] pl-[15px] border border-[#EFEFEF] rounded-5 bg-white hover:border-primary transition-colors"
+                type="button"
+              >
+                <span
+                  className={
+                    startDate
+                      ? 'text-14 text-gray-950'
+                      : 'font-["Pretendard"] font-normal text-[14px] leading-[20px] tracking-[0px] align-middle text-[#B0B0B0] [font-variant-numeric:lining-nums_proportional-nums]'
+                  }
+                >
+                  {startDate ? formatDate(startDate) : 'yyyy-mm-dd'}
+                </span>
+                <Image
+                  src="/icons/calendar2.svg"
+                  alt="calendar"
+                  width={23}
+                  height={23}
+                  className={startDate ? '' : '[filter:brightness(0)_saturate(0%)_invert(82%)]'}
+                />
+              </button>
+
+              <span className="text-gray-400 text-14 shrink-0">—</span>
+
+              <button
+                onClick={() => setIsDateModalOpen(true)}
+                className="w-40 h-10 flex items-center justify-between pt-[7px] pr-[7px] pb-[8px] pl-[15px] border border-[#EFEFEF] rounded-5 bg-white hover:border-primary transition-colors"
+                type="button"
+              >
+                <span
+                  className={
+                    endDate
+                      ? 'text-14 text-gray-950'
+                      : 'font-["Pretendard"] font-normal text-[14px] leading-[20px] tracking-[0px] align-middle text-[#B0B0B0] [font-variant-numeric:lining-nums_proportional-nums]'
+                  }
+                >
+                  {endDate ? formatDate(endDate) : 'yyyy-mm-dd'}
+                </span>
+                <Image
+                  src="/icons/calendar2.svg"
+                  alt="calendar"
+                  width={23}
+                  height={23}
+                  className={endDate ? '' : '[filter:brightness(0)_saturate(0%)_invert(82%)]'}
+                />
+              </button>
+            </div>
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-14 font-bold text-gray-950">관리자 추가하기</label>
+            <label className="text-body text-gray-950 pl-[10px]">관리자 추가하기</label>
             <div className="flex gap-2 items-start relative">
               <div className="flex-1">
                 <TextboxGoogle
@@ -267,7 +317,7 @@ export default function AddProjectForm() {
               </div>
               <Button
                 variant="primary"
-                className="w-12.5! h-12.5! rounded-10! shrink-0 text-13 font-medium"
+                className="w-[54px]! h-[50px]! rounded-10! shrink-0 font-normal text-[14px] leading-[20px] tracking-[0px] text-center [font-variant-numeric:lining-nums_proportional-nums]"
                 onClick={handleAddAdmin}
               >
                 추가
@@ -298,12 +348,11 @@ export default function AddProjectForm() {
           />
         )}
 
-        {showInfoModal && (
-          <InfoModal
-            description={'아직 캠퍼스폼 회원이 아니에요.\n미가입 계정은 초대할 수 없습니다.'}
-            onConfirm={() => setShowInfoModal(false)}
-          />
-        )}
+        <ConfirmModal
+          isOpen={showInfoModal}
+          description={'아직 캠퍼스폼 회원이 아니에요.\n미가입 계정은 초대할 수 없습니다.'}
+          onConfirm={() => setShowInfoModal(false)}
+        />
 
         <div className="fixed bottom-0 left-0 right-0 bg-white px-5 py-4 max-w-93.75 mx-auto">
           <Button variant="primary" size="lg" disabled={isButtonDisabled} className="w-full" onClick={handleSubmit}>
@@ -313,6 +362,11 @@ export default function AddProjectForm() {
 
         <div className="h-24" />
 
+        {isSyncing && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-white">
+            <Loading fullScreen={false} />
+          </div>
+        )}
         {showWarningModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
             <div className="relative w-75 bg-white rounded-[20px] px-6 py-8 flex flex-col items-center shadow-2xl animate-in fade-in zoom-in-95 duration-200">
@@ -334,7 +388,7 @@ export default function AddProjectForm() {
                 <span className="text-gray-500 text-12 mt-1 block">(예: 디자인팀 / Design팀)</span>
               </p>
               <p className="text-[13px] text-gray-950 text-center leading-snug">
-                원활한 분류를 위해 해당 단계에서
+                원활한 분류를 위해 지원 포지션 설정에서
                 <br />
                 <span className="text-primary font-bold">포지션 명칭을 하나로 통일</span> 후 연동해 주세요.
               </p>

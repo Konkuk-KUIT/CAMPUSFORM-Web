@@ -56,13 +56,15 @@ const mapApplicant = (a: ApplicantRaw): InterviewApplicant => ({
   interviewStatus: statusMap[a.status] ?? '보류',
   appointmentDate: formatInterviewDate(a.interviewDate),
   appointmentTime: formatInterviewTime(a.interviewStartTime),
+  rawInterviewDate: a.interviewDate ?? null,
+  rawInterviewTime: a.interviewStartTime ?? null,
   commentCount: a.commentCount,
 });
 
 export default function InterviewContent({ projectId }: { projectId: number }) {
   const [selectedTab, setSelectedTab] = useState<'전체' | '보류' | '합격' | '불합격'>('전체');
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState('name-asc');
+  const [sortBy, setSortBy] = useState('date-asc');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isCommentOpen, setCommentOpen] = useState(false);
   const [selectedApplicantId, setSelectedApplicantId] = useState<number>(0);
@@ -136,6 +138,15 @@ export default function InterviewContent({ projectId }: { projectId: number }) {
     if (searchQuery) result = result.filter(a => a.name.toLowerCase().includes(searchQuery.toLowerCase()));
     if (selectedPosition !== '전체') result = result.filter(a => a.position === selectedPosition);
     result.sort((a, b) => {
+      if (sortBy === 'date-asc') {
+        const toMs = (app: InterviewApplicant) => {
+          if (!app.rawInterviewDate) return Infinity; // 날짜 없으면 맨 뒤
+          const dateStr = `${app.rawInterviewDate}T${app.rawInterviewTime ?? '00:00'}`;
+          const t = new Date(dateStr).getTime();
+          return isNaN(t) ? Infinity : t;
+        };
+        return toMs(a) - toMs(b);
+      }
       if (sortBy === 'name-asc') return a.name.localeCompare(b.name, 'ko');
       if (sortBy === 'name-desc') return b.name.localeCompare(a.name, 'ko');
       if (sortBy === 'star') return (favorites.has(b.applicantId) ? 1 : 0) - (favorites.has(a.applicantId) ? 1 : 0);
@@ -251,7 +262,7 @@ export default function InterviewContent({ projectId }: { projectId: number }) {
 
       <BottomSheet isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)}>
         <h2 className="text-subtitle-md">지원 포지션</h2>
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-4 flex flex-wrap gap-3.5">
           {positions.map(position => (
             <BtnRound
               key={position}

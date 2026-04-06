@@ -12,6 +12,7 @@ import SegmentedControl from '@/components/ui/SegmentedControl';
 import Calendar from '@/components/home/Calendar';
 import ScheduleList from '@/components/home/ScheduleList';
 import ProjectFilter from '@/components/home/ProjectFilter';
+import ConfirmModal from '@/components/ConfirmModal';
 import RecruitmentCard from '@/components/home/RecruitmentCard';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -29,6 +30,7 @@ export default function HomeMain() {
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
   const [isLoadingSchedules, setIsLoadingSchedules] = useState(false);
   const { closedProjectIds, openedProjectIds } = useManualCloseStore();
+  const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -84,14 +86,14 @@ export default function HomeMain() {
           // 모집 시작일
           events.push({
             date: new Date(project.startAt),
-            title: `${project.title} - 모집 시작`,
+            title: `모집 시작 - ${project.title}`,
             timeRange: '종일',
             isChecked: false,
           });
           // 모집 종료일
           events.push({
             date: new Date(project.endAt),
-            title: `${project.title} - 모집 마감`,
+            title: `모집 마감 - ${project.title}`,
             timeRange: '종일',
             isChecked: false,
           });
@@ -123,7 +125,7 @@ export default function HomeMain() {
                   
                   events.push({
                     date: interviewDateTime,
-                    title: `${project.title} - ${applicant.name} 면접`,
+                    title: `면접 - ${applicant.name} - ${project.title}`,
                     timeRange: `${endTime}`,
                     isChecked: false,
                   });
@@ -148,13 +150,13 @@ export default function HomeMain() {
         const fallbackEvents = projects.flatMap(project => [
           {
             date: new Date(project.startAt),
-            title: `${project.title} - 모집 시작`,
+            title: `모집 시작 - ${project.title}`,
             timeRange: '종일',
             isChecked: false,
           },
           {
             date: new Date(project.endAt),
-            title: `${project.title} - 모집 마감`,
+            title: `모집 마감 - ${project.title}`,
             timeRange: '종일',
             isChecked: false,
           },
@@ -168,38 +170,55 @@ export default function HomeMain() {
     fetchSchedules();
   }, [projects]);
 
-  const handleDeleteProject = async (id: number) => {
+  const handleDeleteProject = (id: number) => {
+    setDeleteTargetId(id);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTargetId) return;
     try {
-      await projectService.deleteProject(id);
-      setProjects(projects.filter(p => p.id !== id));
+      await projectService.deleteProject(deleteTargetId);
+      setProjects(projects.filter(p => p.id !== deleteTargetId));
       toast.success('프로젝트가 삭제되었습니다.');
     } catch (e) {
       console.error('프로젝트 삭제 오류:', e);
       toast.error('프로젝트 삭제에 실패했습니다.');
+    } finally {
+      setDeleteTargetId(null);
     }
   };
 
   // 일정 체크 상태 업데이트
   const handleScheduleCheck = (scheduleIndex: number, checked: boolean) => {
-    const targetSchedules = calendarEvents.filter(
-      event => event.date.toDateString() === selectedDate.toDateString()
+    if (scheduleIndex < 0 || scheduleIndex >= todaySchedules.length) return;
+    
+    const targetSchedule = todaySchedules[scheduleIndex];
+    const targetEventIndex = calendarEvents.findIndex(
+      event => 
+        event.date.toDateString() === selectedDate.toDateString() && 
+        event.title === targetSchedule.title && 
+        event.timeRange === targetSchedule.timeRange
     );
     
-    if (scheduleIndex >= 0 && scheduleIndex < targetSchedules.length) {
-      const targetEvent = targetSchedules[scheduleIndex];
-      const allEventIndex = calendarEvents.indexOf(targetEvent);
-      
-      if (allEventIndex !== -1) {
-        const updatedEvents = [...calendarEvents];
-        updatedEvents[allEventIndex] = { ...updatedEvents[allEventIndex], isChecked: checked };
-        setCalendarEvents(updatedEvents);
-      }
+    if (targetEventIndex !== -1) {
+      const updatedEvents = [...calendarEvents];
+      updatedEvents[targetEventIndex] = { 
+        ...updatedEvents[targetEventIndex], 
+        isChecked: checked 
+      };
+      setCalendarEvents(updatedEvents);
     }
   };
 
-  // 선택된 날짜의 일정 필터링
+  // 선택된 날짜의 일정 필터링 및 정렬 (언체크 위, 체크 아래)
   const todaySchedules = calendarEvents
     .filter(event => event.date.toDateString() === selectedDate.toDateString())
+    .sort((a, b) => {
+      // isChecked가 false인 것(언체크) → 위쪽
+      // isChecked가 true인 것(체크) → 아래쪽
+      if (a.isChecked === b.isChecked) return 0;
+      return a.isChecked ? 1 : -1;
+    })
     .map(event => ({
       date: event.date,
       title: event.title,
@@ -218,6 +237,12 @@ export default function HomeMain() {
   return (
     <main className="min-h-screen flex justify-center bg-gray-50">
       <ToastContainer />
+      <ConfirmModal
+        isOpen={deleteTargetId !== null}
+        description="프로젝트를 삭제하시겠습니까?"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteTargetId(null)}
+      />      
       <div className="relative w-[375px] bg-gray-50 min-h-screen flex flex-col overflow-y-auto">
         <div className="sticky top-0 z-50 bg-white">
           <TopAppBar />
@@ -230,7 +255,7 @@ export default function HomeMain() {
 
           {currentTab === 'calendar' ? (
             <div className="flex flex-col animate-in fade-in duration-200 items-center flex-1">
-              <section className="w-full flex justify-center shrink-0 pt-[15px]">
+              <section className="w-full flex justify-center shrink-0 pt-[16px]">
                 <Calendar
                   variant="home"
                   selected={selectedDate}
@@ -255,6 +280,13 @@ export default function HomeMain() {
               <section className="mt-[10px] flex flex-col items-center gap-3 pb-5 w-full px-4">
                 {projects
                   .filter(p => !isOnlyRecruiting || openedProjectIds.includes(p.id) || (p.state === 'DOCUMENT' && !closedProjectIds.includes(p.id)))
+                  .sort((a, b) => {
+                    const isActiveA = openedProjectIds.includes(a.id) || (a.state === 'DOCUMENT' && !closedProjectIds.includes(a.id));
+                    const isActiveB = openedProjectIds.includes(b.id) || (b.state === 'DOCUMENT' && !closedProjectIds.includes(b.id));
+
+                    if (isActiveA !== isActiveB) return isActiveA ? -1 : 1; // 모집중 우선
+                    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                  })
                   .map(project => {
                     const isManuallyClosed = closedProjectIds.includes(project.id);
                     const isManuallyOpened = openedProjectIds.includes(project.id);
@@ -280,14 +312,14 @@ export default function HomeMain() {
                     );
                   })}
               </section>
-              <div className="flex justify-center w-full">
+              <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
                 <Link
                   href="/home/addproject"
-                  className="flex items-center justify-center active:scale-95 transition-transform cursor-pointer"
+                  className="flex items-center justify-center gap-2 px-5 py-3 bg-primary text-white font-medium text-15 rounded-full hover:opacity-90 active:scale-95 transition-all cursor-pointer"
+                  style={{ filter: 'drop-shadow(0 0 10px rgba(0,0,0,0.25))' }}
                 >
-                  <div style={{ filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))' }}>
-                    <Image src="/icons/plus-blue.svg" alt="add" width={65} height={65} />
-                  </div>
+                  <span>+</span>
+                  새 프로젝트 생성
                 </Link>
               </div>
             </div>
@@ -295,5 +327,6 @@ export default function HomeMain() {
         </div>
       </div>
     </main>
+    
   );
 }

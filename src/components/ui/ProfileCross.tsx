@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import DeleteManagerModal from './DeleteManagerModal';
+import ConfirmModal from '@/components/ConfirmModal';
 
 interface ProfileCrossProps {
   nickname: string;
@@ -33,11 +33,11 @@ export default function ProfileCross({
 
   return (
     <>
-      <DeleteManagerModal
+      <ConfirmModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        description="관리자를 삭제하시겠습니까?"
         onConfirm={handleConfirmDelete}
-        managerName={nickname}
+        onCancel={() => setIsModalOpen(false)}
       />
 
       <div className="w-full h-16.5 bg-white flex items-center justify-between py-1 border-b border-gray-100">

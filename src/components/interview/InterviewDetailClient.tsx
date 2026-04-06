@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import PullToRefresh from '@/components/PullToRefresh';
 import ApplicantCardBasic from '@/components/interview/ApplicantCardBasic';
 import AppointmentModal from '@/components/interview/AppointmentModal';
@@ -46,11 +47,12 @@ interface InterviewDetailClientProps {
 }
 
 export default function InterviewDetailClient({
-  projectId, 
+  projectId,
   applicantId,
   initialDate = '',
   initialTime = '',
 }: InterviewDetailClientProps) {
+  const searchParams = useSearchParams();
   const [applicant, setApplicant] = useState<ApplicantDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -59,7 +61,8 @@ export default function InterviewDetailClient({
   const [appointmentDate, setAppointmentDate] = useState(decodeURIComponent(initialDate));
   const [appointmentTime, setAppointmentTime] = useState(decodeURIComponent(initialTime));
   const [currentUserId, setCurrentUserId] = useState<number>(0);
-  
+
+  const scrollToCommentId = searchParams.get('commentId') ? Number(searchParams.get('commentId')) : undefined;
 
   const formatPhoneNumber = (phone: string) => {
     const cleaned = phone.replace(/\D/g, '');
@@ -82,13 +85,19 @@ export default function InterviewDetailClient({
     fetchCurrentUser();
   }, []);
 
+  // 알림에서 openComment=true로 진입 시 바텀시트 자동 오픈
+  useEffect(() => {
+    if (searchParams.get('openComment') === 'true') {
+      setCommentOpen(true);
+    }
+  }, [searchParams]);
+
   const fetchApplicant = async () => {
     try {
       setIsLoading(true);
       const data = await applicantService.getApplicant(projectId, applicantId, 'INTERVIEW');
       setApplicant(data);
       setIsFavorite(data.favorite);
-      // API가 날짜/시간을 돌려주면 덮어쓰고, 없으면 URL params 값 유지
       if (data.interviewDate) setAppointmentDate(formatInterviewDate(data.interviewDate));
       if (data.interviewStartTime) setAppointmentTime(formatInterviewTime(data.interviewStartTime));
     } catch (e) {
@@ -179,6 +188,7 @@ export default function InterviewDetailClient({
         applicantId={applicantId}
         stage="INTERVIEW"
         currentUserId={currentUserId}
+        scrollToCommentId={scrollToCommentId}
       />
 
       <AppointmentModal

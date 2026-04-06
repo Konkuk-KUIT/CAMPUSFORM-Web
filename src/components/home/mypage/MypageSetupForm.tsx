@@ -6,7 +6,7 @@ import Button from '@/components/ui/Btn';
 import Textbox from '@/components/ui/Textbox';
 import ProfileImageButton from '@/components/auth/ProfileImageButton';
 import Header from '@/components/ui/Header';
-import ConfirmModal from '@/components/home/mypage/ConfirmModal';
+import ConfirmModal from '@/components/ConfirmModal';
 import { authService } from '@/services/authService';
 import type { User } from '@/types/auth';
 import Loading from '@/components/ui/Loading';
@@ -248,7 +248,12 @@ export default function MypageSetupForm() {
         </div>
       </div>
 
-      <ConfirmModal isOpen={showLogoutModal} onConfirm={handleLogout} onCancel={() => setShowLogoutModal(false)} />
+      <ConfirmModal
+        isOpen={showLogoutModal}
+        description="로그아웃 하시겠습니까?"
+        onConfirm={handleLogout}
+        onCancel={() => setShowLogoutModal(false)}
+      />
     </div>
   );
 }

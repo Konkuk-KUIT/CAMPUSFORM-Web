@@ -2,7 +2,7 @@
 
 import ReplyButton from '@/components/ui/ReplyButton';
 import SelectModal from '@/components/ui/SelectModal';
-import DeleteCommentModal from '@/components/document/DeleteCommentModal';
+import ConfirmModal from '@/components/ConfirmModal';
 import type { ReplyProps } from '@/types/comment';
 import Image from 'next/image';
 import { useState } from 'react';
@@ -90,7 +90,7 @@ export default function Reply({
   };
 
   return (
-    <div className={`${isNested ? 'ml-3' : ''} py-3 mt-1`}>
+    <div id={`comment-${commentId}`} className={`${isNested ? 'ml-3' : ''} py-3 mt-1`}>
       <div className="flex gap-3">
         {/* 프로필 이미지 */}
         <div className="shrink-0">
@@ -112,7 +112,9 @@ export default function Reply({
           <div className="flex items-start justify-between">
             <div>
               <h4 className="text-body-md text-gray-950">{authorNickname ?? '이름 없음'}</h4>
-              <p className="text-body-xs-rg text-gray-500">{formatDateTime(createdAt)}</p>
+              <p className="text-body-xs-rg text-gray-500 tracking-[0.01em] lining-nums proportional-nums">
+                {formatDateTime(createdAt)}
+              </p>
             </div>
 
             {/* 내 댓글일 때만 메뉴 버튼 표시 */}
@@ -176,28 +178,24 @@ export default function Reply({
 
           {/* 수정 입력창 */}
           {showEditInput && (
-            <div className="mt-3">
+            <div className="mt-3 flex gap-1.5 items-end">
               <textarea
                 value={editContent}
-                onChange={e => setEditContent(e.target.value)}
+                onChange={e => {
+                  setEditContent(e.target.value);
+                  e.target.style.height = '43px';
+                  e.target.style.height = `${e.target.scrollHeight}px`;
+                }}
                 placeholder=""
-                className="w-full border border-gray-200 rounded-5 px-3 py-2 text-body-rg text-gray-800 resize-none outline-none focus:border-primary"
-                rows={1}
+                className="flex-1 border border-gray-200 rounded-5 px-3 py-2 text-body-rg text-gray-800 resize-none outline-none focus:border-primary overflow-hidden"
+                style={{ height: '43px', minHeight: '43px' }}
               />
-              <div className="flex justify-end gap-2 mt-2">
-                <button
-                  onClick={handleEditCancel}
-                  className="px-3 py-3 rounded-5 text-body-sm-rg text-gray-500 bg-gray-100"
-                >
-                  취소
-                </button>
-                <button
-                  onClick={handleEditSubmit}
-                  className="px-3 py-3 rounded-5 text-body-sm-rg text-white bg-primary"
-                >
-                  등록
-                </button>
-              </div>
+              <button
+                onClick={handleEditSubmit}
+                className="rounded-5 text-body-xs-rg text-white bg-primary h-[43px] w-12"
+              >
+                등록
+              </button>
             </div>
           )}
         </div>
@@ -220,10 +218,11 @@ export default function Reply({
       )}
 
       {/* 삭제 확인 모달 */}
-      <DeleteCommentModal
+      <ConfirmModal
         isOpen={showDeleteModal}
-        onCancel={() => setShowDeleteModal(false)}
+        description="댓글을 삭제하시겠습니까?"
         onConfirm={handleDeleteConfirm}
+        onCancel={() => setShowDeleteModal(false)}
       />
     </div>
   );

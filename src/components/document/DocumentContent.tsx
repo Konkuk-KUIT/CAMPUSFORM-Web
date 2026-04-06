@@ -226,7 +226,7 @@ export default function DocumentContent({ projectId }: { projectId: number }) {
 
       <BottomSheet isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} className="h-[40vh] pb-8">
         <h2 className="text-subtitle-md">지원 포지션</h2>
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-4 flex flex-wrap gap-3.5">
           {positions.map(position => (
             <BtnRound
               key={position}
