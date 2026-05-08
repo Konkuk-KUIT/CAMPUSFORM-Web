@@ -8,6 +8,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/ui/Header';
 import Navbar from '@/components/Navbar';
+import SmartScheduleStepIndicator from '@/components/ui/SmartScheduleStepIndicator';
 import Btn from '@/components/ui/Btn';
 import SmartScheduleDropdown from '@/components/ui/SmartScheduleDropdown';
 import TimePicker from '@/components/ui/TimePicker';
@@ -283,6 +284,9 @@ export default function InterviewInfoSettingForm() {
       <div className="relative w-93.75 bg-white min-h-screen flex flex-col overflow-x-hidden">
         {/* Top bar */}
         <Header title="면접 정보 설정" backTo={projectId ? `/smart-schedule/${projectId}` : '/smart-schedule'} />
+
+        {/* Step Indicator */}
+        <SmartScheduleStepIndicator currentStep={1} />
 
         {/* Scrollable content */}
         <div className="flex-1 px-4 pb-4 overflow-y-auto">

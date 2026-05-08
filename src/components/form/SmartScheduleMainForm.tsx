@@ -12,6 +12,7 @@ import AllAccordion from '@/components/ui/AllAccordion';
 import SmartScheduleButton from '@/components/ui/SmartScheduleButton';
 import SmartScheduleCalendarPreview from '@/components/ui/SmartScheduleCalendarPreview';
 import NotificationBell from '@/components/ui/NotificationBell';
+import SmartScheduleStepIndicator from '@/components/ui/SmartScheduleStepIndicator';
 import { useCurrentProjectStore } from '@/store/currentProjectStore';
 import { useNewProjectStore } from '@/store/newProjectStore';
 import { projectService } from '@/services/projectService';
@@ -485,7 +486,23 @@ export default function SmartScheduleMainForm() {
           <NotificationBell />
         </header>
 
-        <div className="flex-1 px-4 pt-4 pb-4 overflow-y-auto">
+        {/* Step Indicator */}
+        <SmartScheduleStepIndicator
+          currentStep={1}
+          onStepClick={(step: number) => {
+            if (projectId) {
+              const paths: { [key: number]: string } = {
+                1: `/smart-schedule/${projectId}/setting`,
+                2: `/smart-schedule/${projectId}/interview-schedule`,
+                3: `/smart-schedule/${projectId}/applicant-submit`,
+                4: `/smart-schedule/${projectId}/result`,
+              };
+              router.push(paths[step]);
+            }
+          }}
+        />
+
+        <div className="flex-1 px-4 pt-4 pb-20 overflow-y-auto">
           <div className="mb-6">
             <button
               onClick={() => projectId && router.push(`/smart-schedule/${projectId}/setting`)}

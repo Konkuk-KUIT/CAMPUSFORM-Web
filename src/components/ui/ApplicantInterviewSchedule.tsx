@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Toggle from './Toggle';
 import Btn from './Btn';
+import SmartScheduleStepIndicator from './SmartScheduleStepIndicator';
 import { useCurrentProjectStore } from '@/store/currentProjectStore';
 import { useNewProjectStore } from '@/store/newProjectStore';
 import { projectService } from '@/services/projectService';
@@ -245,6 +246,9 @@ export default function ApplicantInterviewSchedule() {
         <h1 className="text-title flex-1 text-center text-gray-950">지원자 면접 시간 모집</h1>
         <div className="w-6"></div>
       </div>
+
+      {/* Step Indicator */}
+      <SmartScheduleStepIndicator currentStep={2} />
 
       {/* 콘텐츠 */}
       <div className="px-4 py-6 space-y-6">

@@ -5,6 +5,7 @@ import Header from '@/components/ui/Header';
 import Navbar from '@/components/Navbar';
 import Btn from '@/components/ui/Btn';
 import Checkbox from '@/components/ui/Checkbox';
+import SmartScheduleStepIndicator from '@/components/ui/SmartScheduleStepIndicator';
 
 interface InterviewSchedule {
   id: string;
@@ -93,6 +94,10 @@ export default function AIInterviewScheduleTableForm() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       <Header title="AI 면접 시간표" />
+      
+      {/* Step Indicator */}
+      <SmartScheduleStepIndicator currentStep={4} />
+      
       <div className="flex-1 px-6 py-8 max-w-7xl mx-auto w-full">
         <h1 className="text-title text-gray-950">AI 면접 시간표</h1>
         <p className="text-text-14 text-gray-500 mt-2 mb-6">전체 면접 일정을 한눈에 관리하세요</p>
