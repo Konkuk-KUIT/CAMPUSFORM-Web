@@ -1,4 +1,4 @@
-import SmartScheduleMainForm from '@/components/form/SmartScheduleMainForm';
+import InterviewInfoSettingForm from '@/components/form/InterviewInfoSettingForm';
 import ProjectIdSetter from '@/components/ProjectIdSetter';
 
 export default async function SmartSchedulePage({ params }: { params: Promise<{ projectId: string }> }) {
@@ -7,7 +7,7 @@ export default async function SmartSchedulePage({ params }: { params: Promise<{ 
   return (
     <>
       <ProjectIdSetter projectId={Number(projectId)} />
-      <SmartScheduleMainForm />
+      <InterviewInfoSettingForm />
     </>
   );
 }

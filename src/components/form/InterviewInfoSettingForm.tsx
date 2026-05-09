@@ -271,7 +271,8 @@ export default function InterviewInfoSettingForm() {
       console.log('[InterviewSetting] 면접 정보 설정 성공');
       toast.success('면접 정보가 설정되었습니다.');
       if (targetProjectId) {
-        router.push(`/smart-schedule/${targetProjectId}`);
+        // Step 2 (면접관 시간 등록)로 이동
+        router.push(`/smart-schedule/${targetProjectId}/interview-schedule`);
       }
     } catch (e) {
       console.error('[InterviewSetting] 면접 정보 설정 실패:', e);

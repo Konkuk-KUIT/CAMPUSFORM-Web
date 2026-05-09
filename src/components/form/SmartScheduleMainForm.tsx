@@ -486,31 +486,31 @@ export default function SmartScheduleMainForm() {
           <NotificationBell />
         </header>
 
-        {/* Step Indicator */}
+        {/* Step Indicator - 대시보드에서도 표시 */}
         <SmartScheduleStepIndicator
           currentStep={1}
           onStepClick={(step: number) => {
-            if (projectId) {
-              const paths: { [key: number]: string } = {
-                1: `/smart-schedule/${projectId}/setting`,
-                2: `/smart-schedule/${projectId}/interview-schedule`,
-                3: `/smart-schedule/${projectId}/applicant-submit`,
-                4: `/smart-schedule/${projectId}/result`,
-              };
-              router.push(paths[step]);
-            }
+            if (!projectId) return;
+            const paths: { [key: number]: string } = {
+              1: `/smart-schedule/${projectId}/setting`,
+              2: `/smart-schedule/${projectId}/interview-schedule`,
+              3: `/smart-schedule/${projectId}/applicant-submit`,
+              4: `/smart-schedule/${projectId}/result`,
+            };
+            router.push(paths[step]);
           }}
         />
 
-        <div className="flex-1 px-4 pt-4 pb-20 overflow-y-auto">
-          <div className="mb-6">
+        <div className="flex-1 px-4 pt-4 pb-32 overflow-y-auto space-y-6">
+          {/* 1. 면접 정보 설정 */}
+          <div>
             <button
               onClick={() => projectId && router.push(`/smart-schedule/${projectId}/setting`)}
-              className="w-full flex items-start justify-between mb-2 group cursor-pointer"
+              className="w-full flex items-start justify-between group cursor-pointer"
             >
               <div className="text-left">
-                <h3 className="text-subtitle-sm-sb text-gray-950 mb-1">1. 면접 정보 설정</h3>
-                <p className="text-body-xs text-gray-300">면접 일정과 운영 방식을 설정해 주세요.</p>
+                <h3 className="text-base font-bold text-gray-950 mb-1">1. 면접 정보 설정</h3>
+                <p className="text-xs text-gray-400">면접 일정과 운영 방식을 설정해 주세요.</p>
               </div>
               <div className="mt-1 shrink-0">
                 <Image src="/icons/chevron-right.svg" alt="next" width={24} height={24} className="w-6 h-6" />
@@ -518,245 +518,196 @@ export default function SmartScheduleMainForm() {
             </button>
           </div>
 
-          <div className="mb-6">
-            <div className="text-left mb-3">
-              <h3 className="text-subtitle-sm-sb text-gray-950 mb-1">2. 면접관 시간 등록</h3>
-              <p className="text-body-xs text-gray-300">각 면접관 별 가능한 시간을 선택해 입력합니다.</p>
-            </div>
+          {/* 2. 면접관 시간 등록 */}
+          <div>
+            <h2 className="text-base font-bold text-gray-950 mb-2">2. 면접관 시간 등록</h2>
+            <p className="text-xs text-gray-400 mb-4">각 면접관 별 가능한 시간을 선택해 입력합니다.</p>
 
-            <div className="mb-3">
-              <AllAccordion title="전체">
-                <SmartScheduleCalendarPreview
-                  seeds={interviewersWithParticipation.map((_, idx) => idx + 1)}
-                  interviewers={interviewersWithParticipation.map((int, idx) => ({
-                    ...int,
-                    isRequired: requiredInterviewers[idx] || false,
-                  }))}
-                  interviewDates={interviewDates}
-                  timeSlots={timeSlots}
-                  showInterviewerView={showInterviewerView}
-                  onShowInterviewerViewChange={setShowInterviewerView}
-                  interviewersCellActive={interviewersCellActive}
-                  currentStartDate={overviewCalendarStartDate}
-                  onCurrentStartDateChange={setOverviewCalendarStartDate}
-                />
-              </AllAccordion>
-            </div>
-
-            <div className="bg-white">
-              {interviewersWithParticipation.map((interviewer, idx) => (
-                <div key={idx}>
-                  <button
-                    onClick={() => {
-                      if (selectedInterviewer === idx) {
-                        setSelectedInterviewer(null);
-                      } else {
-                        setSelectedInterviewer(idx);
-                      }
-                    }}
-                    className="w-full h-16.5 px-0 py-1.25 flex items-center justify-between border-b border-gray-200 cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      {interviewer.profileImageUrl ? (
-                        <Image
-                          src={interviewer.profileImageUrl}
-                          alt={interviewer.name}
-                          width={35}
-                          height={35}
-                          className="w-8.75 h-8.75 rounded-full shrink-0 object-cover"
-                        />
-                      ) : (
-                        <div className="w-8.75 h-8.75 rounded-full bg-gray-200 shrink-0" />
-                      )}
-                      <div className="text-left">
-                        <div className="flex items-center gap-1.5">
-                          <p className="text-14 text-black font-normal leading-5">{interviewer.name}</p>
-                          {interviewer.isLeader && (
-                            <span className="flex items-center justify-center px-2 h-4 border border-primary rounded-full text-10 text-primary bg-white leading-tight">
-                              대표자
-                            </span>
-                          )}
-                        </div>
-                        <a className="text-12 text-gray-500 leading-4.25 tracking-[0.12px]">
-                          {interviewer.email}
-                        </a>
+            <div className="space-y-4">
+              {interviewers.map((interviewer) => (
+                <div key={interviewer.userId} className="border border-gray-200 rounded-lg overflow-hidden">
+                  {/* 면접관 정보 */}
+                  <div className="p-4 bg-gray-50 border-b border-gray-200">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-sm font-bold text-blue-600">
+                        {interviewer.name.charAt(0)}
                       </div>
+                      <div className="flex-1">
+                        <div className="text-sm font-bold text-gray-900">
+                          {interviewer.name}
+                          {interviewer.isLeader && <span className="ml-1 text-xs text-gray-500">(대표)</span>}
+                        </div>
+                        <div className="text-xs text-gray-600">{interviewer.email}</div>
+                      </div>
+                      {interviewersCellActive[interviewer.userId] && Object.keys(interviewersCellActive[interviewer.userId]).length > 0 && (
+                        <div className="px-2 py-1 bg-blue-100 rounded text-xs text-blue-600 font-semibold">
+                          {Object.keys(interviewersCellActive[interviewer.userId]).length}개 시간
+                        </div>
+                      )}
                     </div>
-                    <Image
-                      src="/icons/chevron-down.svg"
-                      alt="toggle"
-                      width={24}
-                      height={24}
-                      className={`shrink-0 w-6 h-6 ${selectedInterviewer === idx ? 'rotate-180' : ''}`}
-                    />
-                  </button>
+                  </div>
 
-                  {selectedInterviewer === idx && (
-                    <div className="w-full bg-white border-b border-gray-200 pb-3">
-                      <SmartScheduleCalendarPreview
-                        interviewerName={interviewer.name}
-                        seed={idx + 1}
-                        showProfiles={false}
-                        showRequiredSection={true}
-                        requiredInterviewer={requiredInterviewers[idx] || false}
-                        onRequiredInterviewerChange={async (value) => {
-                          if (!projectId) return;
-                          try {
-                            await projectService.updateRequiredInterviewer(projectId, interviewer.userId, value);
-                            setRequiredInterviewers(prev => ({ ...prev, [idx]: value }));
-                            toast.success(value ? '필수 면접관으로 설정되었습니다.' : '필수 면접관에서 해제되었습니다.');
-                          } catch (error) {
-                            console.error('필수 면접관 설정 실패:', error);
-                            toast.error('필수 면접관 설정에 실패했습니다.');
-                          }
-                        }}
-                        interviewDates={interviewDates}
-                        timeSlots={timeSlots}
-                        cellActive={interviewersCellActive[interviewer.userId] || {}}
-                        onCellActiveChange={newCellActive => {
-                          console.log('[UI] onCellActiveChange -', interviewer.name, 'userId:', interviewer.userId, 'newCellActive:', newCellActive);
-                          setInterviewersCellActive(prev => {
-                            const updated = {
-                              ...prev,
-                              [interviewer.userId]: newCellActive,
-                            };
-                            console.log('[UI] setInterviewersCellActive 호출, 업데이트된 값:', updated);
-                            return updated;
-                          });
-                          handleSaveInterviewerTime(interviewer.userId, interviewer.name, newCellActive);
-                        }}
-                      />
-                    </div>
-                  )}
+                  {/* 캘린더 프리뷰 */}
+                  <div className="p-4">
+                    <SmartScheduleCalendarPreview
+                      interviewerName={interviewer.name}
+                      cellActive={interviewersCellActive[interviewer.userId] || {}}
+                      onCellActiveChange={(newCellActive) =>
+                        setInterviewersCellActive(prev => ({
+                          ...prev,
+                          [interviewer.userId]: newCellActive,
+                        }))
+                      }
+                      interviewDates={interviewDates}
+                      timeSlots={timeSlots}
+                      showProfiles={false}
+                    />
+                  </div>
+
+                  {/* 저장 버튼 */}
+                  <div className="px-4 py-3 border-t border-gray-200 bg-gray-50">
+                    <button
+                      onClick={() => {
+                        const cellActive = interviewersCellActive[interviewer.userId];
+                        if (cellActive && Object.keys(cellActive).length > 0) {
+                          handleSaveInterviewerTime(interviewer.userId, interviewer.name, cellActive);
+                        } else {
+                          toast.error('선택된 시간이 없습니다.');
+                        }
+                      }}
+                      className="w-full py-2.5 px-3 bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold rounded-lg transition-colors"
+                    >
+                      {interviewer.name} 시간 저장
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="mt-6">
-            <div className="text-left mb-3">
-              <h3 className="text-subtitle-sm-sb text-gray-950 mb-1">3. 지원자 면접 가능 시간 모집</h3>
-              <p className="text-body-xs text-gray-300">
-                응답 종료 전까지 지원자가 면접 가능 시간을 입력 후 제출합니다.
-              </p>
-            </div>
+          {/* 3. 지원자 면접 가능 시간 모집 */}
+          <div>
+            <h3 className="text-base font-bold text-gray-950 mb-2">3. 지원자 면접 가능 시간 모집</h3>
+            <p className="text-xs text-gray-400 mb-4">
+              응답 종료 전까지 지원자가 면접 가능 시간을 입력 후 제출합니다.
+            </p>
 
-            <div className="bg-white p-2.5 space-y-2.5">
-              <div className="relative">
-                <input
-                  type="text"
-                  value={investigationLink || '링크를 생성해주세요'}
-                  readOnly
-                  className="w-full bg-gray-50 border border-gray-100 rounded-radius-5 px-3 py-3 pr-10 text-body-md text-gray-300 placeholder-gray-300"
-                />
+            {/* 지원자 링크 섹션 */}
+            <div className="bg-white p-4 rounded-lg border border-gray-200">
+              <div className="space-y-3">
+                {/* 링크 */}
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={investigationLink || '링크를 생성해주세요'}
+                    readOnly
+                    className="w-full bg-gray-100 border border-gray-300 rounded-lg px-4 py-3 pr-12 text-sm text-gray-600 placeholder-gray-400"
+                  />
+                  <button
+                    onClick={async () => {
+                      if (investigationLink) {
+                        const textarea = document.createElement('textarea');
+                        textarea.value = investigationLink;
+                        document.body.appendChild(textarea);
+                        textarea.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(textarea);
+                        toast.success('링크가 복사되었습니다.');
+                      }
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2"
+                  >
+                    <Image src="/icons/copy.svg" alt="copy" width={20} height={20} />
+                  </button>
+                </div>
+
+                {/* 지원자 시간 페이지 편집 */}
                 <button
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 hover:bg-gray-100 rounded transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                  aria-label="복사"
-                  disabled={!investigationLink}
-                  onClick={e => {
-                    e.stopPropagation();
-                    if (investigationLink) {
-                      navigator.clipboard.writeText(investigationLink);
-                      toast.success('링크가 복사되었습니다.');
-                    }
-                  }}
+                  onClick={() => projectId && router.push(`/smart-schedule/${projectId}/applicant-submit`)}
+                  className="w-full flex items-center justify-center gap-2 bg-blue-100 hover:bg-blue-200 text-blue-600 font-semibold py-3 px-4 rounded-lg transition-colors"
                 >
-                  <Image src="/icons/copy-gray.svg" alt="copy" width={16} height={16} className="w-4 h-4" />
+                  <Image src="/icons/edit-blue.svg" alt="edit" width={18} height={18} />
+                  지원자 시간 페이지 편집
                 </button>
-              </div>
 
-              <button
-                onClick={() => projectId && router.push(`/smart-schedule/${projectId}/interview-schedule`)}
-                className="w-full bg-blue-50 border-[0.5px] border-blue-200 rounded-10 px-2.5 py-2.5 flex items-center justify-center gap-1 hover:bg-blue-100 transition-colors cursor-pointer"
-              >
-                <span className="text-body-sm text-gray-950">지원자 시간 페이지 편집</span>
-                <Image src="/icons/edit-blue.svg" alt="edit" width={14} height={13} className="w-3.5 h-3.25" />
-              </button>
-
-              <div className="flex gap-1.25">
-                <SmartScheduleButton
-                  icon="/icons/graph.svg"
-                  iconWidth={7}
-                  iconHeight={9.3}
-                  onClick={() => projectId && router.push(`/smart-schedule/${projectId}/response-result`)}
-                >
-                  응답 결과 확인
-                </SmartScheduleButton>
-                <SmartScheduleButton showHash={true} onClick={handleCopyPhoneNumbers}>
-                  지원자 전화번호 복사
-                </SmartScheduleButton>
+                {/* 액션 버튼들 */}
+                <div className="grid grid-cols-2 gap-2">
+                  <button className="flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 px-3 rounded-lg transition-colors text-sm">
+                    <Image src="/icons/graph.svg" alt="stats" width={16} height={16} />
+                    응답 결과 확인
+                  </button>
+                  <button className="flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 px-3 rounded-lg transition-colors text-sm">
+                    <Image src="/icons/hashtag.svg" alt="tag" width={16} height={16} />
+                    지원자 전화번호 복사
+                  </button>
+                </div>
               </div>
             </div>
           </div>
+        </div>
 
-          <div className="fixed bottom-20 left-0 right-0 px-5 max-w-93.75 mx-auto">
-            <Btn
-              variant="primary"
-              size="lg"
-              className="w-full"
+        {/* 스마트 시간표 생성 버튼 */}
+        <div className="fixed bottom-20 left-0 right-0 px-5">
+          <div className="max-w-93.75 mx-auto w-full">
+            <button
               onClick={() => setShowConfirmDialog(true)}
-              disabled={isGenerating}
+              disabled={!isConfigured || isGenerating}
+              className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white font-bold py-3 px-6 rounded-lg transition-colors text-base"
             >
               {isGenerating ? '생성 중...' : '스마트 시간표 생성'}
-            </Btn>
+            </button>
           </div>
-
-          <ConfirmModal
-            isOpen={showConfirmDialog}
-            onCancel={() => setShowConfirmDialog(false)}
-            onConfirm={handleConfirm}
-            description={
-              <>
-                재설정 시 <span className="font-semibold">기존 데이터가 초기화</span>되며,
-                <br />
-                지원자들에게 다시 응답을 받아야 합니다.
-                <br />
-                진행하시겠습니까?
-              </>
-            }
-            confirmText="완료"
-          />
-
-          <UnassignedApplicantsAlert isOpen={showInfoAlert} onConfirm={handleInfoAlertConfirm} />
-
-          <div className="h-32" />
-
-          {mounted && showOverlay && isOwner && (
-            <div className="absolute left-0 right-0 top-28.75 bottom-20 flex items-center justify-center z-50 bg-white/85">
-              <div className="text-center">
-                <p className="text-subtitle-md text-gray-950 font-medium">면접 정보 설정 후 이용 가능합니다.</p>
-              </div>
-            </div>
-          )}
-
-          {mounted && showOverlay && !isOwner && (
-            <div className="absolute bg-white/85 left-0 right-0 top-12 bottom-0 flex items-center justify-center z-40">
-              <div className="text-center">
-                <p className="text-subtitle-md text-gray-950 mb-6">아직 면접 설정이 등록되지 않았습니다.</p>
-                <div className="text-body-rg text-gray-500">
-                  <p>면접 정보 설정을 원하시면</p>
-                  <p>
-                    <span className="text-body-md">대표자에게 요청</span>해주세요.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {!hasSchedule && !isRepresentative && !showOverlay && (
-            <div className="absolute bg-white/85 left-0 right-0 top-12 bottom-0 flex items-center justify-center z-40">
-              <div className="text-center">
-                <p className="text-subtitle-md text-gray-950 mb-6">생성된 스마트 시간표가 없습니다.</p>
-                <div className="text-body-rg text-gray-500">
-                  <p>다음 단계를 진행하고 싶다면</p>
-                  <p>
-                    <span className="text-body-md">대표자에게 요청</span>해주세요.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
+
+        {/* 컨펌 다이얼로그 */}
+        <ConfirmModal
+          isOpen={showConfirmDialog}
+          description="스마트 시간표를 생성하시겠습니까?\n생성된 시간표는 면접관과 지원자에게 공유됩니다."
+          onConfirm={handleConfirm}
+          onCancel={() => setShowConfirmDialog(false)}
+          confirmText="생성"
+          cancelText="취소"
+        />
+
+        <UnassignedApplicantsAlert isOpen={showInfoAlert} onConfirm={handleInfoAlertConfirm} />
+
+        <div className="h-32" />
+
+        {mounted && showOverlay && isOwner && (
+          <div className="absolute left-0 right-0 top-28.75 bottom-20 flex items-center justify-center z-50 bg-white/85">
+            <div className="text-center">
+              <p className="text-subtitle-md text-gray-950 font-medium">면접 정보 설정 후 이용 가능합니다.</p>
+            </div>
+          </div>
+        )}
+
+        {mounted && showOverlay && !isOwner && (
+          <div className="absolute bg-white/85 left-0 right-0 top-12 bottom-0 flex items-center justify-center z-40">
+            <div className="text-center">
+              <p className="text-subtitle-md text-gray-950 mb-6">아직 면접 설정이 등록되지 않았습니다.</p>
+              <div className="text-body-rg text-gray-500">
+                <p>면접 정보 설정을 원하시면</p>
+                <p>
+                  <span className="text-body-md">대표자에게 요청</span>해주세요.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {!hasSchedule && !isRepresentative && !showOverlay && (
+          <div className="absolute bg-white/85 left-0 right-0 top-12 bottom-0 flex items-center justify-center z-40">
+            <div className="text-center">
+              <p className="text-subtitle-md text-gray-950 mb-6">생성된 스마트 시간표가 없습니다.</p>
+              <div className="text-body-rg text-gray-500">
+                <p>다음 단계를 진행하고 싶다면</p>
+                <p>
+                  <span className="text-body-md">대표자에게 요청</span>해주세요.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         <Navbar />
       </div>

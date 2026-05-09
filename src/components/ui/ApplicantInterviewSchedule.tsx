@@ -3,334 +3,537 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import Toggle from './Toggle';
-import Btn from './Btn';
+import Link from 'next/link';
 import SmartScheduleStepIndicator from './SmartScheduleStepIndicator';
+import SmartScheduleCalendarPreview from './SmartScheduleCalendarPreview';
 import { useCurrentProjectStore } from '@/store/currentProjectStore';
 import { useNewProjectStore } from '@/store/newProjectStore';
+import { authService } from '@/services/authService';
 import { projectService } from '@/services/projectService';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { toast } from '@/components/Toast';
+import Navbar from '@/components/Navbar';
 
-interface ScheduleState {
-  [key: string]: boolean;
+interface InterviewSetting {
+  interviewDates: string[];
+  startTime?: string;
+  endTime?: string;
+  minInterviewers?: number;
+  maxInterviewers?: number;
+  interviewDuration?: number;
+  breakDuration?: number;
+}
+
+interface Interviewer {
+  userId: number;
+  name: string;
+  email: string;
+  profileImageUrl?: string;
+  isLeader: boolean;
 }
 
 export default function ApplicantInterviewSchedule() {
   const router = useRouter();
-  const [isRecruiting, setIsRecruiting] = useState(true);
-  const [guidance, setGuidance] = useState('');
-  const [selectedSlots, setSelectedSlots] = useState<ScheduleState>(() => {
-    // localStorage에서 초기값 로드
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('applicantInterviewSlots');
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch (e) {
-          return {};
-        }
-      }
-    }
-    return {};
-  });
-  const [isFocused, setIsFocused] = useState(false);
+  const [interviewSetting, setInterviewSetting] = useState<InterviewSetting | null>(null);
+  const [interviewers, setInterviewers] = useState<Interviewer[]>([]);
+  const [interviewersCellActive, setInterviewersCellActive] = useState<{
+    [interviewerId: number]: { [key: string]: { top: boolean; bottom: boolean } };
+  }>({});
+  const [timeSlots, setTimeSlots] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [requiredInterviewers, setRequiredInterviewers] = useState<{ [key: number]: boolean }>({});
 
   const projectId = useCurrentProjectStore(s => s.projectId);
-  const setProjectId = useCurrentProjectStore(s => s.setProjectId);
   const createdProjectId = useNewProjectStore(s => s.createdProjectId);
-  const [interviewSetting, setInterviewSetting] = useState<any>(null);
-  const [slotsSummaries, setSlotsSummaries] = useState<any[]>([]);
-  const [token, setToken] = useState<string>('');
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+
+  // 현재 로그인 사용자 정보 조회
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await authService.getCurrentUser();
+        if (response.isAuthenticated && response.user) {
+          setCurrentUserId(response.user.userId);
+        }
+      } catch (error) {
+        console.error('사용자 정보 조회 실패:', error);
+      }
+    };
+    fetchCurrentUser();
+  }, []);
 
   // 프로젝트 ID 초기화
   useEffect(() => {
-    const initializeProjectId = async () => {
-      if (projectId) return;
+    if (!projectId && createdProjectId) {
+      useCurrentProjectStore.setState({ projectId: createdProjectId });
+    }
+  }, [createdProjectId]);
 
-      if (createdProjectId) {
-        setProjectId(createdProjectId);
+  // 면접 설정 조회
+  useEffect(() => {
+    const fetchInterviewSetting = async () => {
+      if (!projectId) return;
+
+      try {
+        const setting = await projectService.getInterviewSetting(projectId);
+        console.log('[InterviewerSchedule] 면접 설정:', setting);
+        setInterviewSetting(setting);
+
+        // 시간 슬롯 생성
+        if (setting.startTime && setting.endTime) {
+          const [startHour, startMin] = setting.startTime.split(':').map(Number);
+          const [endHour, endMin] = setting.endTime.split(':').map(Number);
+          const slots: string[] = [];
+
+          let currentHour = startHour;
+          let currentMin = startMin;
+
+          while (currentHour < endHour || (currentHour === endHour && currentMin < endMin)) {
+            slots.push(`${currentHour.toString().padStart(2, '0')}:${currentMin.toString().padStart(2, '0')}`);
+            currentMin += 30;
+            if (currentMin >= 60) {
+              currentMin = 0;
+              currentHour += 1;
+            }
+          }
+
+          setTimeSlots(slots);
+        }
+      } catch (error) {
+        console.error('면접 설정 조회 실패:', error);
+      }
+    };
+
+    fetchInterviewSetting();
+  }, [projectId]);
+
+  // 면접관 목록 조회 및 가능시간 로드
+  const fetchInterviewers = async () => {
+    if (!projectId) return;
+
+    try {
+      const auth = await authService.getCurrentUser();
+      const { owner, admins } = await projectService.getProjectAdmins(projectId);
+
+      // 필수 면접관 목록 조회
+      let requiredAdminIds: number[] = [];
+      try {
+        const requiredData = await projectService.getRequiredInterviewers(projectId);
+        requiredAdminIds = requiredData.adminIds || [];
+      } catch (error) {
+        console.error('필수 면접관 목록 조회 실패:', error);
+      }
+
+      const adminList: Interviewer[] = [];
+      const newRequiredInterviewers: { [key: number]: boolean } = {};
+      const newInterviewersCellActive: {
+        [interviewerId: number]: { [key: string]: { top: boolean; bottom: boolean } };
+      } = {};
+
+      // owner 정보 추가
+      if (owner) {
+        adminList.push({
+          userId: owner.adminId,
+          name: (auth.user && auth.user.userId === owner.adminId) ? '나(대표)' : owner.adminName,
+          email: owner.email,
+          profileImageUrl: owner.profileImageUrl ?? '',
+          isLeader: true,
+        });
+        newRequiredInterviewers[owner.adminId] = requiredAdminIds.includes(owner.adminId);
+
+        // owner availability 로드
+        try {
+          const availability = await projectService.getInterviewerAvailability(projectId, owner.adminId);
+          const availabilities = availability?.availabilities || availability?.data?.availabilities || [];
+
+          if (availabilities && Array.isArray(availabilities) && availabilities.length > 0 && interviewSetting) {
+            const cellActive: { [key: string]: { top: boolean; bottom: boolean } } = {};
+            const [startHour] = interviewSetting.startTime?.split(':').map(Number) || [9];
+
+            availabilities.forEach((dayAvail: any) => {
+              const date = dayAvail.date;
+              const startTimes = dayAvail.startTimes || dayAvail.timeBlocks || [];
+
+              startTimes.forEach((startTime: any) => {
+                const timeString = typeof startTime === 'string' ? startTime : (startTime?.time || startTime?.startTime);
+                if (!timeString || typeof timeString !== 'string') return;
+                const [hour, min] = timeString.split(':').map(Number);
+                const timeIndex = hour - startHour;
+                const cellKey = `${date}-${timeIndex}`;
+                if (!cellActive[cellKey]) {
+                  cellActive[cellKey] = { top: false, bottom: false };
+                }
+                if (min === 0) cellActive[cellKey].top = true;
+                else if (min === 30) cellActive[cellKey].bottom = true;
+              });
+            });
+
+            if (Object.keys(cellActive).length > 0) {
+              newInterviewersCellActive[owner.adminId] = cellActive;
+            }
+          }
+        } catch (error: any) {
+          console.error('면접관 가능시간 조회 실패:', error);
+        }
+      }
+
+      // admins 정보 추가
+      for (const admin of admins) {
+        adminList.push({
+          userId: admin.adminId,
+          name: admin.adminName,
+          email: admin.email,
+          profileImageUrl: admin.profileImageUrl ?? '',
+          isLeader: false,
+        });
+        newRequiredInterviewers[admin.adminId] = requiredAdminIds.includes(admin.adminId);
+
+        // admin availability 로드
+        try {
+          const availability = await projectService.getInterviewerAvailability(projectId, admin.adminId);
+          const availabilities = availability?.availabilities || availability?.data?.availabilities || [];
+
+          if (availabilities && Array.isArray(availabilities) && availabilities.length > 0 && interviewSetting) {
+            const cellActive: { [key: string]: { top: boolean; bottom: boolean } } = {};
+            const [startHour] = interviewSetting.startTime?.split(':').map(Number) || [9];
+
+            availabilities.forEach((dayAvail: any) => {
+              const date = dayAvail.date;
+              const startTimes = dayAvail.startTimes || dayAvail.timeBlocks || [];
+
+              startTimes.forEach((startTime: any) => {
+                const timeString = typeof startTime === 'string' ? startTime : (startTime?.time || startTime?.startTime);
+                if (!timeString || typeof timeString !== 'string') return;
+                const [hour, min] = timeString.split(':').map(Number);
+                const timeIndex = hour - startHour;
+                const cellKey = `${date}-${timeIndex}`;
+                if (!cellActive[cellKey]) {
+                  cellActive[cellKey] = { top: false, bottom: false };
+                }
+                if (min === 0) cellActive[cellKey].top = true;
+                else if (min === 30) cellActive[cellKey].bottom = true;
+              });
+            });
+
+            if (Object.keys(cellActive).length > 0) {
+              newInterviewersCellActive[admin.adminId] = cellActive;
+            }
+          }
+        } catch (error: any) {
+          console.error('면접관 가능시간 조회 실패:', error);
+        }
+      }
+
+      setInterviewers(adminList);
+      setInterviewersCellActive(newInterviewersCellActive);
+      setRequiredInterviewers(newRequiredInterviewers);
+    } catch (error) {
+      console.error('면접관 목록 조회 실패:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (projectId && interviewSetting) {
+      fetchInterviewers();
+    }
+  }, [projectId, interviewSetting]);
+
+  const handleSaveInterviewerTime = async (userId: number, interviewerName: string, cellActive: { [key: string]: { top: boolean; bottom: boolean } }) => {
+    if (!projectId) {
+      toast.error('프로젝트가 선택되지 않았습니다.');
+      return;
+    }
+
+    if (!interviewSetting) {
+      toast.error('면접 설정을 먼저 완료해주세요.');
+      return;
+    }
+
+    if (!cellActive || Object.keys(cellActive).length === 0) {
+      toast.error('선택된 시간이 없습니다.');
+      return;
+    }
+
+    const dateMap: { [date: string]: string[] } = {};
+
+    Object.entries(cellActive).forEach(([cellKey, value]) => {
+      const parts = cellKey.split('-');
+      if (parts.length < 4) {
+        // parts.length == 3인 경우 처리
+        if (parts.length === 3) {
+          const date = `${parts[0]}-${parts[1]}-${parts[2]}`;
+          const timeIndex = parseInt(parts[3] || '0');
+
+          if (!dateMap[date]) {
+            dateMap[date] = [];
+          }
+
+          const [startHour] = interviewSetting.startTime?.split(':').map(Number) || [9];
+          const actualHour = startHour + timeIndex;
+
+          if (value.top) {
+            dateMap[date].push(`${actualHour.toString().padStart(2, '0')}:00`);
+          }
+
+          if (value.bottom) {
+            dateMap[date].push(`${actualHour.toString().padStart(2, '0')}:30`);
+          }
+        }
         return;
       }
 
-      try {
-        const projects = await projectService.getProjects();
-        if (projects.length > 0) {
-          setProjectId(projects[0].id);
-        }
-      } catch (error) {
-        console.error('프로젝트 목록 조회 실패:', error);
+      const date = `${parts[0]}-${parts[1]}-${parts[2]}`;
+      const timeIndex = parseInt(parts[3]);
+
+      if (!dateMap[date]) {
+        dateMap[date] = [];
       }
-    };
 
-    initializeProjectId();
-  }, []);
+      const [startHour] = interviewSetting.startTime?.split(':').map(Number) || [9];
+      const actualHour = startHour + timeIndex;
 
-  // 토큰 조회
-  useEffect(() => {
-    const fetchToken = async () => {
-      if (!projectId) return;
-
-      try {
-        const linkData = await projectService.getInvestigationLink(projectId);
-        console.log('[ApplicantInterview] Investigation Link:', linkData);
-
-        // 토큰 추출
-        const link = linkData?.link || linkData?.url;
-        if (link) {
-          const url = new URL(link, window.location.origin);
-          const tokenParam = url.searchParams.get('token');
-          if (tokenParam) {
-            setToken(tokenParam);
-            console.log('[ApplicantInterview] 토큰:', tokenParam);
-          }
-        }
-      } catch (error) {
-        console.log('[ApplicantInterview] 토큰 조회 실패:', error);
+      if (value.top) {
+        dateMap[date].push(`${actualHour.toString().padStart(2, '0')}:00`);
       }
-    };
 
-    fetchToken();
-  }, [projectId]);
-
-  // 면접 슬롯 조회 (공개 API)
-  useEffect(() => {
-    const fetchInterviewSlots = async () => {
-      if (!token) return;
-
-      try {
-        // 공개 API로 슬롯 조회
-        const slotsData = await projectService.getPublicInterviewSlots(token);
-        console.log('[ApplicantInterview] 공개 슬롯 API 응답:', JSON.stringify(slotsData, null, 2));
-
-        if (slotsData && slotsData.summaries && Array.isArray(slotsData.summaries)) {
-          setSlotsSummaries(slotsData.summaries);
-
-          // 날짜 정보 추출
-          const dates = slotsData.summaries.map((s: any) => s.date).filter(Boolean);
-
-          if (dates.length > 0) {
-            const setting = {
-              interviewDates: dates,
-            };
-            setInterviewSetting(setting);
-          }
-        }
-      } catch (error) {
-        console.error('면접 슬롯 조회 실패:', error);
-      }
-    };
-
-    fetchInterviewSlots();
-  }, [token]);
-
-  // 지원자 링크 설정 불러오기
-  useEffect(() => {
-    const fetchApplicantConfig = async () => {
-      if (!projectId) return;
-
-      try {
-        const config = await projectService.getApplicantLinkConfig(projectId);
-        console.log('[ApplicantInterview] 지원자 링크 설정:', config);
-
-        if (config) {
-          if (config.enabled !== undefined) {
-            setIsRecruiting(config.enabled);
-          }
-          if (config.guidanceText !== undefined && config.guidanceText !== null) {
-            setGuidance(config.guidanceText);
-          }
-        }
-      } catch (error) {
-        console.log('지원자 링크 설정 조회 실패 (미설정일 수 있음):', error);
-      }
-    };
-
-    fetchApplicantConfig();
-  }, [projectId]);
-
-  // selectedSlots 변경 시 localStorage에 저장
-  useEffect(() => {
-    if (typeof window !== 'undefined' && Object.keys(selectedSlots).length > 0) {
-      localStorage.setItem('applicantInterviewSlots', JSON.stringify(selectedSlots));
-    }
-  }, [selectedSlots]);
-
-  // 면접 시간 데이터 (API 슬롯만 사용)
-  const timeSlotsByDate: Record<string, string[]> = useMemo(() => {
-    console.log('[ApplicantInterview] timeSlotsByDate 생성 - slotsSummaries:', slotsSummaries);
-
-    if (slotsSummaries.length === 0) {
-      console.log('[ApplicantInterview] slotsSummaries가 비어있음');
-      return {};
-    }
-
-    const result: Record<string, string[]> = {};
-
-    // API에서 받은 summaries의 slots만 사용
-    slotsSummaries.forEach((summary: any, index: number) => {
-      console.log(`[ApplicantInterview] summary[${index}]:`, summary);
-
-      if (summary.date && summary.slots && Array.isArray(summary.slots) && summary.slots.length > 0) {
-        const d = new Date(summary.date);
-        const dateKey = format(d, 'M월 d일 (E)', { locale: ko });
-
-        console.log(`[ApplicantInterview] ${dateKey} - slots 개수: ${summary.slots.length}`);
-
-        const times = summary.slots
-          .map((slot: any) => {
-            console.log('[ApplicantInterview] slot:', slot);
-            return slot.startTime.substring(0, 5); // 초 제거
-          })
-          .filter((time: string) => !!time);
-
-        console.log(`[ApplicantInterview] ${dateKey} - 추출된 시간들:`, times);
-
-        if (times.length > 0) {
-          result[dateKey] = times;
-        }
+      if (value.bottom) {
+        dateMap[date].push(`${actualHour.toString().padStart(2, '0')}:30`);
       }
     });
 
-    console.log('[ApplicantInterview] 최종 timeSlotsByDate:', result);
-    return result;
-  }, [slotsSummaries]);
+    const availabilities = Object.entries(dateMap)
+      .map(([date, startTimes]) => ({
+        date,
+        startTimes: startTimes.sort(),
+      }))
+      .filter(item => item.startTimes.length > 0);
 
-  const handleTimeSlotToggle = (date: string, time: string) => {
-    const key = `${date}-${time}`;
-    setSelectedSlots(prev => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
-  };
-
-  const handleSave = async () => {
-    if (!projectId) {
-      toast.warning('프로젝트가 선택되지 않았습니다.');
+    if (availabilities.length === 0) {
+      toast.error('선택된 시간이 없습니다.');
       return;
     }
 
     try {
-      // API로 설정 저장
-      await projectService.updateApplicantLinkConfig(projectId, {
-        enabled: isRecruiting,
-        guidanceText: guidance,
-      });
-
-      const selected = Object.entries(selectedSlots)
-        .filter(([_, isSelected]) => isSelected)
-        .map(([key]) => key);
-
-      console.log('[ApplicantInterview] 저장 완료');
-      console.log('Guidance:', guidance);
-      console.log('Selected Slots:', selected);
-
-      // 스마트 시간표 페이지로 이동
-      if (projectId) {
-        router.push(`/smart-schedule/${projectId}`);
-      }
-    } catch (error) {
-      console.error('지원자 링크 설정 저장 실패:', error);
-      toast.error('저장에 실패했습니다.');
+      await projectService.updateInterviewerAvailability(projectId, userId, { availabilities });
+      toast.success(`${interviewerName}님의 시간이 저장되었습니다.`);
+      await fetchInterviewers();
+    } catch (error: any) {
+      console.error('시간 저장 실패:', error);
+      toast.error('시간 저장에 실패했습니다.');
     }
   };
 
+  const handleSaveAllInterviewers = async () => {
+    if (!projectId) {
+      toast.error('프로젝트가 선택되지 않았습니다.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      let savedCount = 0;
+
+      for (const interviewer of interviewers) {
+        const cellActive = interviewersCellActive[interviewer.userId];
+        if (cellActive && Object.keys(cellActive).length > 0) {
+          await handleSaveInterviewerTime(interviewer.userId, interviewer.name, cellActive);
+          savedCount++;
+        }
+      }
+
+      if (savedCount > 0) {
+        toast.success('면접관 시간이 모두 저장되었습니다.');
+        // Step 3로 이동 (지원자 시간 모집)
+        if (projectId) {
+          router.push(`/smart-schedule/${projectId}/applicant-submit`);
+        }
+      } else {
+        toast.error('저장할 시간 정보가 없습니다.');
+      }
+    } catch (error) {
+      console.error('저장 실패:', error);
+      toast.error('저장에 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const combinedCellActive = useMemo(() => {
+    const combined: { [key: string]: { top: boolean; bottom: boolean } } = {};
+
+    Object.entries(interviewersCellActive).forEach(([userId, cellActive]) => {
+      Object.entries(cellActive).forEach(([key, value]) => {
+        if (!combined[key]) {
+          combined[key] = { top: false, bottom: false };
+        }
+        combined[key].top = combined[key].top || value.top;
+        combined[key].bottom = combined[key].bottom || value.bottom;
+      });
+    });
+
+    return combined;
+  }, [interviewersCellActive]);
+
+  const interviewDates = interviewSetting?.interviewDates || [];
+  const dateLabel = interviewDates.length > 0 ? `${interviewDates[0]}~${interviewDates[interviewDates.length - 1]}` : '미설정';
+
+  const getInterviewDuration = () => {
+    if (interviewSetting?.interviewDuration) {
+      return `${interviewSetting.interviewDuration}분`;
+    }
+    return '30분';
+  };
+
+  const getInterviewerCount = () => {
+    const min = interviewSetting?.minInterviewers || 1;
+    const max = interviewSetting?.maxInterviewers || 2;
+    return `${min}~${max}명`;
+  };
+
   return (
-    <div className="min-h-screen bg-white pb-32">
+    <div className="min-h-screen bg-white flex flex-col">
       {/* 헤더 */}
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-2">
-        <button onClick={() => router.back()} className="flex items-center justify-center">
-          <Image src="/icons/back.svg" alt="back" width={28} height={28} />
+      <header className="flex items-center justify-between h-12 px-4 bg-white border-b border-gray-100">
+        <Link href="/home" className="w-6 h-6">
+          <Image src="/icons/logo.svg" alt="로고" width={22} height={22} className="w-5.5 h-5.5" />
+        </Link>
+        <span className="text-title">스마트 시간표</span>
+        <button className="w-6 h-6 flex items-center justify-center">
+          <Image src="/icons/alarm.svg" alt="알림" width={24} height={24} />
         </button>
-        <h1 className="text-title flex-1 text-center text-gray-950">지원자 면접 시간 모집</h1>
-        <div className="w-6"></div>
-      </div>
+      </header>
 
       {/* Step Indicator */}
-      <SmartScheduleStepIndicator currentStep={2} />
+      <SmartScheduleStepIndicator
+        currentStep={2}
+        onStepClick={(step: number) => {
+          if (projectId) {
+            const paths: { [key: number]: string } = {
+              1: `/smart-schedule/${projectId}/setting`,
+              2: `/smart-schedule/${projectId}/interview-schedule`,
+              3: `/smart-schedule/${projectId}/applicant-submit`,
+              4: `/smart-schedule/${projectId}/result`,
+            };
+            router.push(paths[step]);
+          }
+        }}
+      />
 
       {/* 콘텐츠 */}
-      <div className="px-4 py-6 space-y-6">
-        {/* 토글 섹션 */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <label className="text-subtitle-sm-md text-gray-950">지원자 응답 받기</label>
-            <Toggle checked={isRecruiting} onChange={setIsRecruiting} />
-          </div>
-          <p className="text-body-xs-rg text-gray-300">OFF 시 지원자는 시간 선택을 제출할 수 없습니다.</p>
-        </div>
+      <div className="flex-1 overflow-y-auto pb-24">
+        {/* 조회 정보 카드 */}
+        {interviewSetting && (
+          <div className="mx-4 mt-4 p-4 bg-white border-[0.5px] border-gray-200 rounded-lg mb-6">
+            {/* 날짜 정보 */}
+            <div className="flex items-start gap-3 mb-5">
+              <Image src="/icons/calendar.svg" alt="날짜" width={18} height={18} className="w-4.5 h-4.5 shrink-0 mt-0.5" />
+              <span className="text-xs text-gray-900 font-medium leading-4.5">{dateLabel}</span>
+            </div>
 
-        {/* 안내 문구 섹션 */}
-        <div className="space-y-2">
-          <label className="block text-subtitle-sm-md text-gray-950">안내 사항 문구</label>
-          <div
-            className={`bg-white border rounded-[10px] p-4 transition-colors relative shadow-[2px_2px_20px_0px_rgba(0,0,0,0.03)] ${
-              isFocused ? 'border-primary' : 'border-gray-100'
-            }`}
-          >
-            <textarea
-              value={guidance}
-              onChange={e => setGuidance(e.target.value)}
-              onFocus={() => setIsFocused(true)}
-              onBlur={() => setIsFocused(false)}
-              placeholder="면접 가능 시간 선택 위해 안내 사항을 입력하세요."
-              className="w-full bg-transparent text-body-sm-rg text-gray-950 placeholder:text-gray-400 resize-none focus:outline-none min-h-[120px]"
-            />
-          </div>
-        </div>
-
-        {/* 면접 가능 시간 섹션 */}
-        <div className="space-y-4">
-          <h2 className="text-subtitle-sm-sb text-gray-950">면접 가능 시간</h2>
-
-          {!interviewSetting ? (
-            <div className="text-center py-8 text-body-sm text-gray-300">면접 설정 정보를 불러오는 중...</div>
-          ) : Object.keys(timeSlotsByDate).length === 0 ? (
-            <div className="text-center py-8 text-body-sm text-gray-300">면접 정보 설정 후 이용 가능합니다.</div>
-          ) : (
-            Object.entries(timeSlotsByDate).map(([date, times]) => (
-              <div key={date} className="space-y-3">
-                {/* 날짜 라벨 */}
-                <h3 className="text-subtitle-sm-md text-gray-950">{date}</h3>
-
-                {/* 시간 버튼 그리드 */}
-                <div className="grid grid-cols-4 gap-2">
-                  {times.map(time => {
-                    const key = `${date}-${time}`;
-                    const isSelected = selectedSlots[key] || false;
-
-                    return (
-                      <div
-                        key={key}
-                        className={`
-                          py-2 px-3 rounded-[5px] border text-body-sm-rg
-                          flex items-center justify-center
-                          pointer-events-none
-                          ${
-                            isSelected
-                              ? 'bg-primary text-white border-primary'
-                              : 'bg-white text-gray-950 border-gray-200'
-                          }
-                        `}
-                      >
-                        {time}
-                      </div>
-                    );
-                  })}
+            {/* 시간 정보 */}
+            <div className="flex items-start gap-3 mb-5">
+              <Image src="/icons/clock.svg" alt="시간" width={18} height={18} className="w-4.5 h-4.5 shrink-0 mt-0.5" />
+              <div>
+                <div className="text-xs text-gray-900 font-medium leading-4.5">
+                  {interviewSetting.startTime} - {interviewSetting.endTime}
+                </div>
+                <div className="text-xs text-gray-600 leading-4.5 mt-0.5">
+                  (면접 {getInterviewDuration()}{interviewSetting.breakDuration ? ` · 휴식 ${interviewSetting.breakDuration}분` : ''})
                 </div>
               </div>
-            ))
-          )}
+            </div>
+
+            {/* 참여자 정보 */}
+            <div className="flex items-start gap-3">
+              <Image src="/icons/user.svg" alt="참여자" width={18} height={18} className="w-4.5 h-4.5 shrink-0 mt-0.5" />
+              <span className="text-xs text-gray-900 font-medium leading-4.5">지원자 최대 3명 · 면접관 {getInterviewerCount()}</span>
+            </div>
+          </div>
+        )}
+
+        {/* 면접관 별 시간 등록 */}
+        <div className="px-4 mb-6">
+          <h2 className="text-base font-bold text-gray-950 mb-2">면접관 시간 등록</h2>
+          <p className="text-xs text-gray-400 mb-4">각 면접관 별 가능한 시간을 선택해 입력합니다.</p>
+
+          <div className="space-y-4">
+            {interviewers.map((interviewer) => (
+              <div key={interviewer.userId} className="border border-gray-200 rounded-lg overflow-hidden">
+                {/* 면접관 정보 */}
+                <div className="p-4 bg-gray-50 border-b border-gray-200">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-sm font-bold text-blue-600">
+                      {interviewer.name.charAt(0)}
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-sm font-bold text-gray-900">
+                        {interviewer.name}
+                        {interviewer.isLeader && <span className="ml-1 text-xs text-gray-500">(대표)</span>}
+                      </div>
+                      <div className="text-xs text-gray-600">{interviewer.email}</div>
+                    </div>
+                    {interviewersCellActive[interviewer.userId] && Object.keys(interviewersCellActive[interviewer.userId]).length > 0 && (
+                      <div className="px-2 py-1 bg-blue-100 rounded text-xs text-blue-600 font-semibold">
+                        {Object.keys(interviewersCellActive[interviewer.userId]).length}개 시간
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* 캘린더 프리뷰 */}
+                <div className="p-4">
+                  <SmartScheduleCalendarPreview
+                    interviewerName={interviewer.name}
+                    cellActive={interviewersCellActive[interviewer.userId] || {}}
+                    onCellActiveChange={(newCellActive) =>
+                      setInterviewersCellActive(prev => ({
+                        ...prev,
+                        [interviewer.userId]: newCellActive,
+                      }))
+                    }
+                    interviewDates={interviewDates.map(d => new Date(d))}
+                    timeSlots={timeSlots}
+                    showProfiles={false}
+                  />
+                </div>
+
+                {/* 저장 버튼 */}
+                <div className="px-4 py-3 border-t border-gray-200 bg-gray-50">
+                  <button
+                    onClick={() => {
+                      const cellActive = interviewersCellActive[interviewer.userId];
+                      if (cellActive && Object.keys(cellActive).length > 0) {
+                        handleSaveInterviewerTime(interviewer.userId, interviewer.name, cellActive);
+                      } else {
+                        toast.error('선택된 시간이 없습니다.');
+                      }
+                    }}
+                    className="w-full py-2.5 px-3 bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold rounded-lg transition-colors"
+                  >
+                    {interviewer.name} 시간 저장
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* 저장 버튼 */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 flex justify-center">
-        <Btn onClick={handleSave} disabled={!isRecruiting} variant="primary" size="lg">
-          저장하기
-        </Btn>
+      {/* 모두 저장 버튼 */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 flex justify-center">
+        <button
+          onClick={handleSaveAllInterviewers}
+          disabled={loading || interviewers.length === 0}
+          className="w-full max-w-sm bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white font-bold py-3.5 px-6 rounded-xl transition-colors text-base"
+        >
+          {loading ? '저장 중...' : '다음 단계로'}
+        </button>
       </div>
+
+      {/* Navbar */}
+      <Navbar />
     </div>
   );
 }

@@ -414,7 +414,7 @@ export default function ApplicantInterviewSubmitForm() {
         <h1 className="text-title text-gray-950">{projectTitle}</h1>
       </div>
 
-      {/* 안내 문구 박스 */}}
+      {/* 안내 문구 박스 */}
       {guidanceText && (
         <div className="bg-blue-50 min-h-[98px] flex items-center px-4 py-4">
           <p className="text-body-sm-rg text-gray-950 whitespace-pre-line">{guidanceText}</p>

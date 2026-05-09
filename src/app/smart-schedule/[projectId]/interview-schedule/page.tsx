@@ -1,4 +1,4 @@
-import ApplicantInterviewSchedule from '@/components/ui/ApplicantInterviewSchedule';
+import InterviewerAvailabilityForm from '@/components/form/InterviewerAvailabilityForm';
 import ProjectIdSetter from '@/components/ProjectIdSetter';
 
 export default async function InterviewSchedulePage({ params }: { params: Promise<{ projectId: string }> }) {
@@ -7,7 +7,7 @@ export default async function InterviewSchedulePage({ params }: { params: Promis
   return (
     <>
       <ProjectIdSetter projectId={Number(projectId)} />
-      <ApplicantInterviewSchedule />
+      <InterviewerAvailabilityForm />
     </>
   );
 }
