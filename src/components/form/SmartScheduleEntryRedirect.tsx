@@ -5,84 +5,94 @@ import { useRouter } from 'next/navigation';
 
 import { useCurrentProjectStore } from '@/store/currentProjectStore';
 import { projectService } from '@/services/projectService';
-import { getSmartSchedulePreview } from '@/services/smartScheduleService';
-
-const toArray = (value: any) => {
-  if (Array.isArray(value)) return value;
-  if (!value) return [];
-  return [value];
-};
-
-const hasAssignedScheduleFromSlotData = (slotData: any) => {
-  const rawDays =
-    slotData?.summaries ??
-    slotData?.days ??
-    slotData?.data?.summaries ??
-    slotData?.data?.days ??
-    slotData?.interviewSchedules ??
-    slotData?.data?.interviewSchedules ??
-    slotData?.schedules ??
-    slotData?.data?.schedules ??
-    slotData?.slotsByDate ??
-    slotData?.data?.slotsByDate ??
-    [];
-
-  return toArray(rawDays).some((day: any) => {
-    const rawSlots =
-      day?.slots ??
-      day?.timeSlots ??
-      day?.schedules ??
-      day?.interviewSlots ??
-      day?.interviews ??
-      day?.items ??
-      [];
-
-    return toArray(rawSlots).some((slot: any) => {
-      const applicants =
-        slot?.applicants ??
-        slot?.assignedApplicants ??
-        slot?.applicantSummaries ??
-        slot?.applicationUsers ??
-        slot?.applications ??
-        slot?.participants ??
-        slot?.applicantList ??
-        slot?.applicantInfos ??
-        slot?.applicationInfos ??
-        [];
-
-      const interviewers =
-        slot?.interviewers ??
-        slot?.assignedInterviewers ??
-        slot?.interviewerSummaries ??
-        slot?.admins ??
-        slot?.adminList ??
-        slot?.interviewerList ??
-        slot?.interviewerInfos ??
-        slot?.adminInfos ??
-        [];
-
-      return toArray(applicants).length > 0 || toArray(interviewers).length > 0;
-    });
-  });
-};
 
 export default function SmartScheduleEntryRedirect() {
   const router = useRouter();
   const projectId = useCurrentProjectStore(s => s.projectId);
 
   useEffect(() => {
+    const toArray = (value: any) => {
+      if (Array.isArray(value)) return value;
+      if (!value) return [];
+      return [value];
+    };
+
+    const getRawDays = (data: any) => {
+      return (
+        data?.days ??
+        data?.data?.days ??
+        data?.summaries ??
+        data?.data?.summaries ??
+        data?.interviewSchedules ??
+        data?.data?.interviewSchedules ??
+        data?.schedules ??
+        data?.data?.schedules ??
+        data?.slotsByDate ??
+        data?.data?.slotsByDate ??
+        []
+      );
+    };
+
+    const hasAssignedSchedule = (data: any) => {
+      const rawDays = getRawDays(data);
+
+      if (!Array.isArray(rawDays)) return false;
+
+      return rawDays.some((day: any) => {
+        const slots = toArray(
+          day?.slots ??
+            day?.timeSlots ??
+            day?.schedules ??
+            day?.interviewSlots ??
+            day?.interviews ??
+            day?.items,
+        );
+
+        return slots.some((slot: any) => {
+          const applicants = toArray(
+            slot?.applicants ??
+              slot?.assignedApplicants ??
+              slot?.applicantSummaries ??
+              slot?.applicationUsers ??
+              slot?.applications ??
+              slot?.participants ??
+              slot?.applicantList ??
+              slot?.applicantInfos ??
+              slot?.applicationInfos,
+          );
+
+          const interviewers = toArray(
+            slot?.interviewers ??
+              slot?.assignedInterviewers ??
+              slot?.interviewerSummaries ??
+              slot?.admins ??
+              slot?.adminList ??
+              slot?.interviewerList ??
+              slot?.interviewerInfos ??
+              slot?.adminInfos,
+          );
+
+          return applicants.length > 0 || interviewers.length > 0;
+        });
+      });
+    };
+
     const redirectBySmartScheduleStatus = async () => {
       if (!projectId) return;
 
-      /**
-       * 1. 확정된 면접 슬롯을 먼저 확인한다.
-       * 단, interview-slots는 Step1 설정만 완료해도 빈 슬롯을 반환할 수 있으므로
-       * 지원자/면접관 배정 데이터가 있을 때만 확정된 시간표로 판단한다.
-       */
+      if (typeof window !== 'undefined') {
+        const cached = sessionStorage.getItem(`smartScheduleResult:${projectId}`);
+
+        if (cached) {
+          router.replace(`/smart-schedule/${projectId}/result`);
+          return;
+        }
+      }
+
       try {
         const slotData = await projectService.getInterviewSlots(projectId);
 
-        if (hasAssignedScheduleFromSlotData(slotData)) {
+        if (hasAssignedSchedule(slotData)) {
           router.replace(`/smart-schedule/${projectId}/result`);
           return;
         }
@@ -95,45 +105,11 @@ export default function SmartScheduleEntryRedirect() {
       }
 
       /**
-       * 2. 확정 슬롯이 없을 때만 스마트 시간표 preview 확인
+       * 확정 여부를 판단할 수 있는 API는 현재 interview-slots의 배정 데이터뿐이다.
+       * GET smart-schedule은 생성 전 preview API라 미생성 상태에서 409를 만들 수 있으므로,
+       * 네비바 진입점에서는 호출하지 않는다.
        */
-      try {
-        const previewResponse = await getSmartSchedulePreview(projectId);
-        const previewData = previewResponse?.data;
 
-        const days =
-          previewData?.days ??
-          previewData?.data?.days ??
-          previewData?.schedule?.days ??
-          previewData?.smartSchedule?.days ??
-          [];
-
-        const unassignedApplicants =
-          previewData?.unassignedApplicants ??
-          previewData?.data?.unassignedApplicants ??
-          previewData?.schedule?.unassignedApplicants ??
-          previewData?.smartSchedule?.unassignedApplicants ??
-          [];
-
-        const hasPreviewSchedule =
-          (Array.isArray(days) && days.length > 0) ||
-          (Array.isArray(unassignedApplicants) && unassignedApplicants.length > 0);
-
-        if (hasPreviewSchedule) {
-          router.replace(`/smart-schedule/${projectId}/result`);
-          return;
-        }
-      } catch (error: any) {
-        const status = error?.response?.status;
-
-        if (status !== 409) {
-          console.warn('[SmartScheduleEntry] 스마트 시간표 preview 조회 실패');
-        }
-      }
-
-      /**
-       * 3. 시간표가 아직 없으면 면접 정보 설정 여부에 따라 이동
-       */
       try {
         const setting = await projectService.getInterviewSetting(projectId);
 

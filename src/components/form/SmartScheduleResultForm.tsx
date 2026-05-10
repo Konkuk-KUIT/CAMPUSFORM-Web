@@ -180,38 +180,18 @@ export default function SmartScheduleResultForm() {
     };
   };
 
-  const normalizePreviewDays = (data: any): DateSchedule[] => {
-    const rawDays = data?.days ?? data?.data?.days ?? [];
-
-    if (!Array.isArray(rawDays)) return [];
-
-    return rawDays.map((day: any) => ({
-      date: day.date ?? day.interviewDate ?? day.day ?? '',
-      slots: toArray(day.slots ?? day.timeSlots ?? day.schedules).map((slot: any) => ({
-        startTime: slot.startTime ?? slot.start ?? slot.interviewStartTime ?? '',
-        endTime: slot.endTime ?? slot.end ?? slot.interviewEndTime ?? '',
-        applicants: toArray(slot.applicants ?? slot.assignedApplicants)
-          .map(normalizeApplicant)
-          .filter((applicant: Applicant) => applicant.name),
-        interviewers: toArray(slot.interviewers ?? slot.assignedInterviewers ?? slot.admins)
-          .map(normalizeInterviewer)
-          .filter((interviewer: Interviewer) => interviewer.name),
-      })),
-    }));
-  };
-
-  const normalizeConfirmedSlots = (slotData: any): DateSchedule[] => {
+  const normalizeScheduleDays = (data: any): DateSchedule[] => {
     const rawDays =
-      slotData?.summaries ??
-      slotData?.days ??
-      slotData?.data?.summaries ??
-      slotData?.data?.days ??
-      slotData?.interviewSchedules ??
-      slotData?.data?.interviewSchedules ??
-      slotData?.schedules ??
-      slotData?.data?.schedules ??
-      slotData?.slotsByDate ??
-      slotData?.data?.slotsByDate ??
+      data?.days ??
+      data?.data?.days ??
+      data?.summaries ??
+      data?.data?.summaries ??
+      data?.interviewSchedules ??
+      data?.data?.interviewSchedules ??
+      data?.schedules ??
+      data?.data?.schedules ??
+      data?.slotsByDate ??
+      data?.data?.slotsByDate ??
       [];
 
     if (!Array.isArray(rawDays)) return [];
@@ -279,18 +259,29 @@ export default function SmartScheduleResultForm() {
     });
   };
 
-  const fetchConfirmedSchedule = async () => {
+  const hasAssignedSchedule = (days: DateSchedule[]) => {
+    return days.some(day =>
+      day.slots.some(slot => slot.applicants.length > 0 || slot.interviewers.length > 0),
+    );
+  };
+
+  const applyScheduleResult = (data: any, confirmed: boolean) => {
+    const normalized = normalizeScheduleDays(data);
+    setScheduleData(normalized);
+    setUnassignedApplicants(data?.unassignedApplicants ?? data?.data?.unassignedApplicants ?? []);
+    setIsConfirmed(confirmed);
+
+    return normalized;
+  };
+
+  const fetchAssignedSchedule = async () => {
     if (!projectId) return false;
 
     try {
       const slotData = await projectService.getInterviewSlots(projectId);
-      const normalized = normalizeConfirmedSlots(slotData);
+      const normalized = normalizeScheduleDays(slotData);
 
-      const hasConfirmedSchedule = normalized.some(day =>
-        day.slots.some(slot => slot.applicants.length > 0 || slot.interviewers.length > 0),
-      );
-
-      if (hasConfirmedSchedule) {
+      if (hasAssignedSchedule(normalized)) {
         setScheduleData(normalized);
         setUnassignedApplicants([]);
         setIsConfirmed(true);
@@ -329,23 +320,33 @@ export default function SmartScheduleResultForm() {
         setInterviewSetting(null);
       }
 
-      /**
-       * 중요:
-       * 확정 이후에는 smart-schedule preview API가 409를 줄 수 있으므로,
-       * result 페이지에서는 확정 슬롯 API를 먼저 조회한다.
-       */
-      const hasConfirmedSchedule = await fetchConfirmedSchedule();
+      if (typeof window !== 'undefined') {
+        const cached = sessionStorage.getItem(`smartScheduleResult:${projectId}`);
 
-      if (hasConfirmedSchedule) {
+        if (cached) {
+          try {
+            const parsed = JSON.parse(cached);
+            const normalized = applyScheduleResult(parsed, true);
+
+            if (normalized.length > 0) {
+              return;
+            }
+          } catch {
+            sessionStorage.removeItem(`smartScheduleResult:${projectId}`);
+          }
+        }
+      }
+
+      const hasAssigned = await fetchAssignedSchedule();
+
+      if (hasAssigned) {
         return;
       }
 
       try {
         const res = await getSmartSchedulePreview(projectId);
         const data = res.data;
-
-        setScheduleData(normalizePreviewDays(data));
-        setUnassignedApplicants(data.unassignedApplicants || []);
+        const normalized = applyScheduleResult(data, false);
 
         const confirmed =
           data.confirmed === true ||
@@ -353,7 +354,7 @@ export default function SmartScheduleResultForm() {
           data.status === 'CONFIRMED' ||
           data.scheduleStatus === 'CONFIRMED';
 
-        setIsConfirmed(confirmed);
+        setIsConfirmed(confirmed && hasAssignedSchedule(normalized));
       } catch (error: any) {
         const status = error?.response?.status;
 

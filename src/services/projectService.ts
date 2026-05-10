@@ -235,19 +235,23 @@ class ProjectService {
   }
   // POST : 스마트 시간표 생성 및 확정
   async generateSmartSchedule(projectId: number, userId?: number): Promise<any> {
-    const response = await apiClient.post(
-      `/projects/${projectId}/interview/smart-schedule`,
-      null,
-      userId ? { params: { userId } } : undefined,
-    );
+    const response = await apiClient.post(`/projects/${projectId}/interview/smart-schedule`, null, {
+      params: userId ? { userId } : undefined,
+    });
 
     return response.data;
   }
 
-  // POST : 스마트 시간표 생성 및 확정
-  // 기존 호출부 호환용 alias. 새 코드에서는 generateSmartSchedule(projectId, userId)를 사용한다.
-  async confirmSmartSchedule(projectId: number, userId?: number): Promise<any> {
-    return this.generateSmartSchedule(projectId, userId);
+  // GET : 스마트 시간표 생성 미리보기
+  async getSmartSchedulePreview(projectId: number): Promise<any> {
+    const response = await apiClient.get(`/projects/${projectId}/interview/smart-schedule`);
+    return response.data;
+  }
+
+  // TODO: 백엔드 초기화 API 확정 후 실제 경로로 교체
+  async resetSmartScheduleFromStep(projectId: number, step: 1 | 2): Promise<{ success: boolean }> {
+    console.warn('[ProjectService] resetSmartScheduleFromStep API 미연동', { projectId, step });
+    return { success: true };
   }
 }
 

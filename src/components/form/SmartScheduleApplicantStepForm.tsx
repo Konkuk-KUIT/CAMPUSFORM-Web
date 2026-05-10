@@ -14,8 +14,8 @@ import SmartScheduleSummaryCard from '@/components/ui/SmartScheduleSummaryCard';
 
 import { useCurrentProjectStore } from '@/store/currentProjectStore';
 import { projectService } from '@/services/projectService';
-import { authService } from '@/services/authService';
 import { documentResultService } from '@/services/documentResultService';
+import { authService } from '@/services/authService';
 import { toast } from '@/components/Toast';
 
 type SmartScheduleStep = 1 | 2 | 3 | 4;
@@ -49,8 +49,8 @@ export default function SmartScheduleApplicantStepForm() {
     if (!projectId) return;
 
     const paths: Record<SmartScheduleStep, string> = {
-      1: `/smart-schedule/${projectId}/setting?readonly=true`,
-      2: `/smart-schedule/${projectId}/interview-schedule?readonly=true`,
+      1: `/smart-schedule/${projectId}/setting`,
+      2: `/smart-schedule/${projectId}/interview-schedule`,
       3: `/smart-schedule/${projectId}/applicant`,
       4: `/smart-schedule/${projectId}/result`,
     };
@@ -181,11 +181,15 @@ export default function SmartScheduleApplicantStepForm() {
       const userId = auth.user?.userId;
 
       if (!userId) {
-        toast.error('사용자 정보를 확인할 수 없습니다.');
+        toast.error('사용자 정보를 확인하지 못했습니다. 다시 로그인해주세요.');
         return;
       }
 
-      await projectService.generateSmartSchedule(projectId, userId);
+      const result = await projectService.generateSmartSchedule(projectId, userId);
+
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem(`smartScheduleResult:${projectId}`, JSON.stringify(result));
+      }
 
       toast.success('스마트 시간표가 생성되었습니다.');
       router.push(`/smart-schedule/${projectId}/result`);
@@ -223,11 +227,7 @@ export default function SmartScheduleApplicantStepForm() {
       <div className="relative w-93.75 bg-white min-h-screen flex flex-col overflow-x-hidden">
         <Header
           title="지원자 시간 모집"
-          backTo={
-            projectId
-              ? `/smart-schedule/${projectId}/interview-schedule?readonly=true`
-              : '/smart-schedule'
-          }
+          backTo={projectId ? `/smart-schedule/${projectId}/interview-schedule` : '/smart-schedule'}
         />
 
         <SmartScheduleStepIndicator
