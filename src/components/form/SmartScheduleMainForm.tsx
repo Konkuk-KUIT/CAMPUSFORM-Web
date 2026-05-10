@@ -475,6 +475,22 @@ export default function SmartScheduleMainForm() {
     }));
   }, [interviewers, interviewersCellActive, requiredInterviewers]);
 
+
+  const handleStepClick = (step: 1 | 2 | 3 | 4) => {
+    if (!projectId) return;
+
+    const paths: Record<1 | 2 | 3 | 4, string> = {
+      1: `/smart-schedule/${projectId}/setting`,
+      2: `/smart-schedule/${projectId}/interview-schedule`,
+      3: `/smart-schedule/${projectId}/applicant-submit`,
+      4: `/smart-schedule/${projectId}/result`,
+    };
+
+    router.push(paths[step]);
+  };
+
+  const maxAccessibleStep: 1 | 2 | 3 | 4 = isConfigured ? 3 : 1;
+
   return (
     <main className="min-h-screen flex justify-center bg-white">
       <div className="relative w-93.75 bg-white min-h-screen flex flex-col overflow-x-hidden">
@@ -489,16 +505,8 @@ export default function SmartScheduleMainForm() {
         {/* Step Indicator - 대시보드에서도 표시 */}
         <SmartScheduleStepIndicator
           currentStep={1}
-          onStepClick={(step: number) => {
-            if (!projectId) return;
-            const paths: { [key: number]: string } = {
-              1: `/smart-schedule/${projectId}/setting`,
-              2: `/smart-schedule/${projectId}/interview-schedule`,
-              3: `/smart-schedule/${projectId}/applicant-submit`,
-              4: `/smart-schedule/${projectId}/result`,
-            };
-            router.push(paths[step]);
-          }}
+          maxAccessibleStep={maxAccessibleStep}
+          onStepClick={handleStepClick}
         />
 
         <div className="flex-1 px-4 pt-4 pb-32 overflow-y-auto space-y-6">

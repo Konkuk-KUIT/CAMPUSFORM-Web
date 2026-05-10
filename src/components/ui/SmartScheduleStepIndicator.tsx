@@ -1,14 +1,23 @@
 'use client';
 
+type SmartScheduleStep = 1 | 2 | 3 | 4;
+
 interface Step {
-  id: number;
+  id: SmartScheduleStep;
   label: string;
   title: string;
 }
 
 interface SmartScheduleStepIndicatorProps {
-  currentStep: number; // 1, 2, 3, 4
-  onStepClick?: (step: number) => void;
+  currentStep: SmartScheduleStep;
+  maxAccessibleStep?: SmartScheduleStep;
+  onStepClick?: (step: SmartScheduleStep) => void;
+
+  /**
+   * true면 현재 step 외에는 모두 클릭 불가 처리.
+   * 예: 면접 시간 확정 후 Step4에 고정할 때 사용.
+   */
+  isLocked?: boolean;
 }
 
 const STEPS: Step[] = [
@@ -20,54 +29,99 @@ const STEPS: Step[] = [
 
 export default function SmartScheduleStepIndicator({
   currentStep,
+  maxAccessibleStep = currentStep,
   onStepClick,
+  isLocked = false,
 }: SmartScheduleStepIndicatorProps) {
-  const getStepColors = (stepId: number) => {
-    if (stepId === currentStep) {
+  const getStepStyle = (stepId: SmartScheduleStep) => {
+    const isCurrent = stepId === currentStep;
+    const isPast = stepId < currentStep;
+    const isFuture = stepId > currentStep;
+    const isAccessible = stepId <= maxAccessibleStep;
+
+    if (isCurrent) {
       return {
-        bg: 'bg-blue-500',
-        stepText: 'text-white',
-        titleText: 'text-white',
-      };
-    } else if (stepId < currentStep) {
-      return {
-        bg: 'bg-gray-200',
-        stepText: 'text-gray-600',
-        titleText: 'text-gray-800',
-      };
-    } else {
-      return {
-        bg: 'bg-gray-100',
-        stepText: 'text-gray-400',
-        titleText: 'text-gray-500',
+        container: 'bg-[#5B7CFA] border-[#5B7CFA]',
+        label: 'text-white',
+        title: 'text-white',
       };
     }
+
+    if (isLocked) {
+      return {
+        container: 'bg-[#F2F2F2] border-[#F2F2F2]',
+        label: 'text-[#A8A8A8]',
+        title: 'text-[#A8A8A8]',
+      };
+    }
+
+    if (isPast && isAccessible) {
+      return {
+        container: 'bg-white border-[#5B7CFA]',
+        label: 'text-[#5B7CFA]',
+        title: 'text-[#222222]',
+      };
+    }
+
+    if (isFuture && isAccessible) {
+      return {
+        container: 'bg-white border-[#5B7CFA]',
+        label: 'text-[#5B7CFA]',
+        title: 'text-[#222222]',
+      };
+    }
+
+    return {
+      container: 'bg-[#F2F2F2] border-[#F2F2F2]',
+      label: 'text-[#A8A8A8]',
+      title: 'text-[#A8A8A8]',
+    };
+  };
+
+  const handleStepClick = (stepId: SmartScheduleStep) => {
+    if (isLocked && stepId !== currentStep) return;
+    if (stepId > maxAccessibleStep) return;
+
+    onStepClick?.(stepId);
   };
 
   return (
-    <div className="w-full px-4 py-4 bg-white">
-      <div className="flex gap-3 justify-between">
-        {STEPS.map((step) => {
-          const colors = getStepColors(step.id);
-          const isDisabled = step.id > currentStep;
+    <div className="w-full bg-white px-4 py-3">
+      <div className="flex w-full items-center">
+        {STEPS.map((step, index) => {
+          const style = getStepStyle(step.id);
+          const isFirst = index === 0;
+          const isLast = index === STEPS.length - 1;
+          const isDisabled = isLocked ? step.id !== currentStep : step.id > maxAccessibleStep;
 
           return (
             <button
               key={step.id}
-              onClick={() => !isDisabled && onStepClick?.(step.id)}
+              type="button"
               disabled={isDisabled}
+              onClick={() => handleStepClick(step.id)}
+              aria-current={step.id === currentStep ? 'step' : undefined}
               className={`
-                flex-1 flex flex-col items-center justify-center
-                h-14 rounded-lg px-2 py-2
-                transition-all duration-200
-                ${colors.bg}
-                ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-md'}
+                relative flex h-[42px] flex-1 flex-col items-center justify-center
+                border-y border-r px-1 transition-all duration-150
+                ${isFirst ? 'rounded-l-[6px] border-l' : '-ml-[10px] pl-[12px]'}
+                ${isLast ? 'rounded-r-[6px] pr-1' : 'pr-[12px]'}
+                ${style.container}
+                ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer active:scale-[0.99]'}
               `}
+              style={{
+                clipPath: isLast
+                  ? 'polygon(0 0, 100% 0, 100% 100%, 0 100%, 12px 50%)'
+                  : isFirst
+                    ? 'polygon(0 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 0 100%)'
+                    : 'polygon(0 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 0 100%, 12px 50%)',
+                zIndex: STEPS.length - index,
+              }}
             >
-              <span className={`text-xs font-medium leading-tight ${colors.stepText}`}>
+              <span className={`text-[10px] font-semibold leading-[12px] ${style.label}`}>
                 {step.label}
               </span>
-              <span className={`text-sm font-medium leading-tight mt-1 ${colors.titleText}`}>
+              <span className={`mt-[1px] text-[11px] font-semibold leading-[13px] ${style.title}`}>
                 {step.title}
               </span>
             </button>

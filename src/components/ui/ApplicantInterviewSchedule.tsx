@@ -392,6 +392,21 @@ export default function ApplicantInterviewSchedule() {
     return `${min}~${max}명`;
   };
 
+  const handleStepClick = (step: 1 | 2 | 3 | 4) => {
+    if (!projectId) return;
+
+    const paths: Record<1 | 2 | 3 | 4, string> = {
+      1: `/smart-schedule/${projectId}/setting`,
+      2: `/smart-schedule/${projectId}/interview-schedule`,
+      3: `/smart-schedule/${projectId}/applicant-submit`,
+      4: `/smart-schedule/${projectId}/result`,
+    };
+
+    router.push(paths[step]);
+  };
+
+
+
   return (
     <div className="min-h-screen bg-white flex flex-col">
       {/* 헤더 */}
@@ -408,17 +423,8 @@ export default function ApplicantInterviewSchedule() {
       {/* Step Indicator */}
       <SmartScheduleStepIndicator
         currentStep={2}
-        onStepClick={(step: number) => {
-          if (projectId) {
-            const paths: { [key: number]: string } = {
-              1: `/smart-schedule/${projectId}/setting`,
-              2: `/smart-schedule/${projectId}/interview-schedule`,
-              3: `/smart-schedule/${projectId}/applicant-submit`,
-              4: `/smart-schedule/${projectId}/result`,
-            };
-            router.push(paths[step]);
-          }
-        }}
+        maxAccessibleStep={3}
+        onStepClick={handleStepClick}
       />
 
       {/* 콘텐츠 */}

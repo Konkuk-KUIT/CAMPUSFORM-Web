@@ -280,6 +280,19 @@ export default function InterviewInfoSettingForm() {
     }
   };
 
+  const handleStepClick = (step: 1 | 2 | 3 | 4) => {
+  if (!projectId) return;
+
+  const paths: Record<1 | 2 | 3 | 4, string> = {
+    1: `/smart-schedule/${projectId}/setting`,
+    2: `/smart-schedule/${projectId}/interview-schedule`,
+    3: `/smart-schedule/${projectId}/applicant-submit`,
+    4: `/smart-schedule/${projectId}/result`,
+  };
+
+  router.push(paths[step]);
+  };
+
   return (
     <main className="min-h-screen flex justify-center bg-white font-['Pretendard']">
       <div className="relative w-93.75 bg-white min-h-screen flex flex-col overflow-x-hidden">
@@ -287,7 +300,11 @@ export default function InterviewInfoSettingForm() {
         <Header title="면접 정보 설정" backTo={projectId ? `/smart-schedule/${projectId}` : '/smart-schedule'} />
 
         {/* Step Indicator */}
-        <SmartScheduleStepIndicator currentStep={1} />
+        <SmartScheduleStepIndicator
+        currentStep={1}
+        maxAccessibleStep={1}
+        onStepClick={handleStepClick}
+        />
 
         {/* Scrollable content */}
         <div className="flex-1 px-4 pb-4 overflow-y-auto">
