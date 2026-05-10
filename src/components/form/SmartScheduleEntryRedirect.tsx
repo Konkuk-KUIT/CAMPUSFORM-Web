@@ -15,6 +15,44 @@ export default function SmartScheduleEntryRedirect() {
     const redirectBySmartScheduleStatus = async () => {
       if (!projectId) return;
 
+      /**
+       * 1. 확정된 면접 슬롯을 먼저 확인
+       * 확정 이후에는 smart-schedule preview API가 409를 줄 수 있으므로,
+       * 네비바 진입점에서는 interview-slots를 먼저 봐야 함.
+       */
+      try {
+        const slotData = await projectService.getInterviewSlots(projectId);
+
+        const summaries =
+          slotData?.summaries ??
+          slotData?.days ??
+          slotData?.data?.summaries ??
+          slotData?.data?.days ??
+          slotData?.interviewSchedules ??
+          slotData?.data?.interviewSchedules ??
+          slotData?.schedules ??
+          slotData?.data?.schedules ??
+          slotData?.slotsByDate ??
+          slotData?.data?.slotsByDate ??
+          [];
+
+        const hasConfirmedSchedule = Array.isArray(summaries) && summaries.length > 0;
+
+        if (hasConfirmedSchedule) {
+          router.replace(`/smart-schedule/${projectId}/result`);
+          return;
+        }
+      } catch (error: any) {
+        const status = error?.response?.status;
+
+        if (status !== 404 && status !== 409) {
+          console.warn('[SmartScheduleEntry] 확정된 면접 슬롯 조회 실패');
+        }
+      }
+
+      /**
+       * 2. 확정 슬롯이 없을 때만 스마트 시간표 preview 확인
+       */
       try {
         const previewResponse = await getSmartSchedulePreview(projectId);
         const previewData = previewResponse?.data;
@@ -50,34 +88,8 @@ export default function SmartScheduleEntryRedirect() {
       }
 
       /**
-       * 중요:
-       * preview가 409여도 확정된 interview-slots가 있을 수 있음.
-       * 확정 이후 상태는 이 API로 확인한다.
+       * 3. 시간표가 아직 없으면 면접 정보 설정 여부에 따라 이동
        */
-      try {
-        const slotData = await projectService.getInterviewSlots(projectId);
-
-        const summaries =
-          slotData?.summaries ??
-          slotData?.days ??
-          slotData?.data?.summaries ??
-          slotData?.data?.days ??
-          [];
-
-        const hasConfirmedSchedule = Array.isArray(summaries) && summaries.length > 0;
-
-        if (hasConfirmedSchedule) {
-          router.replace(`/smart-schedule/${projectId}/result`);
-          return;
-        }
-      } catch (error: any) {
-        const status = error?.response?.status;
-
-        if (status !== 404 && status !== 409) {
-          console.warn('[SmartScheduleEntry] 확정된 면접 슬롯 조회 실패');
-        }
-      }
-
       try {
         const setting = await projectService.getInterviewSetting(projectId);
 

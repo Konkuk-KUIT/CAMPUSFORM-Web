@@ -88,6 +88,118 @@ export default function SmartScheduleResultForm() {
     router.push(paths[step]);
   };
 
+  const toArray = (value: any) => {
+    if (Array.isArray(value)) return value;
+    if (!value) return [];
+    return [value];
+  };
+
+  const normalizeApplicant = (item: any): Applicant => {
+    const applicant =
+      item?.applicant ??
+      item?.applicantInfo ??
+      item?.application ??
+      item?.applicationUser ??
+      item?.user ??
+      item?.userInfo ??
+      item;
+
+    return {
+      id:
+        applicant?.id ??
+        applicant?.applicantId ??
+        applicant?.applicationId ??
+        applicant?.userId ??
+        item?.applicantId ??
+        item?.applicationId ??
+        item?.id ??
+        0,
+      name:
+        applicant?.name ??
+        applicant?.applicantName ??
+        applicant?.userName ??
+        applicant?.applicant_name ??
+        item?.applicantName ??
+        item?.name ??
+        '',
+      school:
+        applicant?.school ??
+        applicant?.university ??
+        applicant?.college ??
+        applicant?.schoolName ??
+        item?.school ??
+        item?.university ??
+        '',
+      major:
+        applicant?.major ??
+        applicant?.department ??
+        applicant?.majorName ??
+        item?.major ??
+        item?.department ??
+        '',
+      position:
+        applicant?.position ??
+        applicant?.part ??
+        applicant?.role ??
+        applicant?.field ??
+        item?.position ??
+        item?.part ??
+        '',
+    };
+  };
+
+  const normalizeInterviewer = (item: any): Interviewer => {
+    const interviewer =
+      item?.interviewer ??
+      item?.interviewerInfo ??
+      item?.admin ??
+      item?.adminInfo ??
+      item?.user ??
+      item?.userInfo ??
+      item;
+
+    return {
+      id:
+        interviewer?.id ??
+        interviewer?.adminId ??
+        interviewer?.interviewerId ??
+        interviewer?.userId ??
+        item?.adminId ??
+        item?.interviewerId ??
+        item?.id ??
+        0,
+      name:
+        interviewer?.name ??
+        interviewer?.adminName ??
+        interviewer?.interviewerName ??
+        interviewer?.userName ??
+        item?.adminName ??
+        item?.interviewerName ??
+        item?.name ??
+        '',
+    };
+  };
+
+  const normalizePreviewDays = (data: any): DateSchedule[] => {
+    const rawDays = data?.days ?? data?.data?.days ?? [];
+
+    if (!Array.isArray(rawDays)) return [];
+
+    return rawDays.map((day: any) => ({
+      date: day.date ?? day.interviewDate ?? day.day ?? '',
+      slots: toArray(day.slots ?? day.timeSlots ?? day.schedules).map((slot: any) => ({
+        startTime: slot.startTime ?? slot.start ?? slot.interviewStartTime ?? '',
+        endTime: slot.endTime ?? slot.end ?? slot.interviewEndTime ?? '',
+        applicants: toArray(slot.applicants ?? slot.assignedApplicants)
+          .map(normalizeApplicant)
+          .filter((applicant: Applicant) => applicant.name),
+        interviewers: toArray(slot.interviewers ?? slot.assignedInterviewers ?? slot.admins)
+          .map(normalizeInterviewer)
+          .filter((interviewer: Interviewer) => interviewer.name),
+      })),
+    }));
+  };
+
   const normalizeConfirmedSlots = (slotData: any): DateSchedule[] => {
     const rawDays =
       slotData?.summaries ??
@@ -96,30 +208,75 @@ export default function SmartScheduleResultForm() {
       slotData?.data?.days ??
       slotData?.interviewSchedules ??
       slotData?.data?.interviewSchedules ??
+      slotData?.schedules ??
+      slotData?.data?.schedules ??
+      slotData?.slotsByDate ??
+      slotData?.data?.slotsByDate ??
       [];
 
     if (!Array.isArray(rawDays)) return [];
 
-    return rawDays.map((day: any) => ({
-      date: day.date ?? day.interviewDate ?? day.day ?? '',
-      slots: (day.slots ?? day.timeSlots ?? day.schedules ?? []).map((slot: any) => ({
-        startTime: slot.startTime ?? slot.start ?? slot.interviewStartTime ?? '',
-        endTime: slot.endTime ?? slot.end ?? slot.interviewEndTime ?? '',
-        applicants: (slot.applicants ?? slot.assignedApplicants ?? []).map((applicant: any) => ({
-          id: applicant.id ?? applicant.applicantId ?? applicant.userId ?? 0,
-          name: applicant.name ?? applicant.applicantName ?? '',
-          school: applicant.school ?? applicant.university ?? '',
-          major: applicant.major ?? applicant.department ?? '',
-          position: applicant.position ?? applicant.part ?? '',
-        })),
-        interviewers: (slot.interviewers ?? slot.assignedInterviewers ?? slot.admins ?? []).map(
-          (interviewer: any) => ({
-            id: interviewer.id ?? interviewer.adminId ?? interviewer.userId ?? 0,
-            name: interviewer.name ?? interviewer.adminName ?? interviewer.userName ?? '',
-          }),
-        ),
-      })),
-    }));
+    return rawDays.map((day: any) => {
+      const rawSlots =
+        day?.slots ??
+        day?.timeSlots ??
+        day?.schedules ??
+        day?.interviewSlots ??
+        day?.interviews ??
+        day?.items ??
+        [];
+
+      return {
+        date: day?.date ?? day?.interviewDate ?? day?.day ?? day?.scheduleDate ?? '',
+        slots: toArray(rawSlots).map((slot: any) => {
+          const rawApplicants =
+            slot?.applicants ??
+            slot?.assignedApplicants ??
+            slot?.applicantSummaries ??
+            slot?.applicationUsers ??
+            slot?.applications ??
+            slot?.participants ??
+            slot?.applicantList ??
+            slot?.applicantInfos ??
+            slot?.applicationInfos ??
+            [];
+
+          const rawInterviewers =
+            slot?.interviewers ??
+            slot?.assignedInterviewers ??
+            slot?.interviewerSummaries ??
+            slot?.admins ??
+            slot?.adminList ??
+            slot?.interviewerList ??
+            slot?.interviewerInfos ??
+            slot?.adminInfos ??
+            [];
+
+          return {
+            startTime:
+              slot?.startTime ??
+              slot?.start ??
+              slot?.interviewStartTime ??
+              slot?.timeStart ??
+              slot?.startedAt ??
+              '',
+            endTime:
+              slot?.endTime ??
+              slot?.end ??
+              slot?.interviewEndTime ??
+              slot?.timeEnd ??
+              slot?.endedAt ??
+              '',
+            applicants: toArray(rawApplicants)
+              .map(normalizeApplicant)
+              .filter((applicant: Applicant) => applicant.name),
+            interviewers: toArray(rawInterviewers)
+              .map(normalizeInterviewer)
+              .filter((interviewer: Interviewer) => interviewer.name),
+          };
+        }),
+      };
+    });
   };
 
   const fetchConfirmedSchedule = async () => {
@@ -129,7 +286,9 @@ export default function SmartScheduleResultForm() {
       const slotData = await projectService.getInterviewSlots(projectId);
       const normalized = normalizeConfirmedSlots(slotData);
 
-      if (normalized.length > 0) {
+      const hasConfirmedSchedule = normalized.some(day => day.slots.length > 0);
+
+      if (hasConfirmedSchedule) {
         setScheduleData(normalized);
         setUnassignedApplicants([]);
         setIsConfirmed(true);
@@ -163,20 +322,27 @@ export default function SmartScheduleResultForm() {
           setting.startTime &&
           setting.endTime;
 
-        if (isValid) {
-          setInterviewSetting(setting);
-        } else {
-          setInterviewSetting(null);
-        }
+        setInterviewSetting(isValid ? setting : null);
       } catch {
         setInterviewSetting(null);
+      }
+
+      /**
+       * 중요:
+       * 확정 이후에는 smart-schedule preview API가 409를 줄 수 있으므로,
+       * result 페이지에서는 확정 슬롯 API를 먼저 조회한다.
+       */
+      const hasConfirmedSchedule = await fetchConfirmedSchedule();
+
+      if (hasConfirmedSchedule) {
+        return;
       }
 
       try {
         const res = await getSmartSchedulePreview(projectId);
         const data = res.data;
 
-        setScheduleData(data.days || []);
+        setScheduleData(normalizePreviewDays(data));
         setUnassignedApplicants(data.unassignedApplicants || []);
 
         const confirmed =
@@ -190,23 +356,11 @@ export default function SmartScheduleResultForm() {
         const status = error?.response?.status;
 
         if (status === 409) {
-          const hasConfirmedSchedule = await fetchConfirmedSchedule();
-
-          if (hasConfirmedSchedule) {
-            return;
-          }
-
           setScheduleData([]);
           setUnassignedApplicants([]);
 
           toast.warning('아직 생성된 스마트 시간표가 없습니다.');
           router.replace(`/smart-schedule/${projectId}/applicant`);
-          return;
-        }
-
-        const hasConfirmedSchedule = await fetchConfirmedSchedule();
-
-        if (hasConfirmedSchedule) {
           return;
         }
 
@@ -246,11 +400,17 @@ export default function SmartScheduleResultForm() {
 
       toast.success('면접 시간이 확정되었습니다.');
       setIsConfirmed(true);
+      await fetchConfirmedSchedule();
     } catch (error: any) {
       const status = error?.response?.status;
       const message = error?.response?.data?.message || '';
 
-      if (status === 409 || message.includes('이미')) {
+      if (
+        status === 409 ||
+        message.includes('이미') ||
+        message.includes('existing') ||
+        message.includes('duplicate')
+      ) {
         const hasConfirmedSchedule = await fetchConfirmedSchedule();
 
         if (hasConfirmedSchedule) {
@@ -356,12 +516,21 @@ export default function SmartScheduleResultForm() {
                             </span>
 
                             <div className="flex-1 space-y-1">
-                              {slot.applicants.map((applicant, appIndex) => (
-                                <p key={appIndex} className="text-body-rg text-gray-950">
-                                  {applicant.name}({applicant.school}/{applicant.major}/
-                                  {applicant.position})
+                              {slot.applicants.length > 0 ? (
+                                slot.applicants.map((applicant, appIndex) => (
+                                  <p key={appIndex} className="text-body-rg text-gray-950">
+                                    {applicant.name}
+                                    {(applicant.school || applicant.major || applicant.position) &&
+                                      `(${applicant.school || '-'}/${applicant.major || '-'}/${
+                                        applicant.position || '-'
+                                      })`}
+                                  </p>
+                                ))
+                              ) : (
+                                <p className="text-body-rg text-gray-400">
+                                  배정된 지원자 없음
                                 </p>
-                              ))}
+                              )}
                             </div>
                           </div>
                         </div>
@@ -372,7 +541,9 @@ export default function SmartScheduleResultForm() {
                           </span>
 
                           <p className="text-body-rg text-gray-950 flex-1">
-                            {slot.interviewers.map(interviewer => interviewer.name).join(', ')}
+                            {slot.interviewers.length > 0
+                              ? slot.interviewers.map(interviewer => interviewer.name).join(', ')
+                              : '배정된 면접관 없음'}
                           </p>
                         </div>
                       </div>
