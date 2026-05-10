@@ -11,6 +11,7 @@ import ConfirmModal from '@/components/ConfirmModal';
 import SmartScheduleButton from '@/components/ui/SmartScheduleButton';
 import SmartScheduleStepIndicator from '@/components/ui/SmartScheduleStepIndicator';
 import SmartScheduleSummaryCard from '@/components/ui/SmartScheduleSummaryCard';
+import SmartScheduleTutorialOverlay from '@/components/ui/SmartScheduleTutorialOverlay';
 
 import { useCurrentProjectStore } from '@/store/currentProjectStore';
 import { projectService } from '@/services/projectService';
@@ -342,6 +343,8 @@ export default function SmartScheduleApplicantStepForm() {
         </div>
 
         <Navbar />
+
+        <SmartScheduleTutorialOverlay currentStep={3} projectId={projectId} />
       </div>
     </main>
   );

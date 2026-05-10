@@ -10,6 +10,7 @@ import Navbar from '@/components/Navbar';
 import Btn from '@/components/ui/Btn';
 import SmartScheduleStepIndicator from '@/components/ui/SmartScheduleStepIndicator';
 import SmartScheduleSummaryCard from '@/components/ui/SmartScheduleSummaryCard';
+import SmartScheduleTutorialOverlay from '@/components/ui/SmartScheduleTutorialOverlay';
 import { useCurrentProjectStore } from '@/store/currentProjectStore';
 import { toast } from '@/components/Toast';
 
@@ -579,6 +580,8 @@ export default function SmartScheduleResultForm() {
         )}
 
         <Navbar />
+
+        <SmartScheduleTutorialOverlay currentStep={4} projectId={projectId} />
       </div>
     </main>
   );

@@ -1,18 +1,17 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 
 import Header from '@/components/ui/Header';
 import Navbar from '@/components/Navbar';
 import Btn from '@/components/ui/Btn';
-import ConfirmModal from '@/components/ConfirmModal';
 import AllAccordion from '@/components/ui/AllAccordion';
 import SmartScheduleStepIndicator from '@/components/ui/SmartScheduleStepIndicator';
 import SmartScheduleCalendarPreview from '@/components/ui/SmartScheduleCalendarPreview';
 import SmartScheduleSummaryCard from '@/components/ui/SmartScheduleSummaryCard';
-import SmartScheduleReadOnlyBanner from '@/components/ui/SmartScheduleReadOnlyBanner';
+import SmartScheduleTutorialOverlay from '@/components/ui/SmartScheduleTutorialOverlay';
 import { useCurrentProjectStore } from '@/store/currentProjectStore';
 import { projectService } from '@/services/projectService';
 import { authService } from '@/services/authService';
@@ -52,13 +51,10 @@ interface Interviewer {
 
 export default function InterviewerAvailabilityForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const projectId = useCurrentProjectStore(s => s.projectId);
 
   const [isLoading, setIsLoading] = useState(false);
-  const [isOwner, setIsOwner] = useState(false);
-  const [isReadOnlyMode, setIsReadOnlyMode] = useState(false);
-  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [isTutorialVisible, setIsTutorialVisible] = useState(false);
 
   const [interviewSetting, setInterviewSetting] = useState<InterviewSetting | null>(null);
   const [interviewers, setInterviewers] = useState<Interviewer[]>([]);
@@ -70,12 +66,19 @@ export default function InterviewerAvailabilityForm() {
 
   const [interviewersCellActive, setInterviewersCellActive] = useState<InterviewersCellActive>({});
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const completed = window.localStorage.getItem('smartScheduleTutorialCompleted');
+    setIsTutorialVisible(!completed);
+  }, []);
+
   const handleStepClick = (step: SmartScheduleStep) => {
     if (!projectId) return;
 
     const paths: Record<SmartScheduleStep, string> = {
-      1: `/smart-schedule/${projectId}/setting${isReadOnlyMode ? '?readonly=true' : ''}`,
-      2: `/smart-schedule/${projectId}/interview-schedule${isReadOnlyMode ? '?readonly=true' : ''}`,
+      1: `/smart-schedule/${projectId}/setting`,
+      2: `/smart-schedule/${projectId}/interview-schedule`,
       3: `/smart-schedule/${projectId}/applicant`,
       4: `/smart-schedule/${projectId}/result`,
     };
@@ -125,7 +128,6 @@ export default function InterviewerAvailabilityForm() {
 
       const auth = await authService.getCurrentUser();
       const { owner, admins } = await projectService.getProjectAdmins(projectId);
-      setIsOwner(Boolean(owner && auth.user?.userId === owner.adminId));
 
       let requiredAdminIds: number[] = [];
 
@@ -271,10 +273,6 @@ export default function InterviewerAvailabilityForm() {
   };
 
   useEffect(() => {
-    setIsReadOnlyMode(searchParams.get('readonly') === 'true');
-  }, [searchParams]);
-
-  useEffect(() => {
     fetchInterviewSetting();
   }, [projectId]);
 
@@ -403,21 +401,6 @@ export default function InterviewerAvailabilityForm() {
     }
   };
 
-  const handleResetFromStep2 = async () => {
-    if (!projectId) return;
-
-    try {
-      await projectService.resetSmartScheduleFromStep(projectId, 2);
-      toast.success('면접관 시간 등록을 다시 수정할 수 있습니다.');
-      setIsReadOnlyMode(false);
-      setShowResetConfirm(false);
-      router.replace(`/smart-schedule/${projectId}/interview-schedule`);
-      await fetchInterviewers();
-    } catch {
-      toast.error('초기화에 실패했습니다.');
-    }
-  };
-
   return (
     <main className="min-h-screen flex justify-center bg-white">
       <div className="relative w-93.75 bg-white min-h-screen flex flex-col overflow-x-hidden">
@@ -436,28 +419,14 @@ export default function InterviewerAvailabilityForm() {
 
         <div className="flex-1 px-4 pt-4 pb-32 overflow-y-auto">
           <div className="mb-6">
-            <div className="mb-3 flex items-start justify-between">
-              <div className="text-left">
-                <h3 className="text-subtitle-sm-sb text-gray-950 mb-1">
-                  면접관 시간 등록
-                </h3>
-                <p className="text-body-xs text-gray-300">
-                  각 면접관 별 가능한 시간을 선택해 입력합니다.
-                </p>
-              </div>
-
-              {isReadOnlyMode && isOwner && (
-                <button
-                  type="button"
-                  onClick={() => setShowResetConfirm(true)}
-                  className="h-7 rounded-[4px] bg-primary px-3 text-[12px] font-semibold text-white"
-                >
-                  수정하기
-                </button>
-              )}
+            <div className="text-left mb-3">
+              <h3 className="text-subtitle-sm-sb text-gray-950 mb-1">
+                면접관 시간 등록
+              </h3>
+              <p className="text-body-xs text-gray-300">
+                각 면접관 별 가능한 시간을 선택해 입력합니다.
+              </p>
             </div>
-
-            {isReadOnlyMode && <SmartScheduleReadOnlyBanner />}
 
             {!interviewSetting && (
               <div className="py-20 text-center">
@@ -479,7 +448,7 @@ export default function InterviewerAvailabilityForm() {
             {interviewSetting && (
               <>
                 <div className="mb-3">
-                  <AllAccordion title="전체">
+                  <AllAccordion title="전체" alwaysOpen={isTutorialVisible}>
                     <SmartScheduleCalendarPreview
                       seeds={interviewersWithParticipation.map((_, idx) => idx + 1)}
                       interviewers={interviewersWithParticipation.map((interviewer, idx) => ({
@@ -577,7 +546,6 @@ export default function InterviewerAvailabilityForm() {
                             showRequiredSection={true}
                             requiredInterviewer={requiredInterviewers[idx] || false}
                             onRequiredInterviewerChange={async value => {
-                              if (isReadOnlyMode) return;
                               if (!projectId) return;
 
                               try {
@@ -606,7 +574,6 @@ export default function InterviewerAvailabilityForm() {
                             timeSlots={timeSlots}
                             cellActive={interviewersCellActive[interviewer.userId] || {}}
                             onCellActiveChange={newCellActive => {
-                              if (isReadOnlyMode) return;
                               setInterviewersCellActive(prev => ({
                                 ...prev,
                                 [interviewer.userId]: newCellActive,
@@ -628,40 +595,28 @@ export default function InterviewerAvailabilityForm() {
             )}
           </div>
 
-          {!isReadOnlyMode && (
-            <div className="fixed bottom-20 left-0 right-0 px-5 max-w-93.75 mx-auto">
-              <Btn
-                variant="primary"
-                size="lg"
-                className="w-full"
-                onClick={handleGoToApplicantStep}
-                disabled={!interviewSetting}
-              >
-                설정하기
-              </Btn>
-            </div>
-          )}
+          <div className="fixed bottom-20 left-0 right-0 px-5 max-w-93.75 mx-auto">
+            <Btn
+              variant="primary"
+              size="lg"
+              className="w-full"
+              onClick={handleGoToApplicantStep}
+              disabled={!interviewSetting}
+            >
+              설정하기
+            </Btn>
+          </div>
 
           <div className="h-32" />
         </div>
 
-        <ConfirmModal
-          isOpen={showResetConfirm}
-          onCancel={() => setShowResetConfirm(false)}
-          onConfirm={handleResetFromStep2}
-          description={
-            <>
-              수정 시 기존 데이터가 초기화되며,
-              <br />
-              지원자들에게 다시 응답을 받아야 합니다.
-              <br />
-              진행하시겠습니까?
-            </>
-          }
-          confirmText="확인"
-        />
-
         <Navbar />
+
+        <SmartScheduleTutorialOverlay
+          currentStep={2}
+          projectId={projectId ? Number(projectId) : null}
+          onClose={() => setIsTutorialVisible(false)}
+        />
       </div>
     </main>
   );
