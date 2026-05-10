@@ -78,8 +78,8 @@ const TUTORIAL_CONTENTS: Record<TutorialStep, TutorialContent> = {
     title: '시간대별로 가능 면접관을 확인할 수 있어요.',
     highlight: {
       top: '303px',
-      left: '11.5px',
-      width: '352px',
+      left: '7px',
+      width: '362px',
       height: '270px',
       radius: '12px',
     },
@@ -89,7 +89,6 @@ const TUTORIAL_CONTENTS: Record<TutorialStep, TutorialContent> = {
       width: '300px',
       align: 'center',
     },
-
     bubble: {
       top: '444px',
       left: '142px',
@@ -127,8 +126,8 @@ const TUTORIAL_CONTENTS: Record<TutorialStep, TutorialContent> = {
     description: '* 미배정자는 사유 확인 후 일정 직접 조절 가능',
     highlight: {
       top: '236px',
-      left: '12px',
-      width: '351px',
+      left: '5px',
+      width: '365px',
       height: '285px',
       radius: '18px',
     },
@@ -208,6 +207,8 @@ export default function SmartScheduleTutorialOverlay({
   const content = TUTORIAL_CONTENTS[currentStep];
 
   if (!content) return null;
+
+  const shouldShowOuterBorder = currentStep !== 2 && currentStep !== 4;
 
   const goToStep = (step: TutorialStep) => {
     if (!projectId) return;
@@ -340,17 +341,19 @@ export default function SmartScheduleTutorialOverlay({
           }}
         />
 
-        {/* 바깥쪽: 구멍보다 크게 보이는 점선 테두리 */}
-        <div
-          className="absolute z-[4] border-[1.5px] border-dashed border-white bg-transparent pointer-events-none"
-          style={{
-            top: `calc(${content.highlight.top} - ${OUTER_BORDER_GAP}px)`,
-            left: `calc(${content.highlight.left} - ${OUTER_BORDER_GAP}px)`,
-            width: `calc(${content.highlight.width} + ${OUTER_BORDER_GAP * 2}px)`,
-            height: `calc(${content.highlight.height} + ${OUTER_BORDER_GAP * 2}px)`,
-            borderRadius: `calc(${content.highlight.radius ?? '8px'} + 6px)`,
-          }}
-        />
+        {/* 바깥쪽: Step 1, Step 3에서만 보이는 점선 테두리 */}
+        {shouldShowOuterBorder && (
+          <div
+            className="absolute z-[4] border-[1.5px] border-dashed border-white bg-transparent pointer-events-none"
+            style={{
+              top: `calc(${content.highlight.top} - ${OUTER_BORDER_GAP}px)`,
+              left: `calc(${content.highlight.left} - ${OUTER_BORDER_GAP}px)`,
+              width: `calc(${content.highlight.width} + ${OUTER_BORDER_GAP * 2}px)`,
+              height: `calc(${content.highlight.height} + ${OUTER_BORDER_GAP * 2}px)`,
+              borderRadius: `calc(${content.highlight.radius ?? '8px'} + 6px)`,
+            }}
+          />
+        )}
 
         {renderCommonMessage()}
 
