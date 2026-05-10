@@ -7,6 +7,65 @@ import { useCurrentProjectStore } from '@/store/currentProjectStore';
 import { projectService } from '@/services/projectService';
 import { getSmartSchedulePreview } from '@/services/smartScheduleService';
 
+const toArray = (value: any) => {
+  if (Array.isArray(value)) return value;
+  if (!value) return [];
+  return [value];
+};
+
+const hasAssignedScheduleFromSlotData = (slotData: any) => {
+  const rawDays =
+    slotData?.summaries ??
+    slotData?.days ??
+    slotData?.data?.summaries ??
+    slotData?.data?.days ??
+    slotData?.interviewSchedules ??
+    slotData?.data?.interviewSchedules ??
+    slotData?.schedules ??
+    slotData?.data?.schedules ??
+    slotData?.slotsByDate ??
+    slotData?.data?.slotsByDate ??
+    [];
+
+  return toArray(rawDays).some((day: any) => {
+    const rawSlots =
+      day?.slots ??
+      day?.timeSlots ??
+      day?.schedules ??
+      day?.interviewSlots ??
+      day?.interviews ??
+      day?.items ??
+      [];
+
+    return toArray(rawSlots).some((slot: any) => {
+      const applicants =
+        slot?.applicants ??
+        slot?.assignedApplicants ??
+        slot?.applicantSummaries ??
+        slot?.applicationUsers ??
+        slot?.applications ??
+        slot?.participants ??
+        slot?.applicantList ??
+        slot?.applicantInfos ??
+        slot?.applicationInfos ??
+        [];
+
+      const interviewers =
+        slot?.interviewers ??
+        slot?.assignedInterviewers ??
+        slot?.interviewerSummaries ??
+        slot?.admins ??
+        slot?.adminList ??
+        slot?.interviewerList ??
+        slot?.interviewerInfos ??
+        slot?.adminInfos ??
+        [];
+
+      return toArray(applicants).length > 0 || toArray(interviewers).length > 0;
+    });
+  });
+};
+
 export default function SmartScheduleEntryRedirect() {
   const router = useRouter();
   const projectId = useCurrentProjectStore(s => s.projectId);
@@ -16,29 +75,14 @@ export default function SmartScheduleEntryRedirect() {
       if (!projectId) return;
 
       /**
-       * 1. 확정된 면접 슬롯을 먼저 확인
-       * 확정 이후에는 smart-schedule preview API가 409를 줄 수 있으므로,
-       * 네비바 진입점에서는 interview-slots를 먼저 봐야 함.
+       * 1. 확정된 면접 슬롯을 먼저 확인한다.
+       * 단, interview-slots는 Step1 설정만 완료해도 빈 슬롯을 반환할 수 있으므로
+       * 지원자/면접관 배정 데이터가 있을 때만 확정된 시간표로 판단한다.
        */
       try {
         const slotData = await projectService.getInterviewSlots(projectId);
 
-        const summaries =
-          slotData?.summaries ??
-          slotData?.days ??
-          slotData?.data?.summaries ??
-          slotData?.data?.days ??
-          slotData?.interviewSchedules ??
-          slotData?.data?.interviewSchedules ??
-          slotData?.schedules ??
-          slotData?.data?.schedules ??
-          slotData?.slotsByDate ??
-          slotData?.data?.slotsByDate ??
-          [];
-
-        const hasConfirmedSchedule = Array.isArray(summaries) && summaries.length > 0;
-
-        if (hasConfirmedSchedule) {
+        if (hasAssignedScheduleFromSlotData(slotData)) {
           router.replace(`/smart-schedule/${projectId}/result`);
           return;
         }

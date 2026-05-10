@@ -5,7 +5,7 @@ import { projectService } from '@/services/projectService';
 import { useCurrentProjectStore } from '@/store/currentProjectStore';
 import { useNewProjectStore } from '@/store/newProjectStore';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Header from '@/components/ui/Header';
 import Navbar from '@/components/Navbar';
 import SmartScheduleStepIndicator from '@/components/ui/SmartScheduleStepIndicator';
@@ -14,11 +14,16 @@ import SmartScheduleDropdown from '@/components/ui/SmartScheduleDropdown';
 import TimePicker from '@/components/ui/TimePicker';
 import MultiSelectCalendar from '@/components/home/MultiSelectCalendar';
 import { toast } from '@/components/Toast';
+import ConfirmModal from '@/components/ConfirmModal';
+import SmartScheduleReadOnlyBanner from '@/components/ui/SmartScheduleReadOnlyBanner';
+import SmartScheduleSummaryCard from '@/components/ui/SmartScheduleSummaryCard';
+import { authService } from '@/services/authService';
 
 type TimeOption = { label: string; value: string };
 
 export default function InterviewInfoSettingForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   // Date state - 여러 날짜를 선택할 수 있도록 배열로 변경
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
 
@@ -78,6 +83,9 @@ export default function InterviewInfoSettingForm() {
   ];
   const [estimatedDuration, setEstimatedDuration] = useState<string>('');
   const [restDuration, setRestDuration] = useState<string>('');
+  const [isOwner, setIsOwner] = useState(false);
+  const [isReadOnlyMode, setIsReadOnlyMode] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   const isTimeValid = () => {
     const startTotalMin = parseInt(startHour) * 60 + parseInt(startMinute);
@@ -87,6 +95,7 @@ export default function InterviewInfoSettingForm() {
 
   // 멀티 날짜 선택 핸들러
   const handleMultiDateChange = (dates: Date[]) => {
+    if (isReadOnlyMode) return;
     setSelectedDates(dates);
   };
 
@@ -139,6 +148,26 @@ export default function InterviewInfoSettingForm() {
     initializeProjectId();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    setIsReadOnlyMode(searchParams.get('readonly') === 'true');
+  }, [searchParams]);
+
+  useEffect(() => {
+    const fetchIsOwner = async () => {
+      if (!projectId) return;
+
+      try {
+        const auth = await authService.getCurrentUser();
+        const { owner } = await projectService.getProjectAdmins(projectId);
+        setIsOwner(Boolean(owner && auth.user?.userId === owner.adminId));
+      } catch {
+        setIsOwner(false);
+      }
+    };
+
+    fetchIsOwner();
+  }, [projectId]);
 
   // 기존 면접 설정 불러오기
   useEffect(() => {
@@ -206,6 +235,7 @@ export default function InterviewInfoSettingForm() {
   }, [projectId]);
 
   const handleSubmit = async () => {
+    if (isReadOnlyMode) return;
     console.log('[InterviewSetting] 제출 시도 - projectId:', projectId);
     console.log('[InterviewSetting] createdProjectId:', createdProjectId);
 
@@ -280,13 +310,51 @@ export default function InterviewInfoSettingForm() {
     }
   };
 
+  const currentInterviewSetting = useMemo(() => ({
+    startDate: getFormattedDates()[0] ?? '',
+    endDate: getFormattedDates()[getFormattedDates().length - 1] ?? '',
+    startTime: `${startHour}:${startMinute}`,
+    endTime: `${endHour}:${endMinute}`,
+    slotDurationMin: estimatedDuration ? Number(estimatedDuration) : 0,
+    breakDurationMin: restDuration ? Number(restDuration) : 0,
+    maxApplicantsPerSlot,
+    minInterviewersPerSlot,
+    maxInterviewersPerSlot,
+    interviewDates: getFormattedDates(),
+  }), [
+    selectedDates,
+    startHour,
+    startMinute,
+    endHour,
+    endMinute,
+    estimatedDuration,
+    restDuration,
+    maxApplicantsPerSlot,
+    minInterviewersPerSlot,
+    maxInterviewersPerSlot,
+  ]);
+
+  const handleResetFromStep1 = async () => {
+    if (!projectId) return;
+
+    try {
+      await projectService.resetSmartScheduleFromStep(projectId, 1);
+      toast.success('면접 정보를 다시 수정할 수 있습니다.');
+      setIsReadOnlyMode(false);
+      setShowResetConfirm(false);
+      router.replace(`/smart-schedule/${projectId}/setting`);
+    } catch {
+      toast.error('초기화에 실패했습니다.');
+    }
+  };
+
   const handleStepClick = (step: 1 | 2 | 3 | 4) => {
   if (!projectId) return;
 
   const paths: Record<1 | 2 | 3 | 4, string> = {
-    1: `/smart-schedule/${projectId}/setting`,
-    2: `/smart-schedule/${projectId}/interview-schedule`,
-    3: `/smart-schedule/${projectId}/applicant-submit`,
+    1: `/smart-schedule/${projectId}/setting${isReadOnlyMode ? '?readonly=true' : ''}`,
+    2: `/smart-schedule/${projectId}/interview-schedule${isReadOnlyMode ? '?readonly=true' : ''}`,
+    3: `/smart-schedule/${projectId}/applicant`,
     4: `/smart-schedule/${projectId}/result`,
   };
 
@@ -301,10 +369,34 @@ export default function InterviewInfoSettingForm() {
 
         {/* Step Indicator */}
         <SmartScheduleStepIndicator
-        currentStep={1}
-        maxAccessibleStep={1}
-        onStepClick={handleStepClick}
+          currentStep={1}
+          maxAccessibleStep={1}
+          onStepClick={handleStepClick}
         />
+
+        {isReadOnlyMode && (
+          <>
+            <SmartScheduleSummaryCard interviewSetting={currentInterviewSetting} />
+            <div className="mx-4 mt-3 flex items-start justify-between">
+              <div>
+                <h3 className="text-subtitle-sm-sb text-gray-950 mb-1">면접 정보 설정</h3>
+                <p className="text-body-xs text-gray-300">설정된 면접 정보를 확인할 수 있습니다.</p>
+              </div>
+              {isOwner && (
+                <button
+                  type="button"
+                  onClick={() => setShowResetConfirm(true)}
+                  className="h-7 rounded-[4px] bg-primary px-3 text-[12px] font-semibold text-white"
+                >
+                  수정하기
+                </button>
+              )}
+            </div>
+            <div className="px-4">
+              <SmartScheduleReadOnlyBanner />
+            </div>
+          </>
+        )}
 
         {/* Scrollable content */}
         <div className="flex-1 px-4 pb-4 overflow-y-auto">
@@ -331,6 +423,7 @@ export default function InterviewInfoSettingForm() {
               endHour={endHour}
               endMinute={endMinute}
               onTimeChange={(field, value) => {
+                if (isReadOnlyMode) return;
                 if (field === 'startHour') setStartHour(value);
                 if (field === 'startMinute') setStartMinute(value);
                 if (field === 'endHour') setEndHour(value);
@@ -348,7 +441,7 @@ export default function InterviewInfoSettingForm() {
                 <button
                   aria-label="decrease"
                   className="w-7.25 h-7.25 bg-blue-100 rounded-full flex items-center justify-center text-18"
-                  onClick={() => setMaxApplicantsPerSlot(v => Math.max(1, v - 1))}
+                  onClick={() => { if (!isReadOnlyMode) setMaxApplicantsPerSlot(v => Math.max(1, v - 1)); }}
                 >
                   −
                 </button>
@@ -356,7 +449,7 @@ export default function InterviewInfoSettingForm() {
                 <button
                   aria-label="increase"
                   className="w-7.25 h-7.25 bg-blue-100 rounded-full flex items-center justify-center text-18"
-                  onClick={() => setMaxApplicantsPerSlot(v => v + 1)}
+                  onClick={() => { if (!isReadOnlyMode) setMaxApplicantsPerSlot(v => v + 1); }}
                 >
                   +
                 </button>
@@ -374,7 +467,7 @@ export default function InterviewInfoSettingForm() {
                 <button
                   aria-label="min-dec"
                   className="w-7.25 h-7.25 bg-blue-100 rounded-full flex items-center justify-center text-18"
-                  onClick={() => setMinInterviewersPerSlot(v => Math.max(1, v - 1))}
+                  onClick={() => { if (!isReadOnlyMode) setMinInterviewersPerSlot(v => Math.max(1, v - 1)); }}
                 >
                   −
                 </button>
@@ -382,7 +475,7 @@ export default function InterviewInfoSettingForm() {
                 <button
                   aria-label="min-inc"
                   className="w-7.25 h-7.25 bg-blue-100 rounded-full flex items-center justify-center text-18"
-                  onClick={() => setMinInterviewersPerSlot(v => v + 1)}
+                  onClick={() => { if (!isReadOnlyMode) setMinInterviewersPerSlot(v => v + 1); }}
                 >
                   +
                 </button>
@@ -393,7 +486,7 @@ export default function InterviewInfoSettingForm() {
                 <button
                   aria-label="max-dec"
                   className="w-7.25 h-7.25 bg-blue-100 rounded-full flex items-center justify-center text-18"
-                  onClick={() => setMaxInterviewersPerSlot(v => Math.max(1, v - 1))}
+                  onClick={() => { if (!isReadOnlyMode) setMaxInterviewersPerSlot(v => Math.max(1, v - 1)); }}
                 >
                   −
                 </button>
@@ -401,7 +494,7 @@ export default function InterviewInfoSettingForm() {
                 <button
                   aria-label="max-inc"
                   className="w-7.25 h-7.25 bg-blue-100 rounded-full flex items-center justify-center text-18"
-                  onClick={() => setMaxInterviewersPerSlot(v => v + 1)}
+                  onClick={() => { if (!isReadOnlyMode) setMaxInterviewersPerSlot(v => v + 1); }}
                 >
                   +
                 </button>
@@ -421,7 +514,7 @@ export default function InterviewInfoSettingForm() {
                 <SmartScheduleDropdown
                   options={durationOptions}
                   value={estimatedDuration}
-                  onChange={setEstimatedDuration}
+                  onChange={(value) => { if (!isReadOnlyMode) setEstimatedDuration(value); }}
                   width="w-[109px]"
                 />
               </div>
@@ -433,7 +526,7 @@ export default function InterviewInfoSettingForm() {
                 <SmartScheduleDropdown
                   options={restOptions}
                   value={restDuration}
-                  onChange={setRestDuration}
+                  onChange={(value) => { if (!isReadOnlyMode) setRestDuration(value); }}
                   width="w-[109px]"
                 />
               </div>
@@ -441,15 +534,33 @@ export default function InterviewInfoSettingForm() {
           </div>
 
           {/* CTA */}
-          <div className="fixed bottom-20 left-0 right-0 px-5 max-w-93.75 mx-auto">
-            <Btn variant="primary" size="lg" className="w-full" onClick={handleSubmit}>
-              설정하기
-            </Btn>
-          </div>
+          {!isReadOnlyMode && (
+            <div className="fixed bottom-20 left-0 right-0 px-5 max-w-93.75 mx-auto">
+              <Btn variant="primary" size="lg" className="w-full" onClick={handleSubmit}>
+                설정하기
+              </Btn>
+            </div>
+          )}
 
           {/* Spacer for fixed button */}
           <div className="h-32" />
         </div>
+
+        <ConfirmModal
+          isOpen={showResetConfirm}
+          onCancel={() => setShowResetConfirm(false)}
+          onConfirm={handleResetFromStep1}
+          description={
+            <>
+              수정 시 기존 데이터가 초기화되며,
+              <br />
+              지원자들에게 다시 응답을 받아야 합니다.
+              <br />
+              진행하시겠습니까?
+            </>
+          }
+          confirmText="확인"
+        />
 
         {/* Bottom nav */}
         <Navbar />

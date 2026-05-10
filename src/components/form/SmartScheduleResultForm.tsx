@@ -79,9 +79,9 @@ export default function SmartScheduleResultForm() {
     }
 
     const paths: Record<SmartScheduleStep, string> = {
-      1: `/smart-schedule/${projectId}/setting`,
-      2: `/smart-schedule/${projectId}/interview-schedule`,
-      3: `/smart-schedule/${projectId}/applicant`,
+      1: `/smart-schedule/${projectId}/setting?readonly=true`,
+      2: `/smart-schedule/${projectId}/interview-schedule?readonly=true`,
+      3: `/smart-schedule/${projectId}/applicant?readonly=true`,
       4: `/smart-schedule/${projectId}/result`,
     };
 
@@ -286,7 +286,9 @@ export default function SmartScheduleResultForm() {
       const slotData = await projectService.getInterviewSlots(projectId);
       const normalized = normalizeConfirmedSlots(slotData);
 
-      const hasConfirmedSchedule = normalized.some(day => day.slots.length > 0);
+      const hasConfirmedSchedule = normalized.some(day =>
+        day.slots.some(slot => slot.applicants.length > 0 || slot.interviewers.length > 0),
+      );
 
       if (hasConfirmedSchedule) {
         setScheduleData(normalized);
@@ -389,41 +391,6 @@ export default function SmartScheduleResultForm() {
     return `${formatTime(startTime)} - ${formatTime(endTime)}`;
   };
 
-  const handleConfirm = async () => {
-    if (!projectId) {
-      toast.warning('프로젝트를 선택해주세요.');
-      return;
-    }
-
-    try {
-      await projectService.confirmSmartSchedule(projectId);
-
-      toast.success('면접 시간이 확정되었습니다.');
-      setIsConfirmed(true);
-      await fetchConfirmedSchedule();
-    } catch (error: any) {
-      const status = error?.response?.status;
-      const message = error?.response?.data?.message || '';
-
-      if (
-        status === 409 ||
-        message.includes('이미') ||
-        message.includes('existing') ||
-        message.includes('duplicate')
-      ) {
-        const hasConfirmedSchedule = await fetchConfirmedSchedule();
-
-        if (hasConfirmedSchedule) {
-          toast.warning('이미 확정된 면접 시간이 있어 결과 화면을 표시합니다.');
-          return;
-        }
-      }
-
-      console.error('[ScheduleResult] 확정 실패:', error?.response?.data || error?.message);
-      toast.error('면접 시간 확정에 실패했습니다.');
-    }
-  };
-
   return (
     <main className="min-h-screen flex justify-center bg-white">
       <div className="relative w-93.75 bg-white min-h-screen flex flex-col overflow-x-hidden">
@@ -433,7 +400,7 @@ export default function SmartScheduleResultForm() {
             projectId
               ? isConfirmed
                 ? `/smart-schedule/${projectId}/result`
-                : `/smart-schedule/${projectId}/applicant`
+                : `/smart-schedule/${projectId}/applicant?readonly=true`
               : '/smart-schedule'
           }
         />
@@ -564,17 +531,13 @@ export default function SmartScheduleResultForm() {
           <div className="h-32" />
         </div>
 
-        <div className="fixed bottom-16.25 left-0 right-0 bg-white border-t border-gray-100 px-5 max-w-93.75 mx-auto pt-2.5 pb-2.5">
-          <Btn
-            variant="primary"
-            size="lg"
-            className="w-full"
-            onClick={handleConfirm}
-            disabled={isConfirmed}
-          >
-            {isConfirmed ? '면접 시간 확정 완료' : '면접 시간 확정'}
-          </Btn>
-        </div>
+        {isConfirmed && (
+          <div className="fixed bottom-16.25 left-0 right-0 bg-white border-t border-gray-100 px-5 max-w-93.75 mx-auto pt-2.5 pb-2.5">
+            <Btn variant="primary" size="lg" className="w-full" disabled>
+              면접 시간 확정 완료
+            </Btn>
+          </div>
+        )}
 
         {showInfo && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(31,31,31,0.40)]">

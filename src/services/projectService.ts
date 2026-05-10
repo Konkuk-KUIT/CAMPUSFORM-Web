@@ -233,20 +233,21 @@ class ProjectService {
     const response = await apiClient.get(`/recruiting/projects/${projectId}/interview-slots`);
     return response.data;
   }
-  // GET : 스마트 시간표 생성 및 미리보기
-  async generateSmartSchedule(projectId: number): Promise<any> {
-    console.log('[ProjectService] generateSmartSchedule 호출 (미리보기), projectId:', projectId);
-    const response = await apiClient.get(`/projects/${projectId}/interview/smart-schedule`);
-    console.log('[ProjectService] generateSmartSchedule 응답:', response.data);
+  // POST : 스마트 시간표 생성 및 확정
+  async generateSmartSchedule(projectId: number, userId?: number): Promise<any> {
+    const response = await apiClient.post(
+      `/projects/${projectId}/interview/smart-schedule`,
+      null,
+      userId ? { params: { userId } } : undefined,
+    );
+
     return response.data;
   }
 
-  // POST : 스마트 시간표 확정
-  async confirmSmartSchedule(projectId: number): Promise<any> {
-    console.log('[ProjectService] confirmSmartSchedule 호출, projectId:', projectId);
-    const response = await apiClient.post(`/projects/${projectId}/interview/smart-schedule`);
-    console.log('[ProjectService] confirmSmartSchedule 응답:', response.data);
-    return response.data;
+  // POST : 스마트 시간표 생성 및 확정
+  // 기존 호출부 호환용 alias. 새 코드에서는 generateSmartSchedule(projectId, userId)를 사용한다.
+  async confirmSmartSchedule(projectId: number, userId?: number): Promise<any> {
+    return this.generateSmartSchedule(projectId, userId);
   }
 }
 

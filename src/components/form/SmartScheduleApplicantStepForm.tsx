@@ -14,6 +14,7 @@ import SmartScheduleSummaryCard from '@/components/ui/SmartScheduleSummaryCard';
 
 import { useCurrentProjectStore } from '@/store/currentProjectStore';
 import { projectService } from '@/services/projectService';
+import { authService } from '@/services/authService';
 import { documentResultService } from '@/services/documentResultService';
 import { toast } from '@/components/Toast';
 
@@ -48,8 +49,8 @@ export default function SmartScheduleApplicantStepForm() {
     if (!projectId) return;
 
     const paths: Record<SmartScheduleStep, string> = {
-      1: `/smart-schedule/${projectId}/setting`,
-      2: `/smart-schedule/${projectId}/interview-schedule`,
+      1: `/smart-schedule/${projectId}/setting?readonly=true`,
+      2: `/smart-schedule/${projectId}/interview-schedule?readonly=true`,
       3: `/smart-schedule/${projectId}/applicant`,
       4: `/smart-schedule/${projectId}/result`,
     };
@@ -176,7 +177,15 @@ export default function SmartScheduleApplicantStepForm() {
     setIsGenerating(true);
 
     try {
-      await projectService.generateSmartSchedule(projectId);
+      const auth = await authService.getCurrentUser();
+      const userId = auth.user?.userId;
+
+      if (!userId) {
+        toast.error('사용자 정보를 확인할 수 없습니다.');
+        return;
+      }
+
+      await projectService.generateSmartSchedule(projectId, userId);
 
       toast.success('스마트 시간표가 생성되었습니다.');
       router.push(`/smart-schedule/${projectId}/result`);
@@ -214,7 +223,11 @@ export default function SmartScheduleApplicantStepForm() {
       <div className="relative w-93.75 bg-white min-h-screen flex flex-col overflow-x-hidden">
         <Header
           title="지원자 시간 모집"
-          backTo={projectId ? `/smart-schedule/${projectId}/interview-schedule` : '/smart-schedule'}
+          backTo={
+            projectId
+              ? `/smart-schedule/${projectId}/interview-schedule?readonly=true`
+              : '/smart-schedule'
+          }
         />
 
         <SmartScheduleStepIndicator

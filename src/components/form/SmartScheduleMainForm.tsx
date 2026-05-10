@@ -81,7 +81,16 @@ export default function SmartScheduleMainForm() {
     setIsGenerating(true);
 
     try {
-      const result = await projectService.generateSmartSchedule(projectId);
+      const auth = await authService.getCurrentUser();
+      const userId = auth.user?.userId;
+
+      if (!userId) {
+        toast.error('사용자 정보를 확인할 수 없습니다.');
+        setIsGenerating(false);
+        return;
+      }
+
+      await projectService.generateSmartSchedule(projectId, userId);
       toast.success('스마트 시간표가 생성되었습니다');
       setIsGenerating(false);
       if (projectId) {
