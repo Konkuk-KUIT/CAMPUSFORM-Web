@@ -5,34 +5,31 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import DotIndicator from './DotIndicator';
 import Button from '@/components/ui/Btn';
+import { authService } from '@/services/authService';
 
 const SLIDES = [
-  { title: '오늘의 캘린더', description: '프로젝트와 면접 일정을\n 한눈에 확인해요', image: '/onboarding/1.svg' },
+  { title: '오늘의 캘린더', description: '프로젝트와 면접 일정을 한눈에 확인해요', image: '/onboarding/1.svg' },
   {
     title: '간편해진 지원자 관리',
-    description: '구글폼 시트 연동부터 합불 분류,\n 운영진 코멘트까지 똑똑하게 평가해요',
+    description: '구글폼 시트 연동부터 결과 분류, 운영진 코멘트까지 똑똑하게 평가하세요',
     image: '/onboarding/2.svg',
   },
   {
     title: '가장 쉬운 결과 확인',
-    description: '통계부터 개인/단체 문자 전송\n 세팅까지 한 번에 해요',
+    description: '통계부터 개인/단체 문자 전송\n세팅까지 한 번에 끝내요',
     image: '/onboarding/3.svg',
   },
   {
     title: '스마트 시간표',
-    description: '알고리즘이 짜주는 면접 시간표!\n 면접 정보와 운영진 시간을 먼저 입력해요',
+    description: '알고리즘이 짜주는 면접 시간표로 면접 일정과 운영진 시간을 한번에 맞춰요',
     image: '/onboarding/4.svg',
   },
   {
     title: '적절 없는 시간 조율',
-    description: '버튼 하나로 지원자들에게\n 시간 취합 링크를 보내세요',
+    description: '버튼 하나로 지원자들에게 시간 협업 링크를 보내드려요',
     image: '/onboarding/5.svg',
   },
-  {
-    title: '자동 매칭 완료',
-    description: '항상 골칫거리였던 면접 시간표,\n 이제는 한방에 해결하세요',
-    image: '/onboarding/6.svg',
-  },
+  { title: '자동 매칭 완료', description: '응답이 끝나면 면접 시간표가 자동으로 완성돼요', image: '/onboarding/6.svg' },
 ];
 
 export default function OnboardingClient() {
@@ -43,9 +40,13 @@ export default function OnboardingClient() {
     if (current > 0) setCurrent(c => c - 1);
   };
 
-  const handleNext = () => {
-    if (current < SLIDES.length - 1) setCurrent(c => c + 1);
-    else router.push('/');
+  const handleNext = async () => {
+    if (current < SLIDES.length - 1) {
+      setCurrent(c => c + 1);
+    } else {
+      await authService.completeOnboarding();
+      router.push('/home');
+    }
   };
 
   return (
