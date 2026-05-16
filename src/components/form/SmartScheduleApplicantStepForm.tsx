@@ -193,7 +193,7 @@ export default function SmartScheduleApplicantStepForm() {
       }
 
       toast.success('스마트 시간표가 생성되었습니다.');
-      router.push(`/smart-schedule/${projectId}/result`);
+      router.push(`/smart-schedule/${projectId}/result?mode=preview`);
     } catch (error: any) {
       const status = error?.response?.status;
       const message = error?.response?.data?.message || '';
@@ -204,7 +204,7 @@ export default function SmartScheduleApplicantStepForm() {
         message.includes('existing') ||
         message.includes('duplicate')
       ) {
-        toast.warning('이미 생성된 스마트 시간표가 있어 결과 화면으로 이동합니다.');
+        toast.warning('이미 확정된 스마트 시간표가 있어 결과 화면으로 이동합니다.');
         router.replace(`/smart-schedule/${projectId}/result`);
         return;
       }

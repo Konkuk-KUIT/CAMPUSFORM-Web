@@ -233,11 +233,30 @@ class ProjectService {
     const response = await apiClient.get(`/recruiting/projects/${projectId}/interview-slots`);
     return response.data;
   }
-  // POST : 스마트 시간표 생성 및 확정
-  async generateSmartSchedule(projectId: number, userId?: number): Promise<any> {
-    const response = await apiClient.post(`/projects/${projectId}/interview/smart-schedule`, null, {
-      params: userId ? { userId } : undefined,
-    });
+  // POST : 스마트 시간표 생성 미리보기
+  // 알고리즘을 실행해 결과만 반환하고 DB에는 저장하지 않습니다.
+  async generateSmartSchedule(projectId: number, userId: number): Promise<any> {
+    const response = await apiClient.post(
+      `/projects/${projectId}/interview/smart-schedule/generate`,
+      null,
+      {
+        params: { userId },
+      },
+    );
+
+    return response.data;
+  }
+
+  // POST : 스마트 시간표 최종 확정
+  // 알고리즘 결과를 DB에 저장하여 확정합니다.
+  async confirmSmartSchedule(projectId: number, userId: number): Promise<any> {
+    const response = await apiClient.post(
+      `/projects/${projectId}/interview/smart-schedule/confirm`,
+      null,
+      {
+        params: { userId },
+      },
+    );
 
     return response.data;
   }
@@ -248,9 +267,24 @@ class ProjectService {
     return response.data;
   }
 
-  // TODO: 백엔드 초기화 API 확정 후 실제 경로로 교체
-  async resetSmartScheduleFromStep(projectId: number, step: 1 | 2): Promise<{ success: boolean }> {
-    console.warn('[ProjectService] resetSmartScheduleFromStep API 미연동', { projectId, step });
+  // DELETE : 면접 설정 및 이후 단계 데이터 전체 삭제
+  async deleteInterviewSetting(projectId: number, userId: number): Promise<any> {
+    const response = await apiClient.delete(`/recruiting/projects/${projectId}/interview-setting`, {
+      params: { userId },
+    });
+
+    return response.data;
+  }
+
+  async resetSmartScheduleFromStep(
+    projectId: number,
+    step: 1 | 2,
+    userId: number,
+  ): Promise<{ success: boolean }> {
+    // 현재 Swagger 기준 초기화 API는 Step1 이후 모든 면접/시간표 데이터를 초기화합니다.
+    // step 값은 호출부 의미 보존용으로 유지합니다.
+    void step;
+    await this.deleteInterviewSetting(projectId, userId);
     return { success: true };
   }
 }

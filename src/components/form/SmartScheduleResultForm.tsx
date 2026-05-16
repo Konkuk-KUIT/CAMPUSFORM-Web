@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { getSmartSchedulePreview } from '@/services/smartScheduleService';
 import { projectService } from '@/services/projectService';
+import { authService } from '@/services/authService';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Header from '@/components/ui/Header';
@@ -70,6 +71,7 @@ export default function SmartScheduleResultForm() {
   const [scheduleData, setScheduleData] = useState<DateSchedule[]>([]);
   const [unassignedApplicants, setUnassignedApplicants] = useState<UnassignedApplicant[]>([]);
   const [isConfirmed, setIsConfirmed] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
 
   const handleStepClick = (step: SmartScheduleStep) => {
     if (!projectId) return;
@@ -327,7 +329,7 @@ export default function SmartScheduleResultForm() {
         if (cached) {
           try {
             const parsed = JSON.parse(cached);
-            const normalized = applyScheduleResult(parsed, true);
+            const normalized = applyScheduleResult(parsed, false);
 
             if (normalized.length > 0) {
               return;
@@ -392,6 +394,48 @@ export default function SmartScheduleResultForm() {
   const formatTimeRange = (startTime: string, endTime: string) => {
     return `${formatTime(startTime)} - ${formatTime(endTime)}`;
   };
+
+  const handleConfirmSmartSchedule = async () => {
+    if (!projectId) {
+      toast.error('프로젝트를 선택해주세요.');
+      return;
+    }
+
+    try {
+      setIsConfirming(true);
+
+      const auth = await authService.getCurrentUser();
+      const userId = auth.user?.userId;
+
+      if (!userId) {
+        toast.error('사용자 정보를 확인하지 못했습니다. 다시 로그인해주세요.');
+        return;
+      }
+
+      const confirmedResult = await projectService.confirmSmartSchedule(projectId, userId);
+
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem(`smartScheduleResult:${projectId}`);
+      }
+
+      const normalized = applyScheduleResult(confirmedResult, true);
+
+      if (normalized.length === 0) {
+        await fetchAssignedSchedule();
+      }
+
+      setIsConfirmed(true);
+      toast.success('면접 시간이 확정되었습니다.');
+    } catch (error: any) {
+      const message = error?.response?.data?.message;
+      console.error('[SmartScheduleResult] 면접 시간 확정 실패:', error);
+      toast.error(message || '면접 시간 확정에 실패했습니다.');
+    } finally {
+      setIsConfirming(false);
+    }
+  };
+
+  const canConfirmSchedule = scheduleData.length > 0 || unassignedApplicants.length > 0;
 
   return (
     <main className="min-h-screen flex justify-center bg-white">
@@ -533,13 +577,23 @@ export default function SmartScheduleResultForm() {
           <div className="h-32" />
         </div>
 
-        {isConfirmed && (
-          <div className="fixed bottom-16.25 left-0 right-0 bg-white border-t border-gray-100 px-5 max-w-93.75 mx-auto pt-2.5 pb-2.5">
+        <div className="fixed bottom-16.25 left-0 right-0 bg-white border-t border-gray-100 px-5 max-w-93.75 mx-auto pt-2.5 pb-2.5">
+          {isConfirmed ? (
             <Btn variant="primary" size="lg" className="w-full" disabled>
               면접 시간 확정 완료
             </Btn>
-          </div>
-        )}
+          ) : (
+            <Btn
+              variant="primary"
+              size="lg"
+              className="w-full"
+              onClick={handleConfirmSmartSchedule}
+              disabled={!canConfirmSchedule || isConfirming}
+            >
+              {isConfirming ? '면접 시간 확정 중...' : '면접 시간 확정'}
+            </Btn>
+          )}
+        </div>
 
         {showInfo && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(31,31,31,0.40)]">

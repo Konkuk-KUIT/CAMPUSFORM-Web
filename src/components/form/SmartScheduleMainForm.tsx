@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -99,7 +99,7 @@ export default function SmartScheduleMainForm() {
       toast.success('스마트 시간표가 생성되었습니다');
       setIsGenerating(false);
       if (projectId) {
-        router.push(`/smart-schedule/${projectId}/result`);
+        router.push(`/smart-schedule/${projectId}/result?mode=preview`);
       }
     } catch (error: any) {
       let errorMessage = '스마트 시간표 생성에 실패했습니다.';
