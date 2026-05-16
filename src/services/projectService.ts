@@ -140,6 +140,18 @@ class ProjectService {
     return response.data;
   }
 
+  // PATCH : 서류 단계로 롤백 (재활성화)
+  // INTERVIEW 또는 DOCUMENT_COMPLETE → DOCUMENT
+  // 면접 관련 데이터 전체 삭제, 서류 데이터는 유지
+  async revertToDocument(projectId: number, userId: number): Promise<Project> {
+    const response = await apiClient.patch<Project>(
+      `/recruiting/projects/${projectId}/revert-to-document`,
+      null,
+      { params: { userId } }
+    );
+    return response.data;
+  }
+
   // GET : 면접관 시간 등록 상태 조회 (availability)
   async getInterviewerAvailability(projectId: number, adminId: number): Promise<any> {
     const response = await apiClient.get(`/recruiting/projects/${projectId}/interviewers/${adminId}/availability`);
