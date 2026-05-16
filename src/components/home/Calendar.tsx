@@ -90,7 +90,7 @@ export default function Calendar({
           .react-datepicker__header {
             background: transparent !important;
             border: none !important;
-            padding: 0 0 5px 0 !important;
+            padding: 0 0 10px 0 !important;
             text-align: center !important;
             font-size: 14px !important;
             font-weight: 500 !important;
@@ -135,7 +135,7 @@ export default function Calendar({
             margin: 0 !important;
             padding: 4px 0 !important;
             height: auto !important;
-            min-height: ${variant === 'home' ? '45px' : '30px'} !important;
+            min-height: ${variant === 'home' ? '64px' : '30px'} !important;
             display: flex !important;
             flex-direction: column !important;
             align-items: center !important;

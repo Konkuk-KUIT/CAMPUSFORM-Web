@@ -61,6 +61,7 @@ export default function InterviewInfoSettingForm() {
     { id: '60', label: '60분' },
   ];
   const restOptions = [
+    { id: '0', label: '0분' },
     { id: '5', label: '5분' },
     { id: '10', label: '10분' },
     { id: '15', label: '15분' },
