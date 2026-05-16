@@ -253,4 +253,4 @@ export default function DocumentContent({ projectId }: { projectId: number }) {
       />
     </div>
   );
-}
+}    
