@@ -13,9 +13,10 @@ interface StatusOption {
 interface StatusDropdownProps {
   value?: StatusType;
   onChange?: (value: StatusType) => void;
+  disabled?: boolean;
 }
 
-export default function StatusDropdown({ value, onChange }: StatusDropdownProps) {
+export default function StatusDropdown({ value, onChange, disabled = false }: StatusDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [internalValue, setInternalValue] = useState<StatusType>('보류');
   const [openUpward, setOpenUpward] = useState(false);
@@ -32,6 +33,7 @@ export default function StatusDropdown({ value, onChange }: StatusDropdownProps)
   const selectedOption = options.find(opt => opt.value === selected) ?? options[2];
 
   const handleOpen = () => {
+    if (disabled) return;
     if (buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
       const dropdownHeight = 120;

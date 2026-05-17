@@ -8,12 +8,15 @@ import ApplicantFileCard from '@/components/ui/ApplicantFileCard';
 import BottomSheet from '@/components/ui/BottomSheet';
 import BtnRound from '@/components/ui/BtnRound';
 import CommentSection from '@/components/sections/CommentSection';
+import ConfirmModal from '@/components/ConfirmModal';
 import Loading from '@/components/ui/Loading';
 import { toast } from '@/components/Toast';
 import { applicantService } from '@/services/applicantService';
 import { authService } from '@/services/authService';
 import { projectService } from '@/services/projectService';
 import type { Applicant, ApplicantRaw } from '@/types/applicant';
+import type { ProjectState } from '@/types/project';
+
 
 const statusMap: Record<string, '보류' | '합격' | '불합격'> = {
   HOLD: '보류',
@@ -56,6 +59,15 @@ export default function DocumentContent({ projectId }: { projectId: number }) {
   const [isLoading, setIsLoading] = useState(true);
   const [lastSyncedAt, setLastSyncedAt] = useState<Date>(new Date());
 
+  // 프로젝트 상태
+  const [projectState, setProjectState] = useState<ProjectState | null>(null);
+  const [isReactivateModalOpen, setIsReactivateModalOpen] = useState(false);
+  const [isReverting, setIsReverting] = useState(false);
+
+  // DOCUMENT_COMPLETE, INTERVIEW 상태이면 읽기 전용
+  const isReadOnly = projectState === 'DOCUMENT_COMPLETE' || projectState === 'INTERVIEW';
+
+  // 현재 유저 정보 조회
   useEffect(() => {
     const fetchCurrentUser = async () => {
       const auth = await authService.getCurrentUser();
@@ -66,6 +78,21 @@ export default function DocumentContent({ projectId }: { projectId: number }) {
     fetchCurrentUser();
   }, []);
 
+  // 프로젝트 상태 조회
+  useEffect(() => {
+    const fetchProjectState = async () => {
+      try {
+        const projects = await projectService.getProjects();
+        const project = projects.find(p => p.id === projectId);
+        if (project) setProjectState(project.state);
+      } catch (e) {
+        console.error('프로젝트 상태 조회 실패:', e);
+      }
+    };
+    fetchProjectState();
+  }, [projectId]);
+
+  // 지원자 목록 조회
   useEffect(() => {
     const fetchApplicants = async () => {
       try {
@@ -85,9 +112,12 @@ export default function DocumentContent({ projectId }: { projectId: number }) {
     fetchApplicants();
   }, [projectId]);
 
+  // 새로고침 (읽기 전용 상태에서는 sync 생략)
   const handleRefresh = async () => {
     try {
-      await projectService.syncSheet(projectId);
+      if (!isReadOnly) {
+        await projectService.syncSheet(projectId);
+      }
       const res = await applicantService.getApplicants(projectId, 'DOCUMENT');
       const mappedApplicants = res.applicants.map(mapApplicant);
       setApplicants(mappedApplicants);
@@ -99,13 +129,51 @@ export default function DocumentContent({ projectId }: { projectId: number }) {
     }
   };
 
+  // 상태 변경 (읽기 전용 시 동작 안 함)
   const handleStatusChange = async (applicantId: number, newStatus: '보류' | '합격' | '불합격') => {
+    if (isReadOnly) return;
     try {
       await applicantService.updateStatus(projectId, applicantId, 'DOCUMENT', statusReverseMap[newStatus]);
       setApplicants(prev => prev.map(a => (a.applicantId === applicantId ? { ...a, status: newStatus } : a)));
     } catch (e) {
       console.error('상태 변경 실패:', e);
       toast.error('상태 변경에 실패했습니다.');
+    }
+  };
+
+  // 즐겨찾기 토글 (읽기 전용 시 동작 안 함)
+  const handleToggleFavorite = async (applicantId: number) => {
+    if (isReadOnly) return;
+    try {
+      await applicantService.toggleBookmark(projectId, applicantId, 'DOCUMENT');
+      setFavorites(prev => {
+        const newFavorites = new Set(prev);
+        if (newFavorites.has(applicantId)) {
+          newFavorites.delete(applicantId);
+        } else {
+          newFavorites.add(applicantId);
+        }
+        return newFavorites;
+      });
+    } catch (e) {
+      console.error('즐겨찾기 토글 실패:', e);
+      toast.error('즐겨찾기 변경에 실패했습니다.');
+    }
+  };
+
+  // 재활성화 (서류 단계로 롤백)
+  const handleReactivate = async () => {
+    try {
+      setIsReverting(true);
+      await projectService.revertToDocument(projectId, currentUserId);
+      setProjectState('DOCUMENT');
+      setIsReactivateModalOpen(false);
+      toast.success('서류 단계로 재활성화되었습니다.');
+    } catch (e) {
+      console.error('재활성화 실패:', e);
+      toast.error('재활성화에 실패했습니다.');
+    } finally {
+      setIsReverting(false);
     }
   };
 
@@ -160,28 +228,26 @@ export default function DocumentContent({ projectId }: { projectId: number }) {
     setCommentOpen(true);
   };
 
-  const handleToggleFavorite = async (applicantId: number) => {
-    try {
-      await applicantService.toggleBookmark(projectId, applicantId, 'DOCUMENT');
-      setFavorites(prev => {
-        const newFavorites = new Set(prev);
-        if (newFavorites.has(applicantId)) {
-          newFavorites.delete(applicantId);
-        } else {
-          newFavorites.add(applicantId);
-        }
-        return newFavorites;
-      });
-    } catch (e) {
-      console.error('즐겨찾기 토글 실패:', e);
-      toast.error('즐겨찾기 변경에 실패했습니다.');
-    }
-  };
-
   return (
     <div className="h-full flex flex-col">
       <div className="flex-shrink-0">
         <TopTab counts={counts} onTabChange={setSelectedTab} />
+
+        {/* 마감 상태 배너 */}
+        {isReadOnly && (
+          <div className="h-[51px] bg-[#FFF1BA] flex items-center justify-between px-4">
+            <span className="text-body-rg text-gray-950 flex-1 min-w-0">
+              ⓘ 마감된 지원서 입니다. (읽기 전용)
+            </span>
+            <button
+              onClick={() => setIsReactivateModalOpen(true)}
+              className="w-[69px] h-[27px] bg-primary text-white text-body-sm font-medium rounded-[5px] px-3 py-[3px] whitespace-nowrap shrink-0 ml-2"
+            >
+              재활성화
+            </button>
+          </div>
+        )}
+
         <SearchBar
           placeholder="지원자의 이름을 검색하세요."
           onSearch={setSearchQuery}
@@ -218,12 +284,14 @@ export default function DocumentContent({ projectId }: { projectId: number }) {
                 onToggleFavorite={() => handleToggleFavorite(applicant.applicantId)}
                 onCommentClick={() => handleCommentClick(applicant.applicantId)}
                 onStatusChange={handleStatusChange}
+                isReadOnly={isReadOnly}
               />
             ))
           )}
         </div>
       </PullToRefresh>
 
+      {/* 포지션 필터 BottomSheet */}
       <BottomSheet isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} className="h-[40vh] pb-8">
         <h2 className="text-subtitle-md">지원 포지션</h2>
         <div className="mt-4 flex flex-wrap gap-3.5">
@@ -243,6 +311,7 @@ export default function DocumentContent({ projectId }: { projectId: number }) {
         </div>
       </BottomSheet>
 
+      {/* 댓글 섹션 */}
       <CommentSection
         isOpen={isCommentOpen}
         onClose={() => setCommentOpen(false)}
@@ -250,7 +319,25 @@ export default function DocumentContent({ projectId }: { projectId: number }) {
         applicantId={selectedApplicantId}
         stage="DOCUMENT"
         currentUserId={currentUserId}
+        readOnly={isReadOnly}
       />
+
+      {/* 재활성화 확인 모달 */}
+      <ConfirmModal
+        isOpen={isReactivateModalOpen}
+        onCancel={() => setIsReactivateModalOpen(false)}
+        onConfirm={handleReactivate}
+        description={
+          <>
+            서류를 재활성화 하면 면접 단계가 초기화되며,
+            <br />
+            정보가 삭제되어 복구할 수 없습니다.
+            <br />
+            계속하시겠습니까?
+          </>
+        }
+      />
+      
     </div>
   );
 }
