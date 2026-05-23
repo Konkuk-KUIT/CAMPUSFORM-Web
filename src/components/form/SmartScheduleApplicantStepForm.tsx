@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 
 import Header from '@/components/ui/Header';
@@ -39,20 +39,24 @@ interface InterviewSetting {
 
 export default function SmartScheduleApplicantStepForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isReadOnly = searchParams.get('readonly') === 'true';
   const projectId = useCurrentProjectStore(s => s.projectId);
 
   const [interviewSetting, setInterviewSetting] = useState<InterviewSetting | null>(null);
   const [investigationLink, setInvestigationLink] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showResetConfirmDialog, setShowResetConfirmDialog] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   const handleStepClick = (step: SmartScheduleStep) => {
     if (!projectId) return;
 
     const paths: Record<SmartScheduleStep, string> = {
-      1: `/smart-schedule/${projectId}/setting`,
-      2: `/smart-schedule/${projectId}/interview-schedule`,
-      3: `/smart-schedule/${projectId}/applicant`,
+      1: `/smart-schedule/${projectId}/setting?readonly=true`,
+      2: `/smart-schedule/${projectId}/interview-schedule?readonly=true`,
+      3: `/smart-schedule/${projectId}/applicant${isReadOnly ? '?readonly=true' : ''}`,
       4: `/smart-schedule/${projectId}/result`,
     };
 
@@ -168,7 +172,46 @@ export default function SmartScheduleApplicantStepForm() {
     }
   };
 
+  const handleConfirmResetFromStep2 = async () => {
+    if (!projectId) {
+      toast.error('프로젝트를 선택해주세요.');
+      return;
+    }
+
+    try {
+      setIsResetting(true);
+      const auth = await authService.getCurrentUser();
+      const userId = auth.user?.userId;
+
+      if (!userId) {
+        toast.error('사용자 정보를 확인하지 못했습니다. 다시 로그인해주세요.');
+        return;
+      }
+
+      await projectService.resetInterviewSetting(projectId, 2, userId);
+
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem(`smartScheduleResult:${projectId}`);
+      }
+
+      toast.success('이후 단계 데이터가 초기화되었습니다. 면접관 시간부터 다시 입력해주세요.');
+      setShowResetConfirmDialog(false);
+      router.replace(`/smart-schedule/${projectId}/interview-schedule`);
+    } catch (error: any) {
+      console.error('[SmartScheduleApplicantStep] 단계 초기화 실패:', error);
+      toast.error(error?.response?.data?.message || '기존 데이터 초기화에 실패했습니다.');
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   const handleConfirmGenerate = async () => {
+    if (isReadOnly) {
+      setShowConfirmDialog(false);
+      setShowResetConfirmDialog(true);
+      return;
+    }
+
     if (!projectId) {
       toast.error('프로젝트를 선택해주세요.');
       return;
@@ -233,21 +276,38 @@ export default function SmartScheduleApplicantStepForm() {
 
         <SmartScheduleStepIndicator
           currentStep={3}
-          maxAccessibleStep={3}
+          maxAccessibleStep={isReadOnly ? 4 : 3}
           onStepClick={handleStepClick}
         />
 
         <SmartScheduleSummaryCard interviewSetting={interviewSetting} />
 
         <div className="flex-1 px-4 pt-4 pb-32 overflow-y-auto">
-          <div className="text-left mb-3">
-            <h3 className="text-subtitle-sm-sb text-gray-950 mb-1">
-              지원자 면접 가능 시간 모집
-            </h3>
+          <div className="mb-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-subtitle-sm-sb text-gray-950 mb-1">
+                지원자 면접 가능 시간 모집
+              </h3>
+              {isReadOnly && (
+                <button
+                  type="button"
+                  onClick={() => setShowResetConfirmDialog(true)}
+                  className="h-[25px] rounded-[4px] bg-primary px-3 text-[12px] font-semibold text-white"
+                >
+                  수정하기
+                </button>
+              )}
+            </div>
             <p className="text-body-xs text-gray-300">
               응답 종료 전까지 지원자가 면접 가능 시간을 입력 후 제출합니다.
             </p>
           </div>
+
+          {isReadOnly && (
+            <div className="mb-3 rounded-[4px] bg-[#FFF4C7] py-2 text-center text-[12px] text-gray-600">
+              읽기 전용 모드입니다.
+            </div>
+          )}
 
           <div className="bg-white p-2.5 space-y-2.5">
             <div className="relative">
@@ -311,17 +371,19 @@ export default function SmartScheduleApplicantStepForm() {
             </div>
           </div>
 
-          <div className="fixed bottom-20 left-0 right-0 px-5 max-w-93.75 mx-auto">
-            <Btn
-              variant="primary"
-              size="lg"
-              className="w-full"
-              onClick={() => setShowConfirmDialog(true)}
-              disabled={!interviewSetting || isGenerating}
-            >
-              {isGenerating ? '생성 중...' : '스마트 시간표 생성'}
-            </Btn>
-          </div>
+          {!isReadOnly && (
+            <div className="fixed bottom-20 left-0 right-0 px-5 max-w-93.75 mx-auto">
+              <Btn
+                variant="primary"
+                size="lg"
+                className="w-full"
+                onClick={() => setShowConfirmDialog(true)}
+                disabled={!interviewSetting || isGenerating || isResetting}
+              >
+                {isGenerating ? '생성 중...' : '스마트 시간표 생성'}
+              </Btn>
+            </div>
+          )}
 
           <ConfirmModal
             isOpen={showConfirmDialog}
@@ -337,6 +399,22 @@ export default function SmartScheduleApplicantStepForm() {
               </>
             }
             confirmText="완료"
+          />
+
+          <ConfirmModal
+            isOpen={showResetConfirmDialog}
+            onCancel={() => setShowResetConfirmDialog(false)}
+            onConfirm={handleConfirmResetFromStep2}
+            description={
+              <>
+                수정 시 기존 데이터가 초기화되며,
+                <br />
+                지원자들에게 다시 응답을 받아야 합니다.
+                <br />
+                진행하시겠습니까?
+              </>
+            }
+            confirmText={isResetting ? '초기화 중...' : '확인'}
           />
 
           <div className="h-32" />

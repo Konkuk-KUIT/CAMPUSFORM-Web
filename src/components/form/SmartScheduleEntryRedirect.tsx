@@ -6,6 +6,21 @@ import { useRouter } from 'next/navigation';
 import { useCurrentProjectStore } from '@/store/currentProjectStore';
 import { projectService } from '@/services/projectService';
 
+const getSmartScheduleLastPathKey = (projectId: number) => `smartScheduleLastPath:${projectId}`;
+
+const isValidSmartScheduleLastPath = (path: string, projectId: number) => {
+  const basePath = `/smart-schedule/${projectId}`;
+
+  if (!path.startsWith(`${basePath}/`)) return false;
+
+  return [
+    `${basePath}/setting`,
+    `${basePath}/interview-schedule`,
+    `${basePath}/applicant`,
+    `${basePath}/result`,
+  ].some(validPath => path === validPath || path.startsWith(`${validPath}?`));
+};
+
 export default function SmartScheduleEntryRedirect() {
   const router = useRouter();
   const projectId = useCurrentProjectStore(s => s.projectId);
@@ -81,6 +96,13 @@ export default function SmartScheduleEntryRedirect() {
       if (!projectId) return;
 
       if (typeof window !== 'undefined') {
+        const savedPath = window.localStorage.getItem(getSmartScheduleLastPathKey(projectId));
+
+        if (savedPath && isValidSmartScheduleLastPath(savedPath, projectId)) {
+          router.replace(savedPath);
+          return;
+        }
+
         const cached = sessionStorage.getItem(`smartScheduleResult:${projectId}`);
 
         if (cached) {

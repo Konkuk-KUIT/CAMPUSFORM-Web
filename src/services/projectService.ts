@@ -267,24 +267,55 @@ class ProjectService {
     return response.data;
   }
 
-  // DELETE : 면접 설정 및 이후 단계 데이터 전체 삭제
-  async deleteInterviewSetting(projectId: number, userId: number): Promise<any> {
-    const response = await apiClient.delete(`/recruiting/projects/${projectId}/interview-setting`, {
-      params: { userId },
-    });
+  // POST : 면접 설정 단계별 초기화
+  // fromStep=1: 전체 초기화, fromStep=2: Step2~4 초기화
+  async resetInterviewSetting(
+    projectId: number,
+    fromStep: 1 | 2,
+    userId: number,
+  ): Promise<any> {
+    const response = await apiClient.post(
+      `/recruiting/projects/${projectId}/interview-setting/reset`,
+      null,
+      {
+        params: {
+          fromStep,
+          userId,
+        },
+      },
+    );
 
     return response.data;
   }
 
+  // DELETE : 특정 지원자의 수동 배정 정보 삭제
+  async deleteManualAssignmentApplicant(
+    projectId: number,
+    applicantId: number,
+    userId: number,
+  ): Promise<any> {
+    const response = await apiClient.delete(
+      `/projects/${projectId}/interview/manual-assignments/applicants/${applicantId}`,
+      {
+        params: { userId },
+      },
+    );
+
+    return response.data;
+  }
+
+
   async resetSmartScheduleFromStep(
     projectId: number,
     step: 1 | 2,
-    userId: number,
+    userId?: number,
   ): Promise<{ success: boolean }> {
-    // 현재 Swagger 기준 초기화 API는 Step1 이후 모든 면접/시간표 데이터를 초기화합니다.
-    // step 값은 호출부 의미 보존용으로 유지합니다.
-    void step;
-    await this.deleteInterviewSetting(projectId, userId);
+    if (!userId) {
+      console.warn('[ProjectService] resetSmartScheduleFromStep requires userId', { projectId, step });
+      return { success: false };
+    }
+
+    await this.resetInterviewSetting(projectId, step, userId);
     return { success: true };
   }
 }
