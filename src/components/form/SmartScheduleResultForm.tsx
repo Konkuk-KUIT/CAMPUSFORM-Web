@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getSmartSchedulePreview } from '@/services/smartScheduleService';
 import { projectService } from '@/services/projectService';
 import { authService } from '@/services/authService';
 import { useRouter } from 'next/navigation';
@@ -340,40 +339,29 @@ export default function SmartScheduleResultForm() {
         }
       }
 
-      const hasAssigned = await fetchAssignedSchedule();
-
-      if (hasAssigned) {
-        return;
-      }
-
       try {
-        const res = await getSmartSchedulePreview(projectId);
-        const data = res.data;
-        const normalized = applyScheduleResult(data, false);
-
-        const confirmed =
-          data.confirmed === true ||
-          data.isConfirmed === true ||
-          data.status === 'CONFIRMED' ||
-          data.scheduleStatus === 'CONFIRMED';
-
-        setIsConfirmed(confirmed && hasAssignedSchedule(normalized));
+        const confirmedData = await projectService.getConfirmedSmartSchedule(projectId);
+        applyScheduleResult(confirmedData, true);
+        return;
       } catch (error: any) {
         const status = error?.response?.status;
 
-        if (status === 409) {
+        if (status === 404 || status === 409) {
           setScheduleData([]);
           setUnassignedApplicants([]);
+          setIsConfirmed(false);
 
-          toast.warning('아직 생성된 스마트 시간표가 없습니다.');
+          toast.warning('아직 확정된 스마트 시간표가 없습니다.');
           router.replace(`/smart-schedule/${projectId}/applicant`);
           return;
         }
 
+        console.error('[SmartScheduleResult] 확정 시간표 조회 실패:', error);
         setScheduleData([]);
         setUnassignedApplicants([]);
+        setIsConfirmed(false);
 
-        toast.error('스마트 시간표 결과를 불러오지 못했습니다.');
+        toast.error('확정된 스마트 시간표를 불러오지 못했습니다.');
       }
     };
 

@@ -95,26 +95,10 @@ export default function SmartScheduleEntryRedirect() {
     const redirectBySmartScheduleStatus = async () => {
       if (!projectId) return;
 
-      if (typeof window !== 'undefined') {
-        const savedPath = window.localStorage.getItem(getSmartScheduleLastPathKey(projectId));
-
-        if (savedPath && isValidSmartScheduleLastPath(savedPath, projectId)) {
-          router.replace(savedPath);
-          return;
-        }
-
-        const cached = sessionStorage.getItem(`smartScheduleResult:${projectId}`);
-
-        if (cached) {
-          router.replace(`/smart-schedule/${projectId}/result`);
-          return;
-        }
-      }
-
       try {
-        const slotData = await projectService.getInterviewSlots(projectId);
+        const confirmedData = await projectService.getConfirmedSmartSchedule(projectId);
 
-        if (hasAssignedSchedule(slotData)) {
+        if (hasAssignedSchedule(confirmedData)) {
           router.replace(`/smart-schedule/${projectId}/result`);
           return;
         }
@@ -122,14 +106,29 @@ export default function SmartScheduleEntryRedirect() {
         const status = error?.response?.status;
 
         if (status !== 404 && status !== 409) {
-          console.warn('[SmartScheduleEntry] 확정된 면접 슬롯 조회 실패');
+          console.warn('[SmartScheduleEntry] 확정된 스마트 시간표 조회 실패');
+        }
+      }
+
+      if (typeof window !== 'undefined') {
+        const cached = sessionStorage.getItem(`smartScheduleResult:${projectId}`);
+
+        if (cached) {
+          router.replace(`/smart-schedule/${projectId}/result?mode=preview`);
+          return;
+        }
+
+        const savedPath = window.localStorage.getItem(getSmartScheduleLastPathKey(projectId));
+
+        if (savedPath && isValidSmartScheduleLastPath(savedPath, projectId)) {
+          router.replace(savedPath);
+          return;
         }
       }
 
       /**
-       * 확정 여부를 판단할 수 있는 API는 현재 interview-slots의 배정 데이터뿐이다.
-       * GET smart-schedule은 생성 전 preview API라 미생성 상태에서 409를 만들 수 있으므로,
-       * 네비바 진입점에서는 호출하지 않는다.
+       * GET smart-schedule은 미리보기 계산 API라 DB 저장된 확정 결과 조회에 쓰지 않는다.
+       * 확정 결과는 GET smart-schedule/confirmed API로 먼저 판단한다.
        */
 
       try {

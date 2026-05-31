@@ -267,6 +267,15 @@ class ProjectService {
     return response.data;
   }
 
+  // GET : 확정된 스마트 시간표 조회
+  // DB에 저장된 확정 시간표를 그대로 조회합니다.
+  async getConfirmedSmartSchedule(projectId: number): Promise<any> {
+    const response = await apiClient.get(
+      `/projects/${projectId}/interview/smart-schedule/confirmed`,
+    );
+    return response.data;
+  }
+
   // POST : 면접 설정 단계별 초기화
   // fromStep=1: 전체 초기화, fromStep=2: Step2~4 초기화
   async resetInterviewSetting(

@@ -32,3 +32,12 @@ export const createSmartSchedule = generateSmartSchedule;
 export const getSmartSchedulePreview = async (projectId: number) => {
   return apiClient.get(`/projects/${projectId}/interview/smart-schedule`);
 };
+
+// 스마트 시간표 확정 결과 조회: DB에 저장된 확정 시간표를 그대로 조회합니다.
+export const getConfirmedSmartSchedule = async (projectId: number) => {
+  const response = await apiClient.get(
+    `/projects/${projectId}/interview/smart-schedule/confirmed`,
+  );
+
+  return response.data;
+};
