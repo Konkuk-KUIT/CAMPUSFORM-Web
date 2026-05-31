@@ -41,6 +41,11 @@ export default function SmartScheduleApplicantStepForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isReadOnly = searchParams.get('readonly') === 'true';
+  const maxStepParam = Number(searchParams.get('maxStep'));
+  const readonlyMaxAccessibleStep =
+    isReadOnly && [1, 2, 3, 4].includes(maxStepParam)
+      ? (maxStepParam as SmartScheduleStep)
+      : 3;
   const projectId = useCurrentProjectStore(s => s.projectId);
 
   const [interviewSetting, setInterviewSetting] = useState<InterviewSetting | null>(null);
@@ -52,11 +57,16 @@ export default function SmartScheduleApplicantStepForm() {
 
   const handleStepClick = (step: SmartScheduleStep) => {
     if (!projectId) return;
+    if (step > readonlyMaxAccessibleStep) return;
+
+    const currentProgressStep = isReadOnly ? readonlyMaxAccessibleStep : 3;
+    const shouldOpenReadOnly = step < currentProgressStep;
+    const query = shouldOpenReadOnly ? `?readonly=true&maxStep=${currentProgressStep}` : '';
 
     const paths: Record<SmartScheduleStep, string> = {
-      1: `/smart-schedule/${projectId}/setting?readonly=true`,
-      2: `/smart-schedule/${projectId}/interview-schedule?readonly=true`,
-      3: `/smart-schedule/${projectId}/applicant${isReadOnly ? '?readonly=true' : ''}`,
+      1: `/smart-schedule/${projectId}/setting${query}`,
+      2: `/smart-schedule/${projectId}/interview-schedule${query}`,
+      3: `/smart-schedule/${projectId}/applicant${query}`,
       4: `/smart-schedule/${projectId}/result`,
     };
 
@@ -276,7 +286,7 @@ export default function SmartScheduleApplicantStepForm() {
 
         <SmartScheduleStepIndicator
           currentStep={3}
-          maxAccessibleStep={isReadOnly ? 4 : 3}
+          maxAccessibleStep={isReadOnly ? readonlyMaxAccessibleStep : 3}
           onStepClick={handleStepClick}
         />
 

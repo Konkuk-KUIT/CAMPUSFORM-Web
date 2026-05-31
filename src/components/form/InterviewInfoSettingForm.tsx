@@ -25,6 +25,11 @@ export default function InterviewInfoSettingForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isReadOnly = searchParams.get("readonly") === "true";
+  const maxStepParam = Number(searchParams.get("maxStep"));
+  const readonlyMaxAccessibleStep =
+    isReadOnly && [1, 2, 3, 4].includes(maxStepParam)
+      ? (maxStepParam as 1 | 2 | 3 | 4)
+      : 1;
   const [showResetConfirmDialog, setShowResetConfirmDialog] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   // Date state - 여러 날짜를 선택할 수 있도록 배열로 변경
@@ -388,13 +393,16 @@ export default function InterviewInfoSettingForm() {
 
   const handleStepClick = (step: 1 | 2 | 3 | 4) => {
     if (!projectId) return;
+    if (step > readonlyMaxAccessibleStep) return;
 
-    const readonlyQuery = isReadOnly ? "?readonly=true" : "";
+    const currentProgressStep = isReadOnly ? readonlyMaxAccessibleStep : 1;
+    const shouldOpenReadOnly = step < currentProgressStep;
+    const query = shouldOpenReadOnly ? `?readonly=true&maxStep=${currentProgressStep}` : "";
 
     const paths: Record<1 | 2 | 3 | 4, string> = {
-      1: `/smart-schedule/${projectId}/setting${readonlyQuery}`,
-      2: `/smart-schedule/${projectId}/interview-schedule${readonlyQuery}`,
-      3: `/smart-schedule/${projectId}/applicant${readonlyQuery}`,
+      1: `/smart-schedule/${projectId}/setting${query}`,
+      2: `/smart-schedule/${projectId}/interview-schedule${query}`,
+      3: `/smart-schedule/${projectId}/applicant${query}`,
       4: `/smart-schedule/${projectId}/result`,
     };
 
@@ -415,7 +423,7 @@ export default function InterviewInfoSettingForm() {
         {/* Step Indicator */}
         <SmartScheduleStepIndicator
           currentStep={1}
-          maxAccessibleStep={isReadOnly ? 4 : 1}
+          maxAccessibleStep={isReadOnly ? readonlyMaxAccessibleStep : 1}
           onStepClick={handleStepClick}
         />
 

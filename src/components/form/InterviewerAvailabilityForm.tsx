@@ -54,6 +54,11 @@ export default function InterviewerAvailabilityForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isReadOnly = searchParams.get('readonly') === 'true';
+  const maxStepParam = Number(searchParams.get('maxStep'));
+  const readonlyMaxAccessibleStep =
+    isReadOnly && [1, 2, 3, 4].includes(maxStepParam)
+      ? (maxStepParam as SmartScheduleStep)
+      : 2;
   const projectId = useCurrentProjectStore(s => s.projectId);
 
   const [isLoading, setIsLoading] = useState(false);
@@ -80,13 +85,16 @@ export default function InterviewerAvailabilityForm() {
 
   const handleStepClick = (step: SmartScheduleStep) => {
     if (!projectId) return;
+    if (step > readonlyMaxAccessibleStep) return;
 
-    const readonlyQuery = isReadOnly ? '?readonly=true' : '';
+    const currentProgressStep = isReadOnly ? readonlyMaxAccessibleStep : 2;
+    const shouldOpenReadOnly = step < currentProgressStep;
+    const query = shouldOpenReadOnly ? `?readonly=true&maxStep=${currentProgressStep}` : '';
 
     const paths: Record<SmartScheduleStep, string> = {
-      1: `/smart-schedule/${projectId}/setting?readonly=true`,
-      2: `/smart-schedule/${projectId}/interview-schedule${readonlyQuery}`,
-      3: `/smart-schedule/${projectId}/applicant${readonlyQuery}`,
+      1: `/smart-schedule/${projectId}/setting${query}`,
+      2: `/smart-schedule/${projectId}/interview-schedule${query}`,
+      3: `/smart-schedule/${projectId}/applicant${query}`,
       4: `/smart-schedule/${projectId}/result`,
     };
 
@@ -452,7 +460,7 @@ export default function InterviewerAvailabilityForm() {
 
         <SmartScheduleStepIndicator
           currentStep={2}
-          maxAccessibleStep={isReadOnly ? 4 : 2}
+          maxAccessibleStep={isReadOnly ? readonlyMaxAccessibleStep : 2}
           onStepClick={handleStepClick}
         />
 
