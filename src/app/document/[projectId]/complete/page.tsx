@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import DocumentCompleteButtons from '@/components/document/DocumentCompleteButtons';
 import DocumentCompleteContent from '@/components/document/DocumentCompleteContent';
 import ResultPageHeader from '@/components/ui/ResultPageHeader';
@@ -18,7 +19,9 @@ export default async function DocumentCompletePage({ params }: { params: Promise
         <DocumentCompleteContent projectId={Number(projectId)} />
         <DocumentCompleteButtons projectId={Number(projectId)} />
       </div>
-      <Navbar />
+      <Suspense fallback={<div className="h-16.25" />}>
+        <Navbar />
+      </Suspense>
     </>
   );
 }
