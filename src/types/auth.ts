@@ -8,5 +8,6 @@ export interface User {
 
 export interface AuthResponse {
   isAuthenticated: boolean;
+  isOnboarded: boolean;
   user: User | null;
 }
