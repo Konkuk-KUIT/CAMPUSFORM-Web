@@ -87,6 +87,7 @@ export default function SmartScheduleCalendarPreview({
   interviewersCellActive,
   currentStartDate: externalCurrentStartDate,
   onCurrentStartDateChange,
+  readOnly = false,
 }: {
   interviewerName?: string | null;
   seed?: number;
@@ -105,6 +106,7 @@ export default function SmartScheduleCalendarPreview({
   interviewersCellActive?: { [interviewerId: number]: { [key: string]: { top: boolean; bottom: boolean } } };
   currentStartDate?: Date;
   onCurrentStartDateChange?: (date: Date) => void;
+  readOnly?: boolean;
 }) {
   const [internalCellActive, setInternalCellActive] = useState<{ [key: string]: { top: boolean; bottom: boolean } }>({});
   const [internalCurrentStartDate, setInternalCurrentStartDate] = useState(new Date());
@@ -248,7 +250,10 @@ export default function SmartScheduleCalendarPreview({
             <span className="text-[13px] font-medium text-gray-600">필수 면접관</span>
             <Toggle 
               checked={requiredInterviewer || false} 
-              onChange={(value) => onRequiredInterviewerChange?.(value)} 
+              onChange={(value) => {
+                if (readOnly) return;
+                onRequiredInterviewerChange?.(value);
+              }} 
             />
           </div>
           <p className="text-[12px] text-gray-500 leading-[17px] tracking-[0.12px]">
@@ -431,10 +436,10 @@ export default function SmartScheduleCalendarPreview({
                     <div key={`${dayIdx}-${timeIdx}`} className="flex flex-col h-full w-full relative">
                       {/* Top half - solid border */}
                       <div
-                        className={`flex-1 border-t border-white border-solid ${interviewerName && isInterviewDate ? 'cursor-pointer hover:opacity-80' : interviewerName ? 'cursor-not-allowed' : ''}`}
-                        style={{ backgroundColor: topColor, cursor: interviewerName && isInterviewDate ? 'pointer' : interviewerName ? 'not-allowed' : 'default' }}
+                        className={`flex-1 border-t border-white border-solid ${interviewerName && isInterviewDate && !readOnly ? 'cursor-pointer hover:opacity-80' : interviewerName ? 'cursor-not-allowed' : ''}`}
+                        style={{ backgroundColor: topColor, cursor: interviewerName && isInterviewDate && !readOnly ? 'pointer' : interviewerName ? 'not-allowed' : 'default' }}
                         onClick={() => {
-                          if (interviewerName && isInterviewDate) {
+                          if (interviewerName && isInterviewDate && !readOnly) {
                             const newTop = !(cellActive[cellKey]?.top ?? false);
                             console.log(`[CalendarPreview] ${interviewerName} - 클릭 dateKey: ${dateKey}, cellKey: ${cellKey}, 현재 top: ${cellActive[cellKey]?.top}, 새 top: ${newTop}`);
                             setCellActive(prev => {
@@ -457,10 +462,10 @@ export default function SmartScheduleCalendarPreview({
                       />
                       {/* Bottom half - dashed border */}
                       <div
-                        className={`flex-1 border-t border-white ${interviewerName && isInterviewDate ? 'cursor-pointer hover:opacity-80' : interviewerName ? 'cursor-not-allowed' : ''}`}
-                        style={{ backgroundColor: bottomColor, borderStyle: 'dashed', cursor: interviewerName && isInterviewDate ? 'pointer' : interviewerName ? 'not-allowed' : 'default' }}
+                        className={`flex-1 border-t border-white ${interviewerName && isInterviewDate && !readOnly ? 'cursor-pointer hover:opacity-80' : interviewerName ? 'cursor-not-allowed' : ''}`}
+                        style={{ backgroundColor: bottomColor, borderStyle: 'dashed', cursor: interviewerName && isInterviewDate && !readOnly ? 'pointer' : interviewerName ? 'not-allowed' : 'default' }}
                         onClick={() => {
-                          if (interviewerName && isInterviewDate) {
+                          if (interviewerName && isInterviewDate && !readOnly) {
                             const newBottom = !(cellActive[cellKey]?.bottom ?? false);
                             console.log(`[CalendarPreview] ${interviewerName} - 클릭 dateKey: ${dateKey}, cellKey: ${cellKey}, 현재 bottom: ${cellActive[cellKey]?.bottom}, 새 bottom: ${newBottom}`);
                             setCellActive(prev => {

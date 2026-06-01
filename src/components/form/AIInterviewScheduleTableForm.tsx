@@ -1,10 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Header from '@/components/ui/Header';
 import Navbar from '@/components/Navbar';
 import Btn from '@/components/ui/Btn';
 import Checkbox from '@/components/ui/Checkbox';
+import SmartScheduleStepIndicator from '@/components/ui/SmartScheduleStepIndicator';
+import { useCurrentProjectStore } from '@/store/currentProjectStore';
 
 interface InterviewSchedule {
   id: string;
@@ -51,6 +54,22 @@ export default function AIInterviewScheduleTableForm() {
     },
   ]);
 
+  const router = useRouter();
+  const projectId = useCurrentProjectStore(s => s.projectId);
+
+  const handleStepClick = (step: 1 | 2 | 3 | 4) => {
+    if (!projectId) return;
+
+    const paths: Record<1 | 2 | 3 | 4, string> = {
+      1: `/smart-schedule/${projectId}/setting`,
+      2: `/smart-schedule/${projectId}/interview-schedule`,
+      3: `/smart-schedule/${projectId}/applicant-submit`,
+      4: `/smart-schedule/${projectId}/result`,
+    };
+
+    router.push(paths[step]);
+  };
+
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [filterStatus, setFilterStatus] = useState('all');
 
@@ -93,6 +112,14 @@ export default function AIInterviewScheduleTableForm() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       <Header title="AI 면접 시간표" />
+      
+      {/* Step Indicator */}
+      <SmartScheduleStepIndicator
+        currentStep={4}
+        maxAccessibleStep={4}
+        onStepClick={handleStepClick}
+      />
+      
       <div className="flex-1 px-6 py-8 max-w-7xl mx-auto w-full">
         <h1 className="text-title text-gray-950">AI 면접 시간표</h1>
         <p className="text-text-14 text-gray-500 mt-2 mb-6">전체 면접 일정을 한눈에 관리하세요</p>

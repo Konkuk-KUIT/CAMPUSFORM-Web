@@ -1,7 +1,7 @@
 import ProjectIdSetter from '@/components/ProjectIdSetter';
-import SmartScheduleEntryRedirect from '@/components/form/SmartScheduleEntryRedirect';
+import SmartScheduleApplicantStepForm from '@/components/form/SmartScheduleApplicantStepForm';
 
-export default async function SmartSchedulePage({
+export default async function SmartScheduleApplicantPage({
   params,
 }: {
   params: Promise<{ projectId: string }>;
@@ -11,7 +11,7 @@ export default async function SmartSchedulePage({
   return (
     <>
       <ProjectIdSetter projectId={Number(projectId)} />
-      <SmartScheduleEntryRedirect />
+      <SmartScheduleApplicantStepForm />
     </>
   );
 }

@@ -245,20 +245,99 @@ class ProjectService {
     const response = await apiClient.get(`/recruiting/projects/${projectId}/interview-slots`);
     return response.data;
   }
-  // GET : 스마트 시간표 생성 및 미리보기
-  async generateSmartSchedule(projectId: number): Promise<any> {
-    console.log('[ProjectService] generateSmartSchedule 호출 (미리보기), projectId:', projectId);
-    const response = await apiClient.get(`/projects/${projectId}/interview/smart-schedule`);
-    console.log('[ProjectService] generateSmartSchedule 응답:', response.data);
+  // POST : 스마트 시간표 생성 미리보기
+  // 알고리즘을 실행해 결과만 반환하고 DB에는 저장하지 않습니다.
+  async generateSmartSchedule(projectId: number, userId: number): Promise<any> {
+    const response = await apiClient.post(
+      `/projects/${projectId}/interview/smart-schedule/generate`,
+      null,
+      {
+        params: { userId },
+      },
+    );
+
     return response.data;
   }
 
-  // POST : 스마트 시간표 확정
-  async confirmSmartSchedule(projectId: number): Promise<any> {
-    console.log('[ProjectService] confirmSmartSchedule 호출, projectId:', projectId);
-    const response = await apiClient.post(`/projects/${projectId}/interview/smart-schedule`);
-    console.log('[ProjectService] confirmSmartSchedule 응답:', response.data);
+  // POST : 스마트 시간표 최종 확정
+  // 알고리즘 결과를 DB에 저장하여 확정합니다.
+  async confirmSmartSchedule(projectId: number, userId: number): Promise<any> {
+    const response = await apiClient.post(
+      `/projects/${projectId}/interview/smart-schedule/confirm`,
+      null,
+      {
+        params: { userId },
+      },
+    );
+
     return response.data;
+  }
+
+  // GET : 스마트 시간표 생성 미리보기
+  async getSmartSchedulePreview(projectId: number): Promise<any> {
+    const response = await apiClient.get(`/projects/${projectId}/interview/smart-schedule`);
+    return response.data;
+  }
+
+  // GET : 확정된 스마트 시간표 조회
+  // DB에 저장된 확정 시간표를 그대로 조회합니다.
+  async getConfirmedSmartSchedule(projectId: number): Promise<any> {
+    const response = await apiClient.get(
+      `/projects/${projectId}/interview/smart-schedule/confirmed`,
+    );
+    return response.data;
+  }
+
+  // POST : 면접 설정 단계별 초기화
+  // fromStep=1: 전체 초기화, fromStep=2: Step2~4 초기화
+  async resetInterviewSetting(
+    projectId: number,
+    fromStep: 1 | 2,
+    userId: number,
+  ): Promise<any> {
+    const response = await apiClient.post(
+      `/recruiting/projects/${projectId}/interview-setting/reset`,
+      null,
+      {
+        params: {
+          fromStep,
+          userId,
+        },
+      },
+    );
+
+    return response.data;
+  }
+
+  // DELETE : 특정 지원자의 수동 배정 정보 삭제
+  async deleteManualAssignmentApplicant(
+    projectId: number,
+    applicantId: number,
+    userId: number,
+  ): Promise<any> {
+    const response = await apiClient.delete(
+      `/projects/${projectId}/interview/manual-assignments/applicants/${applicantId}`,
+      {
+        params: { userId },
+      },
+    );
+
+    return response.data;
+  }
+
+
+  async resetSmartScheduleFromStep(
+    projectId: number,
+    step: 1 | 2,
+    userId?: number,
+  ): Promise<{ success: boolean }> {
+    if (!userId) {
+      console.warn('[ProjectService] resetSmartScheduleFromStep requires userId', { projectId, step });
+      return { success: false };
+    }
+
+    await this.resetInterviewSetting(projectId, step, userId);
+    return { success: true };
   }
 }
 

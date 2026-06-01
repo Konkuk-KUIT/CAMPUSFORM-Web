@@ -1,14 +1,30 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname, useParams } from 'next/navigation';
+import { usePathname, useParams, useSearchParams } from 'next/navigation';
 import ResultSelectionModal from '@/components/ui/ResultSelectionModal';
 import { useCurrentProjectStore } from '@/store/currentProjectStore';
 
+const getSmartScheduleLastPathKey = (projectId: number) => `smartScheduleLastPath:${projectId}`;
+
+const isValidSmartScheduleLastPath = (path: string, projectId: number) => {
+  const basePath = `/smart-schedule/${projectId}`;
+
+  if (!path.startsWith(`${basePath}/`)) return false;
+
+  return [
+    `${basePath}/setting`,
+    `${basePath}/interview-schedule`,
+    `${basePath}/applicant`,
+    `${basePath}/result`,
+  ].some(validPath => path === validPath || path.startsWith(`${validPath}?`));
+};
+
 export default function Navbar() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const params = useParams();
   const storeProjectId = useCurrentProjectStore(s => s.projectId);
 
@@ -21,9 +37,37 @@ export default function Navbar() {
   const isResult = pathname.startsWith('/result');
 
   const [isResultOpen, setIsResultOpen] = useState(false);
+  const [scheduleHref, setScheduleHref] = useState(projectId ? `/smart-schedule/${projectId}` : '/smart-schedule');
 
   const documentHref = projectId ? `/document/${projectId}` : '/document';
   const interviewHref = projectId ? `/interview/${projectId}` : '/interview';
+
+  useEffect(() => {
+    if (!projectId || typeof window === 'undefined') {
+      setScheduleHref('/smart-schedule');
+      return;
+    }
+
+    const basePath = `/smart-schedule/${projectId}`;
+    const queryString = searchParams.toString();
+    const currentFullPath = queryString ? `${pathname}?${queryString}` : pathname;
+    const storageKey = getSmartScheduleLastPathKey(projectId);
+
+    if (isValidSmartScheduleLastPath(currentFullPath, projectId)) {
+      window.localStorage.setItem(storageKey, currentFullPath);
+      setScheduleHref(currentFullPath);
+      return;
+    }
+
+    const savedPath = window.localStorage.getItem(storageKey);
+
+    if (savedPath && isValidSmartScheduleLastPath(savedPath, projectId)) {
+      setScheduleHref(savedPath);
+      return;
+    }
+
+    setScheduleHref(basePath);
+  }, [pathname, projectId, searchParams]);
 
   return (
     <>
@@ -59,7 +103,7 @@ export default function Navbar() {
               <span className={isInterview ? 'text-black' : 'text-gray-500'}>면접</span>
             </Link>
 
-            <Link href={projectId ? `/smart-schedule/${projectId}` : '/smart-schedule'} className="flex flex-col items-center gap-2.25 px-6 py-2.25">
+            <Link href={scheduleHref} className="flex flex-col items-center gap-2.25 px-6 py-2.25">
               <Image
                 src={isSchedule ? '/icons/schedule.svg' : '/icons/schedule-off.svg'}
                 alt="시간표"

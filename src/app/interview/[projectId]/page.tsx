@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import InterviewContent from '@/components/interview/InterviewContent';
 import InterviewHeader from '@/components/ui/InterviewHeader';
 import Navbar from '@/components/Navbar';
@@ -12,7 +13,9 @@ export default async function InterviewListPage({ params }: { params: Promise<{ 
       <ProjectIdSetter projectId={Number(projectId)} />
       <InterviewHeader />
       <InterviewContent projectId={Number(projectId)} />
-      <Navbar />
+      <Suspense fallback={<div className="h-16.25" />}>
+        <Navbar />
+      </Suspense>
     </div>
   );
 }
