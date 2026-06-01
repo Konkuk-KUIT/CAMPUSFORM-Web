@@ -47,6 +47,11 @@ export default function HomeMain() {
           return;
         }
 
+        if (!authResponse.isOnboarded) {
+          router.replace('/onboarding');
+          return;
+        }
+
         setIsLoading(false);
       } catch (error) {
         console.error('Auth check error:', error);

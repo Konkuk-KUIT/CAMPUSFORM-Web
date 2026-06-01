@@ -127,7 +127,7 @@ export default function ProfileSetupForm() {
       if (nickname && nickname !== user?.nickname) {
         await authService.updateNickname(nickname);
       }
-      router.push('/home');
+      router.push('/onboarding');
     } catch (error) {
       console.error('Failed to update nickname:', error);
       toast.error('프로필 저장에 실패했습니다.');
