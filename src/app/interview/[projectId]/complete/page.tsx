@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import InterviewCompleteButtons from '@/components/interview/InterviewCompleteButtons';
 import InterviewCompleteContent from '@/components/interview/InterviewCompleteContent';
 import Navbar from '@/components/Navbar';
@@ -22,7 +23,9 @@ export default async function InterviewCompletePage({ params }: { params: Promis
         <InterviewCompleteContent projectId={Number(projectId)} />
         <InterviewCompleteButtons projectId={Number(projectId)} />
       </div>
-      <Navbar />
+      <Suspense fallback={<div className="h-16.25" />}>
+        <Navbar />
+      </Suspense>
     </>
   );
 }

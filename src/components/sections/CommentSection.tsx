@@ -17,6 +17,7 @@ interface CommentSectionProps {
   stage: CommentStage;
   currentUserId: number;
   scrollToCommentId?: number;
+  readOnly?: boolean;
 }
 
 export default function CommentSection({
@@ -27,6 +28,7 @@ export default function CommentSection({
   stage,
   currentUserId,
   scrollToCommentId,
+  readOnly = false,
 }: CommentSectionProps) {
   const [comments, setComments] = useState<ReplyProps[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -40,7 +42,6 @@ export default function CommentSection({
     }));
   };
 
-  // 댓글 불러오기
   const loadComments = async () => {
     if (!applicantId) return;
     setIsLoading(true);
@@ -54,7 +55,6 @@ export default function CommentSection({
     }
   };
 
-  // 댓글 작성
   const handleCommentSubmit = async (content: string) => {
     try {
       await commentService.createComment(projectId, Number(applicantId), stage, {
@@ -67,7 +67,6 @@ export default function CommentSection({
     }
   };
 
-  // 답글 작성
   const handleReply = async (parentId: number, content: string) => {
     try {
       await commentService.createComment(projectId, Number(applicantId), stage, {
@@ -80,7 +79,6 @@ export default function CommentSection({
     }
   };
 
-  // 댓글 수정
   const handleEdit = async (commentId: number, newContent: string) => {
     try {
       await commentService.updateComment(projectId, Number(applicantId), commentId, stage, {
@@ -93,7 +91,6 @@ export default function CommentSection({
     }
   };
 
-  // 댓글 삭제
   const handleDelete = async (commentId: number) => {
     try {
       await commentService.deleteComment(projectId, Number(applicantId), commentId, stage);
@@ -103,7 +100,6 @@ export default function CommentSection({
     }
   };
 
-  // 바텀시트 열릴 때 댓글 불러오기
   useEffect(() => {
     if (isOpen && applicantId) {
       loadComments().then(() => {
@@ -118,7 +114,8 @@ export default function CommentSection({
 
   return (
     <BottomSheet isOpen={isOpen} onClose={onClose}>
-      <InputComment onSubmit={handleCommentSubmit} />
+      {/* 읽기 전용 모드에서는 댓글 입력창 숨김 */}
+      {!readOnly && <InputComment onSubmit={handleCommentSubmit} />}
 
       <div className="space-y-2 mt-4">
         {isLoading ? (
@@ -130,9 +127,10 @@ export default function CommentSection({
             <Reply
               key={comment.commentId}
               {...comment}
-              onReply={handleReply}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
+              onReply={readOnly ? undefined : handleReply}
+              onEdit={readOnly ? undefined : handleEdit}
+              onDelete={readOnly ? undefined : handleDelete}
+              readOnly={readOnly}
             />
           ))
         )}

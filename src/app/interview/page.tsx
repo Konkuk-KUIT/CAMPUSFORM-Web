@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import InterviewHeader from '@/components/ui/InterviewHeader';
 import Navbar from '@/components/Navbar';
 
@@ -11,7 +12,9 @@ export default function InterviewInitialPage() {
       <div className="flex-1 bg-gray-50 px-5 pt-[33px] pb-20">
         <InterviewInitialCards />
       </div>
-      <Navbar />
+      <Suspense fallback={<div className="h-16.25" />}>
+        <Navbar />
+      </Suspense>
     </div>
   );
 }

@@ -19,6 +19,7 @@ interface ApplicantFileCardProps {
   appointmentDate?: string;
   appointmentTime?: string;
   onAppointmentClick?: () => void;
+  isReadOnly?: boolean;
 }
 
 export default function ApplicantFileCard({
@@ -35,12 +36,19 @@ export default function ApplicantFileCard({
   appointmentDate,
   appointmentTime,
   onAppointmentClick,
+  isReadOnly = false,
 }: ApplicantFileCardProps) {
   const [status, setStatus] = useState(initialStatus as '보류' | '합격' | '불합격');
 
   const handleStatusChange = (newStatus: '보류' | '합격' | '불합격') => {
+    if (isReadOnly) return;
     setStatus(newStatus);
     onStatusChange?.(id, newStatus);
+  };
+
+  const handleToggleFavorite = () => {
+    if (isReadOnly) return;
+    onToggleFavorite?.();
   };
 
   return (
@@ -56,7 +64,8 @@ export default function ApplicantFileCard({
       </Link>
 
       <div className="flex flex-col items-end gap-2">
-        <StatusDropdown value={status} onChange={handleStatusChange} />
+        {/* 읽기 전용이어도 디자인 그대로, 클릭만 막음 */}
+        <StatusDropdown value={status} onChange={handleStatusChange} disabled={isReadOnly} />
 
         <div className="flex items-center gap-2.5 text-gray-300">
           <div className="flex items-center gap-1">
@@ -65,7 +74,8 @@ export default function ApplicantFileCard({
             </button>
             <span className="text-body-xs-rg text-gray-300">{commentCount}</span>
           </div>
-          <button className="w-4.5 h-4.5 relative" onClick={onToggleFavorite}>
+          {/* 읽기 전용이어도 디자인 그대로, 클릭만 막음 */}
+          <button className="w-4.5 h-4.5 relative" onClick={handleToggleFavorite}>
             <Image src={isFavorite ? '/icons/star.svg' : '/icons/star-off.svg'} alt="즐겨찾기" fill />
           </button>
         </div>

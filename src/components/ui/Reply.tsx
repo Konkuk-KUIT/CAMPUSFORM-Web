@@ -31,7 +31,8 @@ export default function Reply({
   onEdit,
   onDelete,
   replies = [],
-}: ReplyProps) {
+  readOnly = false,
+}: ReplyProps & { readOnly?: boolean }) {
   const [showMenu, setShowMenu] = useState(false);
   const [showReplyInput, setShowReplyInput] = useState(false);
   const [replyContent, setReplyContent] = useState('');
@@ -39,13 +40,11 @@ export default function Reply({
   const [showEditInput, setShowEditInput] = useState(false);
   const [editContent, setEditContent] = useState(content);
 
-  // 댓글 메뉴 옵션 (수정/삭제)
   const menuOptions = [
     { id: 'edit', label: '수정하기' },
     { id: 'delete', label: '삭제하기' },
   ];
 
-  // 메뉴 옵션 선택 핸들러
   const handleMenuSelect = (optionId: string) => {
     if (optionId === 'edit') {
       setEditContent(content);
@@ -56,13 +55,11 @@ export default function Reply({
     setShowMenu(false);
   };
 
-  // 삭제 확인 핸들러
   const handleDeleteConfirm = () => {
     onDelete?.(commentId);
     setShowDeleteModal(false);
   };
 
-  // 답글 등록 핸들러
   const handleReplySubmit = () => {
     if (!replyContent.trim()) return;
     onReply?.(commentId, replyContent);
@@ -70,20 +67,17 @@ export default function Reply({
     setShowReplyInput(false);
   };
 
-  // 답글 취소 핸들러
   const handleReplyCancel = () => {
     setReplyContent('');
     setShowReplyInput(false);
   };
 
-  // 수정 등록 핸들러
   const handleEditSubmit = () => {
     if (!editContent.trim()) return;
     onEdit?.(commentId, editContent);
     setShowEditInput(false);
   };
 
-  // 수정 취소 핸들러
   const handleEditCancel = () => {
     setEditContent(content);
     setShowEditInput(false);
@@ -117,8 +111,8 @@ export default function Reply({
               </p>
             </div>
 
-            {/* 내 댓글일 때만 메뉴 버튼 표시 */}
-            {isAuthor && (
+            {/* 내 댓글이고 readOnly가 아닐 때만 메뉴 버튼 표시 */}
+            {isAuthor && !readOnly && (
               <div className="relative">
                 <button onClick={() => setShowMenu(!showMenu)} className="p-1 cursor-pointer">
                   <Image src="/icons/more.svg" alt="메뉴" width={24} height={24} />
@@ -126,9 +120,7 @@ export default function Reply({
 
                 {showMenu && (
                   <>
-                    {/* 메뉴 닫기용 배경 */}
                     <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
-                    {/* 수정/삭제 메뉴 */}
                     <div className="absolute top-full -left-8 -translate-x-1/2 z-50">
                       <SelectModal
                         options={menuOptions}
@@ -146,8 +138,10 @@ export default function Reply({
           {/* 댓글 텍스트 */}
           <p className="mt-2 text-body-rg text-gray-800 whitespace-pre-wrap">{content}</p>
 
-          {/* 답글 버튼 (최상위 댓글에만 표시) */}
-          {!isNested && <ReplyButton onClick={() => setShowReplyInput(true)} className="mt-3" />}
+          {/* 답글 버튼 - readOnly가 아닐 때만 표시 */}
+          {!isNested && !readOnly && (
+            <ReplyButton onClick={() => setShowReplyInput(true)} className="mt-3" />
+          )}
 
           {/* 답글 입력창 */}
           {showReplyInput && (
@@ -212,6 +206,7 @@ export default function Reply({
               onReply={onReply}
               onEdit={onEdit}
               onDelete={onDelete}
+              readOnly={readOnly}
             />
           ))}
         </div>
