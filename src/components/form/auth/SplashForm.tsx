@@ -16,6 +16,8 @@ export default function SplashForm() {
         if (authResponse?.isAuthenticated) {
           if (!authService.isProfileCompleted(authResponse.user)) {
             router.push('/auth/setup');
+          } else if (!authResponse.isOnboarded) {
+            router.push('/onboarding');
           } else {
             router.push('/home');
           }
