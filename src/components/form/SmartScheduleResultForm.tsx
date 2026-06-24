@@ -565,9 +565,9 @@ export default function SmartScheduleResultForm() {
                 스마트 시간표 유의사항 안내
               </button>
 
-              <div className="w-4.5 h-4.5 relative">
+              <button type="button" onClick={() => setShowInfo(true)} className="w-4.5 h-4.5 relative">
                 <Image src="/icons/info-2.svg" alt="info" width={18} height={18} />
-              </div>
+              </button>
             </div>
           </div>
 

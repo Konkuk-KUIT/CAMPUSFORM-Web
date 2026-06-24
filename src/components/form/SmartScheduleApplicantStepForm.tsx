@@ -402,7 +402,7 @@ export default function SmartScheduleApplicantStepForm() {
               type="button"
               onClick={() => {
                 if (!projectId) return;
-                router.push(`/smart-schedule/${projectId}/applicant-submit`);
+                router.push(`/smart-schedule/${projectId}/applicant-edit`);
               }}
               className="w-full bg-blue-50 border-[0.5px] border-blue-200 rounded-10 px-2.5 py-2.5 flex items-center justify-center gap-1 hover:bg-blue-100 transition-colors cursor-pointer"
             >
@@ -464,7 +464,7 @@ export default function SmartScheduleApplicantStepForm() {
                 variant="primary"
                 size="lg"
                 className="w-full"
-                onClick={() => setShowConfirmDialog(true)}
+                onClick={handleConfirmGenerate}
                 disabled={!interviewSetting || isGenerating || isResetting}
               >
                 {isGenerating ? '생성 중...' : '스마트 시간표 생성'}

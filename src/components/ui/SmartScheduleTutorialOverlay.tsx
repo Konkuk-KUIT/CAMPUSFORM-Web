@@ -241,6 +241,10 @@ export default function SmartScheduleTutorialOverlay({
 
     setIsVisible(false);
     onClose?.();
+
+    if (projectId) {
+      router.push(`/smart-schedule/${projectId}/setting`);
+    }
   };
 
   const renderCommonMessage = () => {
