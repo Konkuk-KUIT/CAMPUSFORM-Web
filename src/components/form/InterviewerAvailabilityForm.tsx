@@ -14,6 +14,7 @@ import SmartScheduleCalendarPreview from '@/components/ui/SmartScheduleCalendarP
 import SmartScheduleSummaryCard from '@/components/ui/SmartScheduleSummaryCard';
 import SmartScheduleTutorialOverlay from '@/components/ui/SmartScheduleTutorialOverlay';
 import { useCurrentProjectStore } from '@/store/currentProjectStore';
+import { useTutorialMode, TUTORIAL_DATES } from '@/hooks/useTutorialMode';
 import { projectService } from '@/services/projectService';
 import { authService } from '@/services/authService';
 import { toast } from '@/components/Toast';
@@ -60,6 +61,7 @@ export default function InterviewerAvailabilityForm() {
       ? (maxStepParam as SmartScheduleStep)
       : 2;
   const projectId = useCurrentProjectStore(s => s.projectId);
+  const isTutorialMode = useTutorialMode();
 
   const [isLoading, setIsLoading] = useState(false);
   const [isTutorialVisible, setIsTutorialVisible] = useState(false);
@@ -321,14 +323,61 @@ export default function InterviewerAvailabilityForm() {
   };
 
   useEffect(() => {
+    if (isTutorialMode === null) return;
+
+    if (isTutorialMode) {
+      const setting: InterviewSetting = {
+        startDate: TUTORIAL_DATES[0],
+        endDate: TUTORIAL_DATES[2],
+        startTime: '09:00',
+        endTime: '18:00',
+        slotDurationMin: 30,
+        interviewDates: TUTORIAL_DATES,
+      };
+      setInterviewSetting(setting);
+
+      const dummyInterviewers: Interviewer[] = [
+        { userId: 1, name: '김운영(나)', email: 'kim@example.com', isLeader: true },
+        { userId: 2, name: '이면접', email: 'lee@example.com', isLeader: false },
+        { userId: 3, name: '박진행', email: 'park@example.com', isLeader: false },
+      ];
+      setInterviewers(dummyInterviewers);
+
+      const d0 = TUTORIAL_DATES[0];
+      const d1 = TUTORIAL_DATES[1];
+      const cellActive: InterviewersCellActive = {
+        1: {
+          [`${d0}-0`]: { top: true, bottom: true },
+          [`${d0}-1`]: { top: true, bottom: false },
+          [`${d0}-3`]: { top: true, bottom: true },
+          [`${d1}-0`]: { top: true, bottom: true },
+          [`${d1}-2`]: { top: false, bottom: true },
+        },
+        2: {
+          [`${d0}-0`]: { top: true, bottom: true },
+          [`${d0}-2`]: { top: true, bottom: true },
+          [`${d1}-0`]: { top: true, bottom: true },
+          [`${d1}-1`]: { top: true, bottom: false },
+        },
+        3: {
+          [`${d0}-1`]: { top: true, bottom: true },
+          [`${d1}-3`]: { top: true, bottom: true },
+        },
+      };
+      setInterviewersCellActive(cellActive);
+      setRequiredInterviewers({ 0: true, 1: false, 2: false });
+      setSelectedInterviewer(1);
+      return;
+    }
+
     fetchInterviewSetting();
-  }, [projectId]);
+  }, [projectId, isTutorialMode]);
 
   useEffect(() => {
-    if (!interviewSetting) return;
+    if (isTutorialMode || !interviewSetting) return;
 
     fetchInterviewers();
-  }, [projectId, interviewSetting]);
+  }, [projectId, interviewSetting, isTutorialMode]);
 
   useEffect(() => {
     if (

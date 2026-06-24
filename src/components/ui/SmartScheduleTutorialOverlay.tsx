@@ -80,7 +80,7 @@ const TUTORIAL_CONTENTS: Record<TutorialStep, TutorialContent> = {
       top: '303px',
       left: '7px',
       width: '362px',
-      height: '270px',
+      height: '250px',
       radius: '12px',
     },
     message: {
@@ -125,20 +125,20 @@ const TUTORIAL_CONTENTS: Record<TutorialStep, TutorialContent> = {
     title: '캠퍼스를 알고리즘이 찾아낸 최적의 시간표를 확인할 수 있어요.',
     description: '* 미배정자는 사유 확인 후 일정 직접 조절 가능',
     highlight: {
-      top: '236px',
+      top: '256px',
       left: '5px',
       width: '365px',
       height: '285px',
       radius: '18px',
     },
     message: {
-      top: '164px',
+      top: '184px',
       left: '28px',
       width: '320px',
       align: 'center',
     },
     arrow: {
-      top: '206px',
+      top: '226px',
       left: '187px',
       height: '22px',
       direction: 'down',
@@ -236,6 +236,7 @@ export default function SmartScheduleTutorialOverlay({
   const handleClose = () => {
     if (typeof window !== 'undefined') {
       window.localStorage.setItem('smartScheduleTutorialCompleted', 'true');
+      window.dispatchEvent(new CustomEvent('tutorialCompleted'));
     }
 
     setIsVisible(false);
