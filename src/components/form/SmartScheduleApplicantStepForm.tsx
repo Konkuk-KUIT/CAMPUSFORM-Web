@@ -12,8 +12,10 @@ import SmartScheduleButton from '@/components/ui/SmartScheduleButton';
 import SmartScheduleStepIndicator from '@/components/ui/SmartScheduleStepIndicator';
 import SmartScheduleSummaryCard from '@/components/ui/SmartScheduleSummaryCard';
 import SmartScheduleTutorialOverlay from '@/components/ui/SmartScheduleTutorialOverlay';
+import Toggle from '@/components/ui/Toggle';
 
 import { useCurrentProjectStore } from '@/store/currentProjectStore';
+import { useTutorialMode, TUTORIAL_DATES } from '@/hooks/useTutorialMode';
 import { projectService } from '@/services/projectService';
 import { documentResultService } from '@/services/documentResultService';
 import { authService } from '@/services/authService';
@@ -47,6 +49,7 @@ export default function SmartScheduleApplicantStepForm() {
       ? (maxStepParam as SmartScheduleStep)
       : 3;
   const projectId = useCurrentProjectStore(s => s.projectId);
+  const isTutorialMode = useTutorialMode();
 
   const [interviewSetting, setInterviewSetting] = useState<InterviewSetting | null>(null);
   const [investigationLink, setInvestigationLink] = useState('');
@@ -54,6 +57,9 @@ export default function SmartScheduleApplicantStepForm() {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showResetConfirmDialog, setShowResetConfirmDialog] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+  const [applicantResponseEnabled, setApplicantResponseEnabled] = useState<boolean>(true);
+  const [isTogglingResponse, setIsTogglingResponse] = useState(false);
+  const [showStopResponseDialog, setShowStopResponseDialog] = useState(false);
 
   const handleStepClick = (step: SmartScheduleStep) => {
     if (!projectId) return;
@@ -122,10 +128,57 @@ export default function SmartScheduleApplicantStepForm() {
     }
   };
 
+  const fetchApplicantLinkConfig = async () => {
+    if (!projectId) return;
+    try {
+      const config = await projectService.getApplicantLinkConfig(projectId);
+      if (typeof config?.enabled === 'boolean') {
+        setApplicantResponseEnabled(config.enabled);
+      }
+    } catch {
+      // 설정이 없으면 기본값 유지
+    }
+  };
+
+  const handleToggleApplicantResponse = async (enabled: boolean) => {
+    if (!projectId || isTogglingResponse) return;
+    setIsTogglingResponse(true);
+    try {
+      await projectService.updateApplicantLinkConfig(projectId, { enabled });
+      setApplicantResponseEnabled(enabled);
+      toast.success(
+        enabled
+          ? '응답을 받기 시작했습니다.'
+          : '응답이 중단되었습니다.',
+      );
+    } catch {
+      toast.error('응답 상태 변경에 실패했습니다.');
+    } finally {
+      setIsTogglingResponse(false);
+    }
+  };
+
   useEffect(() => {
+    if (isTutorialMode === null) return;
+
+    if (isTutorialMode) {
+      setInterviewSetting({
+        startDate: TUTORIAL_DATES[0],
+        endDate: TUTORIAL_DATES[2],
+        startTime: '09:00',
+        endTime: '18:00',
+        slotDurationMin: 30,
+        interviewDates: TUTORIAL_DATES,
+      });
+      setInvestigationLink('https://campusform.kr/submit/tutorial-preview');
+      setApplicantResponseEnabled(true);
+      return;
+    }
+
     fetchInterviewSetting();
     fetchInvestigationLink();
-  }, [projectId]);
+    fetchApplicantLinkConfig();
+  }, [projectId, isTutorialMode]);
 
   const handleCopyInvestigationLink = async () => {
     if (!investigationLink) {
@@ -349,7 +402,7 @@ export default function SmartScheduleApplicantStepForm() {
               type="button"
               onClick={() => {
                 if (!projectId) return;
-                router.push(`/smart-schedule/${projectId}/applicant-submit`);
+                router.push(`/smart-schedule/${projectId}/applicant-edit`);
               }}
               className="w-full bg-blue-50 border-[0.5px] border-blue-200 rounded-10 px-2.5 py-2.5 flex items-center justify-center gap-1 hover:bg-blue-100 transition-colors cursor-pointer"
             >
@@ -379,6 +432,30 @@ export default function SmartScheduleApplicantStepForm() {
                 지원자 전화번호 복사
               </SmartScheduleButton>
             </div>
+
+            {/* 지원자 응답 상태 토글 */}
+            {!isReadOnly && (
+              <div className="border border-gray-100 rounded-[10px] px-3 py-3.5">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-body-md text-gray-950">지원자 응답 상태</span>
+                  <Toggle
+                    checked={applicantResponseEnabled}
+                    onChange={(enabled) => {
+                      if (!enabled) {
+                        setShowStopResponseDialog(true);
+                      } else {
+                        handleToggleApplicantResponse(true);
+                      }
+                    }}
+                  />
+                </div>
+                <p className="text-body-xs text-gray-400 whitespace-pre-line">
+                  {applicantResponseEnabled
+                    ? '응답을 받고 있습니다.\n지원자가 면접 시간을 선택할 수 있습니다.'
+                    : '응답이 중단되었습니다.\n지원자가 면접 시간을 제출할 수 없습니다.'}
+                </p>
+              </div>
+            )}
           </div>
 
           {!isReadOnly && (
@@ -387,7 +464,7 @@ export default function SmartScheduleApplicantStepForm() {
                 variant="primary"
                 size="lg"
                 className="w-full"
-                onClick={() => setShowConfirmDialog(true)}
+                onClick={handleConfirmGenerate}
                 disabled={!interviewSetting || isGenerating || isResetting}
               >
                 {isGenerating ? '생성 중...' : '스마트 시간표 생성'}
@@ -425,6 +502,26 @@ export default function SmartScheduleApplicantStepForm() {
               </>
             }
             confirmText={isResetting ? '초기화 중...' : '확인'}
+          />
+
+          <ConfirmModal
+            isOpen={showStopResponseDialog}
+            onCancel={() => setShowStopResponseDialog(false)}
+            onConfirm={() => {
+              setShowStopResponseDialog(false);
+              handleToggleApplicantResponse(false);
+            }}
+            description={
+              <>
+                중단하면 지원자는 더 이상
+                <br />
+                면접 시간을 선택할 수 없습니다.
+                <br />
+                응답을 중단하시겠습니까?
+              </>
+            }
+            confirmText="확인"
+            cancelText="취소"
           />
 
           <div className="h-32" />

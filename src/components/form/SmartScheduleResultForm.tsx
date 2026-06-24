@@ -13,6 +13,7 @@ import SmartScheduleStepIndicator from '@/components/ui/SmartScheduleStepIndicat
 import SmartScheduleSummaryCard from '@/components/ui/SmartScheduleSummaryCard';
 import SmartScheduleTutorialOverlay from '@/components/ui/SmartScheduleTutorialOverlay';
 import { useCurrentProjectStore } from '@/store/currentProjectStore';
+import { useTutorialMode, TUTORIAL_DATES } from '@/hooks/useTutorialMode';
 import { toast } from '@/components/Toast';
 
 type SmartScheduleStep = 1 | 2 | 3 | 4;
@@ -65,6 +66,7 @@ interface UnassignedApplicant extends Applicant {
 export default function SmartScheduleResultForm() {
   const router = useRouter();
   const projectId = useCurrentProjectStore(s => s.projectId);
+  const isTutorialMode = useTutorialMode();
 
   const [showInfo, setShowInfo] = useState(false);
   const [interviewSetting, setInterviewSetting] = useState<InterviewSetting | null>(null);
@@ -72,6 +74,8 @@ export default function SmartScheduleResultForm() {
   const [unassignedApplicants, setUnassignedApplicants] = useState<UnassignedApplicant[]>([]);
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
+  const [selectedDateIndex, setSelectedDateIndex] = useState<number>(0);
+  const [showDateDropdown, setShowDateDropdown] = useState(false);
 
   const handleStepClick = (step: SmartScheduleStep) => {
     if (!projectId) return;
@@ -273,6 +277,7 @@ export default function SmartScheduleResultForm() {
     setScheduleData(normalized);
     setUnassignedApplicants(data?.unassignedApplicants ?? data?.data?.unassignedApplicants ?? []);
     setIsConfirmed(confirmed);
+    setSelectedDateIndex(0);
 
     return normalized;
   };
@@ -304,6 +309,91 @@ export default function SmartScheduleResultForm() {
   };
 
   useEffect(() => {
+    if (isTutorialMode === null) return;
+
+    if (isTutorialMode) {
+      setInterviewSetting({
+        startDate: TUTORIAL_DATES[0],
+        endDate: TUTORIAL_DATES[2],
+        startTime: '09:00',
+        endTime: '18:00',
+        slotDurationMin: 30,
+        interviewDates: TUTORIAL_DATES,
+      });
+      setScheduleData([
+        {
+          date: TUTORIAL_DATES[0],
+          slots: [
+            {
+              startTime: '09:00:00',
+              endTime: '09:30:00',
+              applicants: [
+                { id: 1, name: '홍길동', school: '건국대학교', major: '컴퓨터공학과', position: '개발' },
+                { id: 2, name: '김민준', school: '서울대학교', major: '경영학과', position: '기획' },
+              ],
+              interviewers: [{ id: 1, name: '김운영' }, { id: 2, name: '이면접' }],
+            },
+            {
+              startTime: '09:30:00',
+              endTime: '10:00:00',
+              applicants: [
+                { id: 3, name: '이수진', school: '연세대학교', major: '디자인학과', position: '디자인' },
+              ],
+              interviewers: [{ id: 1, name: '김운영' }],
+            },
+            {
+              startTime: '10:00:00',
+              endTime: '10:30:00',
+              applicants: [
+                { id: 4, name: '박준혁', school: '고려대학교', major: '미디어학과', position: '기획' },
+                { id: 5, name: '최유리', school: '성균관대학교', major: '응용수학과', position: '개발' },
+              ],
+              interviewers: [{ id: 1, name: '김운영' }, { id: 2, name: '이면접' }],
+            },
+          ],
+        },
+        {
+          date: TUTORIAL_DATES[1],
+          slots: [
+            {
+              startTime: '09:00:00',
+              endTime: '09:30:00',
+              applicants: [
+                { id: 6, name: '정다은', school: '한양대학교', major: '국어국문학과', position: '기획' },
+              ],
+              interviewers: [{ id: 2, name: '이면접' }],
+            },
+            {
+              startTime: '09:30:00',
+              endTime: '10:00:00',
+              applicants: [
+                { id: 7, name: '윤서준', school: '중앙대학교', major: '전기전자공학과', position: '개발' },
+                { id: 8, name: '강예린', school: '이화여자대학교', major: '심리학과', position: '기획' },
+              ],
+              interviewers: [{ id: 1, name: '김운영' }, { id: 2, name: '이면접' }],
+            },
+          ],
+        },
+        {
+          date: TUTORIAL_DATES[2],
+          slots: [
+            {
+              startTime: '09:00:00',
+              endTime: '09:30:00',
+              applicants: [
+                { id: 9, name: '오지훈', school: '숙명여자대학교', major: '통계학과', position: '개발' },
+                { id: 10, name: '신채원', school: '동국대학교', major: '광고홍보학과', position: '기획' },
+              ],
+              interviewers: [{ id: 1, name: '김운영' }, { id: 3, name: '박진행' }],
+            },
+          ],
+        },
+      ]);
+      setUnassignedApplicants([]);
+      setIsConfirmed(false);
+      return;
+    }
+
     const fetchData = async () => {
       if (!projectId) return;
 
@@ -378,7 +468,7 @@ export default function SmartScheduleResultForm() {
     };
 
     fetchData();
-  }, [projectId, router]);
+  }, [projectId, router, isTutorialMode]);
 
   const formatDateToKorean = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -475,9 +565,9 @@ export default function SmartScheduleResultForm() {
                 스마트 시간표 유의사항 안내
               </button>
 
-              <div className="w-4.5 h-4.5 relative">
+              <button type="button" onClick={() => setShowInfo(true)} className="w-4.5 h-4.5 relative">
                 <Image src="/icons/info-2.svg" alt="info" width={18} height={18} />
-              </div>
+              </button>
             </div>
           </div>
 
@@ -502,69 +592,112 @@ export default function SmartScheduleResultForm() {
             </div>
           )}
 
-          {scheduleData.map(
-            (dateSchedule, dateIndex) =>
-              dateSchedule.slots.length > 0 && (
-                <div key={dateIndex} className="mb-4">
-                  <div className="px-4 pb-3">
-                    <h2 className="text-subtitle-sm-sb text-gray-950">
-                      {formatDateToKorean(dateSchedule.date)}
-                    </h2>
-                  </div>
+          {/* 날짜 드롭다운 */}
+          {scheduleData.filter(d => d.slots.length > 0).length > 0 && (
+            <div className="relative px-4 pb-3">
+              <button
+                type="button"
+                onClick={() => setShowDateDropdown(prev => !prev)}
+                className="w-full flex items-center justify-between h-[50px] border border-gray-200 rounded-[10px] px-4 bg-white"
+              >
+                <span className="text-body-md text-gray-950">
+                  {formatDateToKorean(scheduleData.filter(d => d.slots.length > 0)[selectedDateIndex]?.date ?? '')}
+                </span>
+                <Image
+                  src="/icons/chevron-down.svg"
+                  alt="dropdown"
+                  width={20}
+                  height={20}
+                  className={`transition-transform ${showDateDropdown ? 'rotate-180' : ''}`}
+                />
+              </button>
 
-                  <div className="px-4 space-y-3">
-                    {dateSchedule.slots.map((slot, index) => (
-                      <div
-                        key={index}
-                        className="border-[1.5px] border-gray-200 rounded-10 p-4"
+              {showDateDropdown && (
+                <div className="absolute left-4 right-4 top-[54px] z-10 bg-white border border-gray-200 rounded-[10px] shadow-md overflow-hidden">
+                  {scheduleData
+                    .filter(d => d.slots.length > 0)
+                    .map((dateSchedule, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          setSelectedDateIndex(idx);
+                          setShowDateDropdown(false);
+                        }}
+                        className={`w-full text-left px-4 py-3 text-body-md transition-colors ${
+                          idx === selectedDateIndex
+                            ? 'text-primary bg-blue-50'
+                            : 'text-gray-950 hover:bg-gray-50'
+                        }`}
                       >
-                        <p className="text-subtitle-rg text-primary mb-3">
-                          {formatTimeRange(slot.startTime, slot.endTime)}
-                        </p>
+                        {formatDateToKorean(dateSchedule.date)}
+                      </button>
+                    ))}
+                </div>
+              )}
+            </div>
+          )}
 
-                        <div className="mb-3">
-                          <div className="flex gap-4">
-                            <span className="text-body-md text-gray-950 w-14 shrink-0">
-                              지원자
-                            </span>
+          {(() => {
+            const validDates = scheduleData.filter(d => d.slots.length > 0);
+            const dateSchedule = validDates[selectedDateIndex];
+            if (!dateSchedule) return null;
 
-                            <div className="flex-1 space-y-1">
-                              {slot.applicants.length > 0 ? (
-                                slot.applicants.map((applicant, appIndex) => (
-                                  <p key={appIndex} className="text-body-rg text-gray-950">
-                                    {applicant.name}
-                                    {(applicant.school || applicant.major || applicant.position) &&
-                                      `(${applicant.school || '-'}/${applicant.major || '-'}/${
-                                        applicant.position || '-'
-                                      })`}
-                                  </p>
-                                ))
-                              ) : (
-                                <p className="text-body-rg text-gray-400">
-                                  배정된 지원자 없음
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        </div>
+            return (
+              <div className="mb-4">
+                <div className="px-4 space-y-3">
+                  {dateSchedule.slots.map((slot, index) => (
+                    <div
+                      key={index}
+                      className="border-[1.5px] border-gray-200 rounded-10 p-4"
+                    >
+                      <p className="text-subtitle-rg text-primary mb-3">
+                        {formatTimeRange(slot.startTime, slot.endTime)}
+                      </p>
 
+                      <div className="mb-3">
                         <div className="flex gap-4">
                           <span className="text-body-md text-gray-950 w-14 shrink-0">
-                            면접관
+                            지원자
                           </span>
 
-                          <p className="text-body-rg text-gray-950 flex-1">
-                            {slot.interviewers.length > 0
-                              ? slot.interviewers.map(interviewer => interviewer.name).join(', ')
-                              : '배정된 면접관 없음'}
-                          </p>
+                          <div className="flex-1 space-y-1">
+                            {slot.applicants.length > 0 ? (
+                              slot.applicants.map((applicant, appIndex) => (
+                                <p key={appIndex} className="text-body-rg text-gray-950">
+                                  {applicant.name}
+                                  {(applicant.school || applicant.major || applicant.position) &&
+                                    `(${applicant.school || '-'}/${applicant.major || '-'}/${
+                                      applicant.position || '-'
+                                    })`}
+                                </p>
+                              ))
+                            ) : (
+                              <p className="text-body-rg text-gray-400">
+                                배정된 지원자 없음
+                              </p>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
+
+                      <div className="flex gap-4">
+                        <span className="text-body-md text-gray-950 w-14 shrink-0">
+                          면접관
+                        </span>
+
+                        <p className="text-body-rg text-gray-950 flex-1">
+                          {slot.interviewers.length > 0
+                            ? slot.interviewers.map(interviewer => interviewer.name).join(', ')
+                            : '배정된 면접관 없음'}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ),
-          )}
+              </div>
+            );
+          })()}
 
           {scheduleData.length === 0 && unassignedApplicants.length === 0 && (
             <div className="px-4 py-20 text-center">
