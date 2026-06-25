@@ -6,7 +6,7 @@ import { useCurrentProjectStore } from "@/store/currentProjectStore";
 import { useNewProjectStore } from "@/store/newProjectStore";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import Header from "@/components/ui/Header";
+import SmartScheduleHeader from "@/components/ui/SmartScheduleHeader";
 import Navbar from "@/components/Navbar";
 import SmartScheduleStepIndicator from "@/components/ui/SmartScheduleStepIndicator";
 import Btn from "@/components/ui/Btn";
@@ -430,12 +430,7 @@ export default function InterviewInfoSettingForm() {
     <main className="min-h-screen flex justify-center bg-white font-['Pretendard']">
       <div className="relative w-93.75 bg-white min-h-screen flex flex-col overflow-x-hidden">
         {/* Top bar */}
-        <Header
-          title="면접 정보 설정"
-          backTo={
-            projectId ? `/smart-schedule/${projectId}` : "/smart-schedule"
-          }
-        />
+        <SmartScheduleHeader title="스마트 시간표" />
 
         {/* Step Indicator */}
         <SmartScheduleStepIndicator
