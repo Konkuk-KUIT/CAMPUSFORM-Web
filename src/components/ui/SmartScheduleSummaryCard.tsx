@@ -140,7 +140,7 @@ export default function SmartScheduleSummaryCard({
           {formatTime(interviewSetting.startTime)} - {formatTime(interviewSetting.endTime)}
           <span>
             {' '}
-            · 면접 {interviewSetting.slotDurationMin}분 · 휴식 {breakDuration}분
+            (면접 {interviewSetting.slotDurationMin}분 · 휴식 {breakDuration}분)
           </span>
         </p>
       </div>
