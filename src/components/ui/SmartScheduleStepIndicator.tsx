@@ -42,39 +42,39 @@ export default function SmartScheduleStepIndicator({
     if (isCurrent) {
       return {
         container: 'bg-[#5B7CFA] border-[#5B7CFA]',
-        label: 'text-white',
-        title: 'text-white',
+        label: 'text-[#efefef]',
+        title: 'text-white font-semibold',
       };
     }
 
     if (isLocked) {
       return {
         container: 'bg-[#F2F2F2] border-[#F2F2F2]',
-        label: 'text-[#A8A8A8]',
-        title: 'text-[#A8A8A8]',
+        label: 'text-[#b0b0b0]',
+        title: 'text-[#5d5d5d]',
       };
     }
 
     if (isPast && isAccessible) {
       return {
         container: 'bg-white border-[#5B7CFA]',
-        label: 'text-[#5B7CFA]',
-        title: 'text-[#222222]',
+        label: 'text-[#6d6d6d]',
+        title: 'text-[#1f1f1f]',
       };
     }
 
     if (isFuture && isAccessible) {
       return {
         container: 'bg-white border-[#5B7CFA]',
-        label: 'text-[#5B7CFA]',
-        title: 'text-[#222222]',
+        label: 'text-[#6d6d6d]',
+        title: 'text-[#1f1f1f]',
       };
     }
 
     return {
       container: 'bg-[#F2F2F2] border-[#F2F2F2]',
-      label: 'text-[#A8A8A8]',
-      title: 'text-[#A8A8A8]',
+      label: 'text-[#b0b0b0]',
+      title: 'text-[#5d5d5d]',
     };
   };
 
@@ -86,7 +86,7 @@ export default function SmartScheduleStepIndicator({
   };
 
   return (
-    <div className="w-full bg-white px-4 py-3">
+    <div className="w-full bg-white px-4 pt-2 pb-2">
       <div className="flex w-full items-center">
         {STEPS.map((step, index) => {
           const style = getStepStyle(step.id);
@@ -102,7 +102,7 @@ export default function SmartScheduleStepIndicator({
               onClick={() => handleStepClick(step.id)}
               aria-current={step.id === currentStep ? 'step' : undefined}
               className={`
-                relative flex h-[42px] flex-1 flex-col items-center justify-center
+                relative flex h-[48px] flex-1 flex-col items-center justify-center
                 border-y border-r px-1 transition-all duration-150
                 ${isFirst ? 'rounded-l-[6px] border-l' : '-ml-[10px] pl-[12px]'}
                 ${isLast ? 'rounded-r-[6px] pr-1' : 'pr-[12px]'}
@@ -118,10 +118,10 @@ export default function SmartScheduleStepIndicator({
                 zIndex: STEPS.length - index,
               }}
             >
-              <span className={`text-[10px] font-semibold leading-[12px] ${style.label}`}>
+              <span className={`text-[12px] font-medium leading-[17px] ${style.label}`}>
                 {step.label}
               </span>
-              <span className={`mt-[1px] text-[11px] font-semibold leading-[13px] ${style.title}`}>
+              <span className={`mt-[1px] text-[13px] font-medium leading-[20px] ${style.title}`}>
                 {step.title}
               </span>
             </button>
