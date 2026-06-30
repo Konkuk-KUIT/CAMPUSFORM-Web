@@ -209,11 +209,7 @@ export default function OwnerView({
             <p className="text-[11px] text-gray-500 leading-tight pl-[10px]">
               스프레드시트의 항목을 서비스에서 사용할 수 있도록 변환합니다.
             </p>
-            <TextboxGoogle
-              placeholder="스프레드 시트 URL을 입력해주세요"
-              value={project.sheetUrl ?? ''}
-              disabled
-            />
+            <TextboxGoogle placeholder="스프레드 시트 URL을 입력해주세요" value={project.sheetUrl ?? ''} disabled />
           </div>
 
           {/* 모집 기간 설정 */}
@@ -225,10 +221,13 @@ export default function OwnerView({
                 className="w-40 h-10 flex items-center justify-between pt-[7px] pr-[7px] pb-[8px] pl-[15px] border border-[#EFEFEF] rounded-5 bg-white hover:border-primary transition-colors"
                 type="button"
               >
-                <span className={startDate
-                  ? 'text-14 text-gray-950'
-                  : 'font-["Pretendard"] font-normal text-[14px] leading-[20px] tracking-[0px] align-middle text-[#B0B0B0] [font-variant-numeric:lining-nums_proportional-nums]'
-                }>
+                <span
+                  className={
+                    startDate
+                      ? 'text-14 text-gray-950'
+                      : 'font-["Pretendard"] font-normal text-[14px] leading-[20px] tracking-[0px] align-middle text-[#B0B0B0] [font-variant-numeric:lining-nums_proportional-nums]'
+                  }
+                >
                   {startDate ? formatDate(startDate) : 'yyyy-mm-dd'}
                 </span>
                 <Image
@@ -247,10 +246,13 @@ export default function OwnerView({
                 className="w-40 h-10 flex items-center justify-between pt-[7px] pr-[7px] pb-[8px] pl-[15px] border border-[#EFEFEF] rounded-5 bg-white hover:border-primary transition-colors"
                 type="button"
               >
-                <span className={endDate
-                  ? 'text-14 text-gray-950'
-                  : 'font-["Pretendard"] font-normal text-[14px] leading-[20px] tracking-[0px] align-middle text-[#B0B0B0] [font-variant-numeric:lining-nums_proportional-nums]'
-                }>
+                <span
+                  className={
+                    endDate
+                      ? 'text-14 text-gray-950'
+                      : 'font-["Pretendard"] font-normal text-[14px] leading-[20px] tracking-[0px] align-middle text-[#B0B0B0] [font-variant-numeric:lining-nums_proportional-nums]'
+                  }
+                >
                   {endDate ? formatDate(endDate) : 'yyyy-mm-dd'}
                 </span>
                 <Image
@@ -331,6 +333,7 @@ export default function OwnerView({
                   onChange={handleAdminInputChange}
                   error={isAdminError}
                   errorMessage="유효하지 않은 이메일입니다."
+                  className="[&_input]:px-2.5"
                 />
               </div>
               <Button

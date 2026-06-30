@@ -23,11 +23,11 @@ class AuthService {
       return response.data;
     } catch (error) {
       console.error('Failed to get current user:', error);
-      return { isAuthenticated: false, user: null };
+      return { isAuthenticated: false, isOnboarded: false, user: null };
     }
   }
 
-  // GET : 이메일로 전체 사용자 정보 조회 (exists 필드 포함)
+  // GET : 이메일로 전체 사용자 정보 조회
   async getUserDetailByEmail(email: string): Promise<{
     exists: boolean;
     userId: number;
@@ -66,6 +66,12 @@ class AuthService {
   isProfileCompleted(user: User | null): boolean {
     if (!user) return false;
     return !!(user.nickname && user.nickname.trim() !== '');
+  }
+
+  // PATCH : 온보딩 완료 처리
+  async completeOnboarding(): Promise<{ isOnboarded: boolean }> {
+    const response = await apiClient.patch('/users/onboarding');
+    return response.data;
   }
 
   // POST : 로그아웃
