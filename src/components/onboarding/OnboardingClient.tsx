@@ -11,7 +11,7 @@ const SLIDES = [
   { title: '오늘의 캘린더', description: '프로젝트와 면접 일정을 한눈에 확인해요', image: '/onboarding/1.svg' },
   {
     title: '간편해진 지원자 관리',
-    description: '구글폼 시트 연동부터 결과 분류, 운영진 코멘트까지 똑똑하게 평가하세요',
+    description: '구글폼 시트 연동부터 결과 분류,\n운영진 코멘트까지 똑똑하게 평가하세요',
     image: '/onboarding/2.svg',
   },
   {
@@ -70,7 +70,7 @@ export default function OnboardingClient() {
       <div className="h-[331px] bg-white -mt-6 flex flex-col items-center px-6 pt-8 pb-5 relative">
         {/* 텍스트 + 화살표 */}
         <div className="flex items-center justify-center w-full">
-          <button onClick={handlePrev}>
+          <button onClick={handlePrev} className="-ml-4">
             <Image
               src={current === 0 ? '/icons/onboarding-disable-chevron-left.svg' : '/icons/onboarding-chevron-left.svg'}
               alt="이전"
@@ -84,7 +84,7 @@ export default function OnboardingClient() {
             <p className="text-body-rg text-gray-500 whitespace-pre-line">{SLIDES[current].description}</p>
           </div>
 
-          <button onClick={handleNext}>
+          <button onClick={handleNext} className="-mr-4">
             <Image
               src={
                 current === SLIDES.length - 1
