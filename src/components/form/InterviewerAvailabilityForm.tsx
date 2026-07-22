@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 
-import Header from '@/components/ui/Header';
+import SmartScheduleHeader from '@/components/ui/SmartScheduleHeader';
 import Navbar from '@/components/Navbar';
 import Btn from '@/components/ui/Btn';
 import ConfirmModal from '@/components/ConfirmModal';
@@ -502,10 +502,7 @@ export default function InterviewerAvailabilityForm() {
   return (
     <main className="min-h-screen flex justify-center bg-white">
       <div className="relative w-93.75 bg-white min-h-screen flex flex-col overflow-x-hidden">
-        <Header
-          title="면접관 시간 등록"
-          backTo={projectId ? `/smart-schedule/${projectId}` : '/smart-schedule'}
-        />
+        <SmartScheduleHeader title="스마트 시간표" />
 
         <SmartScheduleStepIndicator
           currentStep={2}

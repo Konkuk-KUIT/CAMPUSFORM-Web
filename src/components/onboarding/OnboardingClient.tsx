@@ -25,7 +25,7 @@ const SLIDES = [
     image: '/onboarding/4.svg',
   },
   {
-    title: '적절 없는 시간 조율',
+    title: '걱정 없는 시간 조율',
     description: '버튼 하나로 지원자들에게 시간 협업 링크를 보내드려요',
     image: '/onboarding/5.svg',
   },
