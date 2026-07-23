@@ -11,7 +11,9 @@ import Loading from '@/components/ui/Loading';
 import { toast } from '@/components/Toast';
 import { applicantService } from '@/services/applicantService';
 import { authService } from '@/services/authService';
+import { projectService } from '@/services/projectService';
 import type { ApplicantDetail } from '@/types/applicant';
+import type { ProjectState } from '@/types/project';
 
 const genderMap: Record<string, '남' | '여'> = {
   MALE: '남',
@@ -62,6 +64,15 @@ export default function InterviewDetailClient({
   const [appointmentTime, setAppointmentTime] = useState(decodeURIComponent(initialTime));
   const [currentUserId, setCurrentUserId] = useState<number>(0);
 
+  // 프로젝트 상태
+  const [projectState, setProjectState] = useState<ProjectState | null>(null);
+  const [isProjectStateFailed, setIsProjectStateFailed] = useState(false);
+
+  // 면접 단계에 아직 진입하지 않았거나, 재활성화로 서류 단계로 되돌아간 상태
+  const isBeforeInterview = projectState === 'DOCUMENT' || projectState === 'DOCUMENT_COMPLETE';
+  // 위 경우 + 모든 절차가 종료된 경우는 쓰기 불가
+  const isReadOnly = isBeforeInterview || projectState === 'INTERVIEW_COMPLETE';
+
   const scrollToCommentId = searchParams.get('commentId') ? Number(searchParams.get('commentId')) : undefined;
 
   const formatPhoneNumber = (phone: string) => {
@@ -85,12 +96,35 @@ export default function InterviewDetailClient({
     fetchCurrentUser();
   }, []);
 
-  // 알림에서 openComment=true로 진입 시 바텀시트 자동 오픈
+  // 프로젝트 상태 조회
   useEffect(() => {
+    const fetchProjectState = async () => {
+      try {
+        const projects = await projectService.getProjects();
+        const project = projects.find(p => p.id === projectId);
+        if (project) {
+          setProjectState(project.state);
+        } else {
+          setIsProjectStateFailed(true);
+          setIsLoading(false);
+        }
+      } catch (e) {
+        console.error('프로젝트 상태 조회 실패:', e);
+        setIsProjectStateFailed(true);
+        setIsLoading(false);
+      }
+    };
+    fetchProjectState();
+  }, [projectId]);
+
+  // 알림에서 openComment=true로 진입 시 바텀시트 자동 오픈
+  // 서류 단계로 되돌아간 프로젝트에서는 열지 않는다
+  useEffect(() => {
+    if (isBeforeInterview) return;
     if (searchParams.get('openComment') === 'true') {
       setCommentOpen(true);
     }
-  }, [searchParams]);
+  }, [searchParams, isBeforeInterview]);
 
   const fetchApplicant = async () => {
     try {
@@ -108,15 +142,31 @@ export default function InterviewDetailClient({
     }
   };
 
+  // 지원자 상세 조회 (프로젝트 상태 확정 이후에만 실행)
   useEffect(() => {
+    if (projectState === null) return;
+
+    // 서류 단계로 되돌아간 프로젝트는 면접 정보를 노출하지 않는다
+    if (isBeforeInterview) {
+      setApplicant(null);
+      setIsLoading(false);
+      return;
+    }
+
     fetchApplicant();
-  }, [projectId, applicantId]);
+  }, [projectId, applicantId, projectState, isBeforeInterview]);
 
   const handleRefresh = async () => {
+    if (isBeforeInterview) return;
     await fetchApplicant();
   };
 
   const handleConfirm = async (date: string, time: string, rawDate: string) => {
+    if (isReadOnly) {
+      toast.error('종료된 단계라 면접 일정을 변경할 수 없습니다.');
+      setIsModalOpen(false);
+      return;
+    }
     try {
       await applicantService.manualAssignInterview(projectId, applicantId, rawDate, time);
       setAppointmentDate(date);
@@ -129,6 +179,7 @@ export default function InterviewDetailClient({
   };
 
   const handleToggleFavorite = async () => {
+    if (isReadOnly) return;
     try {
       await applicantService.toggleBookmark(projectId, applicantId, 'INTERVIEW');
       setIsFavorite(prev => !prev);
@@ -139,6 +190,26 @@ export default function InterviewDetailClient({
 
   if (isLoading) {
     return <Loading fullScreen={false} />;
+  }
+
+  // 프로젝트 정보를 확인하지 못한 경우
+  if (isProjectStateFailed) {
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-200px)] px-5">
+        <p className="text-gray-400 text-center">프로젝트 정보를 불러오지 못했습니다.</p>
+      </div>
+    );
+  }
+
+  // 서류 단계로 재활성화된 프로젝트
+  if (isBeforeInterview) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)] px-5">
+        <h2 className="text-subtitle-md text-black mb-2">아직 면접 단계가 아닙니다.</h2>
+        <p className="text-body-rg text-gray-500 text-center">서류 심사를 마치고 면접 단계로 이동하면</p>
+        <p className="text-body-rg text-gray-500 text-center">이곳에서 면접 정보를 확인할 수 있습니다.</p>
+      </div>
+    );
   }
 
   if (!applicant) {
@@ -167,7 +238,10 @@ export default function InterviewDetailClient({
               onCommentClick={() => setCommentOpen(true)}
               appointmentDate={appointmentDate}
               appointmentTime={appointmentTime}
-              onAppointmentClick={() => setIsModalOpen(true)}
+              onAppointmentClick={() => {
+                if (isReadOnly) return;
+                setIsModalOpen(true);
+              }}
             />
           </div>
 
@@ -189,6 +263,7 @@ export default function InterviewDetailClient({
         stage="INTERVIEW"
         currentUserId={currentUserId}
         scrollToCommentId={scrollToCommentId}
+        readOnly={isReadOnly}
       />
 
       <AppointmentModal

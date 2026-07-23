@@ -112,7 +112,7 @@ export default function SmartScheduleSummaryCard({
   const maxInterviewers = interviewSetting.maxInterviewersPerSlot ?? 2;
 
   return (
-    <div className="mx-4 mt-3 rounded-[10px] border border-gray-100 bg-white px-5 py-4">
+    <div className="mx-4 rounded-[10px] border border-gray-100 bg-white px-5 py-4">
       <div className="flex items-center gap-3">
         <Image
           src="/icons/calendar.svg"
@@ -140,7 +140,7 @@ export default function SmartScheduleSummaryCard({
           {formatTime(interviewSetting.startTime)} - {formatTime(interviewSetting.endTime)}
           <span>
             {' '}
-            · 면접 {interviewSetting.slotDurationMin}분 · 휴식 {breakDuration}분
+            (면접 {interviewSetting.slotDurationMin}분 · 휴식 {breakDuration}분)
           </span>
         </p>
       </div>

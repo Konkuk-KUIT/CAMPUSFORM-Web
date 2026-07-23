@@ -12,11 +12,6 @@ interface SmartScheduleStepIndicatorProps {
   currentStep: SmartScheduleStep;
   maxAccessibleStep?: SmartScheduleStep;
   onStepClick?: (step: SmartScheduleStep) => void;
-
-  /**
-   * true면 현재 step 외에는 모두 클릭 불가 처리.
-   * 예: 면접 시간 확정 후 Step4에 고정할 때 사용.
-   */
   isLocked?: boolean;
 }
 
@@ -33,101 +28,103 @@ export default function SmartScheduleStepIndicator({
   onStepClick,
   isLocked = false,
 }: SmartScheduleStepIndicatorProps) {
-  const getStepStyle = (stepId: SmartScheduleStep) => {
+  const getStepColors = (stepId: SmartScheduleStep) => {
     const isCurrent = stepId === currentStep;
-    const isPast = stepId < currentStep;
-    const isFuture = stepId > currentStep;
     const isAccessible = stepId <= maxAccessibleStep;
 
     if (isCurrent) {
       return {
-        container: 'bg-[#5B7CFA] border-[#5B7CFA]',
-        label: 'text-white',
-        title: 'text-white',
+        fill: '#5A81FA',
+        stroke: '#5A81FA',
+        label: 'text-[#efefef]',
+        title: 'text-white font-semibold',
       };
     }
-
     if (isLocked) {
       return {
-        container: 'bg-[#F2F2F2] border-[#F2F2F2]',
-        label: 'text-[#A8A8A8]',
-        title: 'text-[#A8A8A8]',
+        fill: '#F2F2F2',
+        stroke: '#F2F2F2',
+        label: 'text-[#b0b0b0]',
+        title: 'text-[#5d5d5d]',
       };
     }
-
-    if (isPast && isAccessible) {
+    if (isAccessible) {
       return {
-        container: 'bg-white border-[#5B7CFA]',
-        label: 'text-[#5B7CFA]',
-        title: 'text-[#222222]',
+        fill: '#FFFFFF',
+        stroke: '#5A81FA',
+        label: 'text-[#6d6d6d]',
+        title: 'text-[#1f1f1f]',
       };
     }
-
-    if (isFuture && isAccessible) {
-      return {
-        container: 'bg-white border-[#5B7CFA]',
-        label: 'text-[#5B7CFA]',
-        title: 'text-[#222222]',
-      };
-    }
-
     return {
-      container: 'bg-[#F2F2F2] border-[#F2F2F2]',
-      label: 'text-[#A8A8A8]',
-      title: 'text-[#A8A8A8]',
+      fill: '#F2F2F2',
+      stroke: '#F2F2F2',
+      label: 'text-[#b0b0b0]',
+      title: 'text-[#5d5d5d]',
     };
   };
 
   const handleStepClick = (stepId: SmartScheduleStep) => {
     if (isLocked && stepId !== currentStep) return;
     if (stepId > maxAccessibleStep) return;
-
     onStepClick?.(stepId);
   };
 
   return (
-    <div className="w-full bg-white px-4 py-3">
-      <div className="flex w-full items-center">
+    <div className="w-full bg-white px-4 pt-2 pb-2">
+      <svg viewBox="0 0 343 48" fill="none" className="w-full" style={{ maxWidth: '343px', margin: '0 auto', display: 'block' }}>
         {STEPS.map((step, index) => {
-          const style = getStepStyle(step.id);
+          const colors = getStepColors(step.id);
           const isFirst = index === 0;
           const isLast = index === STEPS.length - 1;
           const isDisabled = isLocked ? step.id !== currentStep : step.id > maxAccessibleStep;
+          const x = index * 84;
+
+          let path: string;
+          if (isFirst) {
+            path = `M4,1 H79 L91,24 L79,47 H4 C2.3,47 1,45.7 1,44 V4 C1,2.3 2.3,1 4,1 Z`;
+          } else if (isLast) {
+            path = `M${x},1 H${x + 87} C${x + 89.5},1 ${x + 91},3 ${x + 91},5 V43 C${x + 91},45 ${x + 89.5},47 ${x + 87},47 H${x} L${x + 12},24 L${x},1 Z`;
+          } else {
+            path = `M${x},1 H${x + 79} L${x + 91},24 L${x + 79},47 H${x} L${x + 12},24 L${x},1 Z`;
+          }
+
+          const labelX = isFirst ? 45.5 : x + 45.5;
+          const titleX = isFirst ? 45.5 : x + 45.5;
 
           return (
-            <button
+            <g
               key={step.id}
-              type="button"
-              disabled={isDisabled}
-              onClick={() => handleStepClick(step.id)}
-              aria-current={step.id === currentStep ? 'step' : undefined}
-              className={`
-                relative flex h-[42px] flex-1 flex-col items-center justify-center
-                border-y border-r px-1 transition-all duration-150
-                ${isFirst ? 'rounded-l-[6px] border-l' : '-ml-[10px] pl-[12px]'}
-                ${isLast ? 'rounded-r-[6px] pr-1' : 'pr-[12px]'}
-                ${style.container}
-                ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer active:scale-[0.99]'}
-              `}
-              style={{
-                clipPath: isLast
-                  ? 'polygon(0 0, 100% 0, 100% 100%, 0 100%, 12px 50%)'
-                  : isFirst
-                    ? 'polygon(0 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 0 100%)'
-                    : 'polygon(0 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 0 100%, 12px 50%)',
-                zIndex: STEPS.length - index,
-              }}
+              onClick={() => !isDisabled && handleStepClick(step.id)}
+              style={{ cursor: isDisabled ? 'not-allowed' : 'pointer' }}
             >
-              <span className={`text-[10px] font-semibold leading-[12px] ${style.label}`}>
+              <path d={path} fill={colors.fill} stroke={colors.stroke} />
+              <text
+                x={labelX}
+                y={17}
+                textAnchor="middle"
+                fill={colors.fill === '#5A81FA' ? '#efefef' : colors.fill === '#FFFFFF' ? '#6d6d6d' : '#b0b0b0'}
+                fontSize="12"
+                fontWeight="500"
+                fontFamily="Pretendard, sans-serif"
+              >
                 {step.label}
-              </span>
-              <span className={`mt-[1px] text-[11px] font-semibold leading-[13px] ${style.title}`}>
+              </text>
+              <text
+                x={titleX}
+                y={36}
+                textAnchor="middle"
+                fill={colors.fill === '#5A81FA' ? '#ffffff' : colors.fill === '#FFFFFF' ? '#1f1f1f' : '#5d5d5d'}
+                fontSize="13"
+                fontWeight={step.id === currentStep ? '600' : '500'}
+                fontFamily="Pretendard, sans-serif"
+              >
                 {step.title}
-              </span>
-            </button>
+              </text>
+            </g>
           );
         })}
-      </div>
+      </svg>
     </div>
   );
 }

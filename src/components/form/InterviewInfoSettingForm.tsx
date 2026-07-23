@@ -6,7 +6,7 @@ import { useCurrentProjectStore } from "@/store/currentProjectStore";
 import { useNewProjectStore } from "@/store/newProjectStore";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import Header from "@/components/ui/Header";
+import SmartScheduleHeader from "@/components/ui/SmartScheduleHeader";
 import Navbar from "@/components/Navbar";
 import SmartScheduleStepIndicator from "@/components/ui/SmartScheduleStepIndicator";
 import Btn from "@/components/ui/Btn";
@@ -16,6 +16,7 @@ import MultiSelectCalendar from "@/components/home/MultiSelectCalendar";
 import { toast } from "@/components/Toast";
 import SmartScheduleTutorialOverlay from "@/components/ui/SmartScheduleTutorialOverlay";
 import SmartScheduleSummaryCard from "@/components/ui/SmartScheduleSummaryCard";
+import { useTutorialMode, TUTORIAL_DATES } from "@/hooks/useTutorialMode";
 import ConfirmModal from "@/components/ConfirmModal";
 import { authService } from "@/services/authService";
 
@@ -142,6 +143,8 @@ export default function InterviewInfoSettingForm() {
     maxInterviewersPerSlot,
   ]);
 
+  const isTutorialMode = useTutorialMode();
+
   // zustand store에서 현재 projectId 받아오기
   const projectId = useCurrentProjectStore((state) => state.projectId);
   const setProjectId = useCurrentProjectStore((state) => state.setProjectId);
@@ -197,6 +200,20 @@ export default function InterviewInfoSettingForm() {
 
   // 기존 면접 설정 불러오기
   useEffect(() => {
+    if (isTutorialMode === null) return;
+
+    if (isTutorialMode) {
+      setSelectedDates(TUTORIAL_DATES.map((d) => new Date(d)));
+      setStartHour("09"); setStartMinute("00");
+      setEndHour("18"); setEndMinute("00");
+      setMaxApplicantsPerSlot(2);
+      setMinInterviewersPerSlot(1);
+      setMaxInterviewersPerSlot(2);
+      setEstimatedDuration("30");
+      setRestDuration("10");
+      return;
+    }
+
     const loadExistingSetting = async () => {
       if (!projectId) return;
 
@@ -264,7 +281,7 @@ export default function InterviewInfoSettingForm() {
     };
 
     loadExistingSetting();
-  }, [projectId]);
+  }, [projectId, isTutorialMode]);
 
   const handleConfirmResetFromStep1 = async () => {
     const targetProjectId = projectId ?? createdProjectId;
@@ -413,12 +430,7 @@ export default function InterviewInfoSettingForm() {
     <main className="min-h-screen flex justify-center bg-white font-['Pretendard']">
       <div className="relative w-93.75 bg-white min-h-screen flex flex-col overflow-x-hidden">
         {/* Top bar */}
-        <Header
-          title="면접 정보 설정"
-          backTo={
-            projectId ? `/smart-schedule/${projectId}` : "/smart-schedule"
-          }
-        />
+        <SmartScheduleHeader title="스마트 시간표" />
 
         {/* Step Indicator */}
         <SmartScheduleStepIndicator
@@ -685,7 +697,7 @@ export default function InterviewInfoSettingForm() {
           />
 
           {/* Spacer for fixed button */}
-          <div className={isReadOnly ? "h-10" : "h-32"} />
+          <div className={isReadOnly ? "h-20" : "h-32"} />
         </div>
 
         {/* Bottom nav */}
