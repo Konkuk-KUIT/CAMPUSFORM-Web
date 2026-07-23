@@ -13,6 +13,9 @@ interface InterviewResultContentProps {
   projectId: number;
 }
 
+const sortByName = (list: DocumentApplicantResult[]) =>
+  [...list].sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+
 export default function InterviewResultContent({ projectId }: InterviewResultContentProps) {
   const [selectedTab, setSelectedTab] = useState<'합격자' | '불합격자'>('합격자');
   const [stats, setStats] = useState<DocumentResultStats | null>(null);
@@ -33,8 +36,8 @@ export default function InterviewResultContent({ projectId }: InterviewResultCon
         documentResultService.getInterviewResults(projectId, 'FAIL'),
       ]);
       setStats(passedRes.stats);
-      setPassedList(passedRes.applicants);
-      setFailedList(failedRes.applicants);
+      setPassedList(sortByName(passedRes.applicants));
+      setFailedList(sortByName(failedRes.applicants));
       setPassedTemplate(passedRes.template.content);
       setFailedTemplate(failedRes.template.content);
       setIsLoaded(true);

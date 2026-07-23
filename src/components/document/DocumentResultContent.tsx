@@ -13,6 +13,9 @@ interface DocumentResultContentProps {
   projectId: number;
 }
 
+const sortByName = (list: DocumentApplicantResult[]) =>
+  [...list].sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+
 export default function DocumentResultContent({ projectId }: DocumentResultContentProps) {
   const [selectedTab, setSelectedTab] = useState<'합격자' | '불합격자'>('합격자');
   const [stats, setStats] = useState<DocumentResultStats | null>(null);
@@ -26,6 +29,7 @@ export default function DocumentResultContent({ projectId }: DocumentResultConte
   const [failedIsVariableEnabled, setFailedIsVariableEnabled] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
+  
   useEffect(() => {
     const fetchResults = async () => {
       const [passedRes, failedRes] = await Promise.all([
@@ -33,8 +37,8 @@ export default function DocumentResultContent({ projectId }: DocumentResultConte
         documentResultService.getDocumentResults(projectId, 'FAIL'),
       ]);
       setStats(passedRes.stats);
-      setPassedList(passedRes.applicants);
-      setFailedList(failedRes.applicants);
+      setPassedList(sortByName(passedRes.applicants)); 
+      setFailedList(sortByName(failedRes.applicants)); 
       setPassedTemplate(passedRes.template.content);
       setFailedTemplate(failedRes.template.content);
       setIsLoaded(true);
