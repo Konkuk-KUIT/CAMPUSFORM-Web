@@ -13,8 +13,10 @@ import Loading from '@/components/ui/Loading';
 import { toast } from '@/components/Toast';
 import { applicantService } from '@/services/applicantService';
 import { authService } from '@/services/authService';
+import { projectService } from '@/services/projectService';
 import type { ApplicantRaw } from '@/types/applicant';
 import type { InterviewApplicant } from '@/types/interview';
+import type { ProjectState } from '@/types/project';
 
 const statusMap: Record<string, '보류' | '합격' | '불합격'> = {
   HOLD: '보류',
@@ -79,6 +81,15 @@ export default function InterviewContent({ projectId }: { projectId: number }) {
   const [selectedAppointmentTime, setSelectedAppointmentTime] = useState<string | undefined>();
   const [lastSyncedAt, setLastSyncedAt] = useState<Date>(new Date());
 
+  // 프로젝트 상태
+  const [projectState, setProjectState] = useState<ProjectState | null>(null);
+
+  // 면접 단계에 아직 진입하지 않았거나, 재활성화로 서류 단계로 되돌아간 상태
+  const isBeforeInterview = projectState === 'DOCUMENT' || projectState === 'DOCUMENT_COMPLETE';
+  // 위 경우 + 모든 절차가 종료된 경우는 쓰기 불가
+  const isReadOnly = isBeforeInterview || projectState === 'INTERVIEW_COMPLETE';
+
+  // 현재 유저 정보 조회
   useEffect(() => {
     const fetchCurrentUser = async () => {
       const auth = await authService.getCurrentUser();
@@ -89,7 +100,34 @@ export default function InterviewContent({ projectId }: { projectId: number }) {
     fetchCurrentUser();
   }, []);
 
+  // 프로젝트 상태 조회
   useEffect(() => {
+    const fetchProjectState = async () => {
+      try {
+        const projects = await projectService.getProjects();
+        const project = projects.find(p => p.id === projectId);
+        if (project) setProjectState(project.state);
+      } catch (e) {
+        console.error('프로젝트 상태 조회 실패:', e);
+        toast.error('프로젝트 정보를 불러오지 못했습니다.');
+        setIsLoading(false);
+      }
+    };
+    fetchProjectState();
+  }, [projectId]);
+
+  // 지원자 목록 조회 (프로젝트 상태 확정 이후에만 실행)
+  useEffect(() => {
+    if (projectState === null) return;
+
+    // 서류 단계로 되돌아간 프로젝트는 면접 목록을 노출하지 않는다
+    if (isBeforeInterview) {
+      setApplicants([]);
+      setFavorites(new Set());
+      setIsLoading(false);
+      return;
+    }
+
     const fetchApplicants = async () => {
       try {
         setIsLoading(true);
@@ -105,9 +143,10 @@ export default function InterviewContent({ projectId }: { projectId: number }) {
       }
     };
     fetchApplicants();
-  }, [projectId]);
+  }, [projectId, projectState, isBeforeInterview]);
 
   const handleRefresh = async () => {
+    if (isBeforeInterview) return;
     try {
       const res = await applicantService.getApplicants(projectId, 'INTERVIEW');
       const mapped = res.applicants.map(mapApplicant);
@@ -119,6 +158,10 @@ export default function InterviewContent({ projectId }: { projectId: number }) {
   };
 
   const handleStatusChange = async (applicantId: number, newStatus: '보류' | '합격' | '불합격') => {
+    if (isReadOnly) {
+      toast.error('종료된 단계라 면접 결과를 변경할 수 없습니다.');
+      return;
+    }
     try {
       await applicantService.updateStatus(projectId, applicantId, 'INTERVIEW', statusReverseMap[newStatus]);
       setApplicants(prev => prev.map(a => (a.applicantId === applicantId ? { ...a, interviewStatus: newStatus } : a)));
@@ -166,6 +209,7 @@ export default function InterviewContent({ projectId }: { projectId: number }) {
   );
 
   const handleToggleFavorite = async (applicantId: number) => {
+    if (isReadOnly) return;
     try {
       await applicantService.toggleBookmark(projectId, applicantId, 'INTERVIEW');
       setFavorites(prev => {
@@ -180,6 +224,11 @@ export default function InterviewContent({ projectId }: { projectId: number }) {
 
   const handleAppointmentConfirm = async (date: string, time: string, rawDate: string) => {
     if (!selectedAppointmentApplicantId) return;
+    if (isReadOnly) {
+      toast.error('종료된 단계라 면접 일정을 변경할 수 없습니다.');
+      setIsAppointmentOpen(false);
+      return;
+    }
     try {
       await applicantService.manualAssignInterview(projectId, selectedAppointmentApplicantId, rawDate, time);
       setApplicants(prev =>
@@ -192,6 +241,17 @@ export default function InterviewContent({ projectId }: { projectId: number }) {
       toast.error('면접 일정 저장에 실패했습니다.');
     }
   };
+
+  // 서류 단계로 재활성화된 프로젝트
+  if (!isLoading && isBeforeInterview) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)] px-5">
+        <h2 className="text-subtitle-md text-black mb-2">아직 면접 단계가 아닙니다.</h2>
+        <p className="text-body-rg text-gray-500 text-center">서류 심사를 마치고 면접 단계로 이동하면</p>
+        <p className="text-body-rg text-gray-500 text-center">이곳에서 면접 대상자를 관리할 수 있습니다.</p>
+      </div>
+    );
+  }
 
   if (!isLoading && applicants.length === 0) {
     return (
@@ -286,6 +346,7 @@ export default function InterviewContent({ projectId }: { projectId: number }) {
         applicantId={selectedApplicantId}
         stage="INTERVIEW"
         currentUserId={currentUserId}
+        readOnly={isReadOnly}
       />
 
       <AppointmentModal
