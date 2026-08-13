@@ -232,9 +232,11 @@ export default function AddProjectForm() {
 
           <div className="flex flex-col gap-2">
             <label className="text-body text-gray-950 pl-[10px]">구글폼 스프레드 시트 URL</label>
-            <p className="text-[11px] text-gray-500 leading-tight pl-[10px]">
-              스프레드시트의 항목을 서비스에서 사용할 수 있도록 변환합니다.
+            <p className="text-body-xs-rg text-gray-400 leading-tight pl-[10px]">
+              스프레드시트의 항목을 서비스에서 사용할 수 있도록 변환합니다. <br /> * 구글 경고창이 뜰 경우, 좌측 하단의
+              ‘고급’을 눌러 진행해 주세요.
             </p>
+
             <div className="flex gap-2 items-start relative">
               <div className="flex-1">
                 <TextboxGoogle placeholder="스프레드 시트 URL을 입력해주세요" value={url} onChange={handleUrlChange} />
